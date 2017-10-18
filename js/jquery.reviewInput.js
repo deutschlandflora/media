@@ -300,13 +300,24 @@
 
       indiciaFns.bindTabsActivate($('#controls'), function activateTab(event, ui) {
         var element = $(indiciaData.mapdiv);
+        var features = [];
         if ($(div).closest('.ui-tabs-panel')[0] === ui.newPanel[0]) {
           indiciaData.origMapParent = element.parent();
           indiciaData.origMapWidth = $(indiciaData.mapdiv).css('width');
           $(indiciaData.mapdiv).css('width', '100%');
           $('#review-map-container').append(element);
           indiciaData.mapdiv.map.updateSize();
+          // Remove boundaries when assessing the size of the area to show on review map, just want records
+          $.each(indiciaData.mapdiv.map.editLayer.features, function() {
+            if ($.inArray(this.attributes.type, ['ghost', 'boundary', 'linkedboundary']) > -1) {
+              features.push(this);
+            }
+          });
+          indiciaData.mapdiv.map.editLayer.removeFeatures(features);
+          // Zoom to the extent of the records
           indiciaData.mapdiv.map.zoomToExtent(indiciaData.mapdiv.map.editLayer.getDataExtent());
+          // Add the boundary features back
+          indiciaData.mapdiv.map.editLayer.addFeatures(features);
         } else if (typeof indiciaData.origMapParent !== 'undefined') {
           $(indiciaData.mapdiv).css('width', indiciaData.origMapWidth);
           $(indiciaData.origMapParent).append(element);

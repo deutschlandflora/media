@@ -121,65 +121,67 @@ var destroyAllFeatures;
         }
       });
       layer.destroyFeatures(toRemove, {});
-    }
+    };
 
     /**
      * A public method that can be fired when a location is selected in an input control, to load the location's
      * boundary onto the map. Automatic for #imp-location, but can be attached to other controls as well.
      */
     function locationSelectedInInput(div, val, loading) {
-      var intValue = parseInt(val);
+      var intValue = parseInt(val, 10);
+      var geomwkt;
+      var parser;
+      var feature;
       if (div.map.editLayer) {
         removeAllFeatures(div.map.editLayer, 'boundary');
       }
       if (!isNaN(intValue)) {
         // Change the location control requests the location's geometry to place on the map.
         $.getJSON(div.settings.indiciaSvc + 'index.php/services/data/location/' + val +
-          '?mode=json&view=detail' + div.settings.readAuth + '&callback=?', function (data) {
-            // store value in saved field?
-            if (data.length > 0) {
-              // TODO not sure best way of doing this using the services, we don't really want
-              // to use the proj4 client transform until its issues are sorted out, but have little choice here as
-              // the wkt for a boundary could be too big to send to the services on the URL
-              var geomwkt = data[0].boundary_geom || data[0].centroid_geom;
-              if(_diffProj(div.indiciaProjection, div.map.projection)){
-                // NB geometry may not be a point (especially if a boundary!)
-                var parser = new OpenLayers.Format.WKT();
-                var feature = parser.read(geomwkt);
-                geomwkt = feature.geometry.transform(div.indiciaProjection, div.map.projection).toString();
-              }
-              _showWktFeature(div, geomwkt, div.map.editLayer, null, true, 'boundary');
-
-              if (typeof loading === 'undefined' &&
-                  typeof indiciaData.searchUpdatesSref !== 'undefined' && indiciaData.searchUpdatesSref) {
-                // The location search box must fill in the sample sref box, but not during initial page load
-                $('#' + div.settings.srefId).val(data[0].centroid_sref);
-                $('#' + div.settings.srefSystemId).val(data[0].centroid_sref_system);
-                if (indiciaData.searchUpdatesUsingBoundary && data[0].boundary_geom) {
-                  $('#' + div.settings.geomId).val(data[0].boundary_geom);
-                } else {
-                  $('#' + div.settings.geomId).val(data[0].centroid_geom);
-                }
-                // If the sref is in two parts, then we might need to split it across 2 input fields for lat and long
-                if (data[0].centroid_sref.indexOf(' ') !== -1) {
-                  var parts = $.trim(data[0].centroid_sref).split(' ');
-                  // part 1 may have a comma at the end, so remove
-                  var part1 = parts.shift().split(',')[0];
-                  $('#' + div.settings.srefLatId).val(part1);
-                  $('#' + div.settings.srefLongId).val(parts.join(''));
-                }
-              }
-              if (typeof loading === "undefined" &&
-                  typeof indiciaData.searchUpdatesGeom !== 'undefined' && indiciaData.searchUpdatesGeom) {
-                // The location search box must fill in the sample sref box, but not during initial page load
-                $('#'+div.settings.geomId).val(data[0].boundary_geom);
-              }
-              $.each(mapLocationSelectedHooks, function() {
-                this(div, data);
-              });
+            '?mode=json&view=detail' + div.settings.readAuth + '&callback=?', function (data) {
+          // store value in saved field?
+          if (data.length > 0) {
+            // TODO not sure best way of doing this using the services, we don't really want
+            // to use the proj4 client transform until its issues are sorted out, but have little choice here as
+            // the wkt for a boundary could be too big to send to the services on the URL
+            geomwkt = data[0].boundary_geom || data[0].centroid_geom;
+            if (_diffProj(div.indiciaProjection, div.map.projection)) {
+              // NB geometry may not be a point (especially if a boundary!)
+              parser = new OpenLayers.Format.WKT();
+              feature = parser.read(geomwkt);
+              geomwkt = feature.geometry.transform(div.indiciaProjection, div.map.projection).toString();
             }
+            _showWktFeature(div, geomwkt, div.map.editLayer, null, true, 'boundary');
+
+            if (typeof loading === 'undefined' &&
+                typeof indiciaData.searchUpdatesSref !== 'undefined' && indiciaData.searchUpdatesSref) {
+              // The location search box must fill in the sample sref box, but not during initial page load
+              $('#' + div.settings.srefId).val(data[0].centroid_sref);
+              $('#' + div.settings.srefSystemId).val(data[0].centroid_sref_system);
+              if (indiciaData.searchUpdatesUsingBoundary && data[0].boundary_geom) {
+                $('#' + div.settings.geomId).val(data[0].boundary_geom);
+              } else {
+                $('#' + div.settings.geomId).val(data[0].centroid_geom);
+              }
+              // If the sref is in two parts, then we might need to split it across 2 input fields for lat and long
+              if (data[0].centroid_sref.indexOf(' ') !== -1) {
+                var parts = $.trim(data[0].centroid_sref).split(' ');
+                // part 1 may have a comma at the end, so remove
+                var part1 = parts.shift().split(',')[0];
+                $('#' + div.settings.srefLatId).val(part1);
+                $('#' + div.settings.srefLongId).val(parts.join(''));
+              }
+            }
+            if (typeof loading === 'undefined' &&
+                typeof indiciaData.searchUpdatesGeom !== 'undefined' && indiciaData.searchUpdatesGeom) {
+              // The location search box must fill in the sample sref box, but not during initial page load
+              $('#' + div.settings.geomId).val(data[0].boundary_geom);
+            }
+            $.each(mapLocationSelectedHooks, function callHook() {
+              this(div, data);
+            });
           }
-        );
+        });
       }
     }
 
@@ -191,10 +193,11 @@ var destroyAllFeatures;
       var features = [];
       var ids;
       var featureVal;
-      for(var i = 0, len = layer.features.length; i < len; ++i) {
-        if (typeof field!=='undefined' && typeof layer.features[i].attributes[field + 's'] !== 'undefined') {
+      var i;
+      for (i = 0, len = layer.features.length; i < len; ++i) {
+        if (typeof field !== 'undefined' && typeof layer.features[i].attributes[field + 's'] !== 'undefined') {
           ids = layer.features[i].attributes[field + 's'].split(',');
-          if ($.inArray(value, ids) >- 1) {
+          if ($.inArray(value, ids) > -1) {
             features.push(layer.features[i]);
           }
         } else {
@@ -211,15 +214,15 @@ var destroyAllFeatures;
      * Compare 2 projection representations.
      */
     function _diffProj(proj1, proj2) {
-      return (indiciaFns.projectionToSystem(proj1, true) != indiciaFns.projectionToSystem(proj2, true));
+      return (indiciaFns.projectionToSystem(proj1, true) !== indiciaFns.projectionToSystem(proj2, true));
     }
 
     /**
      * Adds a buffer around a boundary so you can zoom to the boundary without zooming too tight.
      */
     function _extendBounds(bounds, buffer) {
-      var dy = Math.max(50, (bounds.top-bounds.bottom) * buffer);
-      var dx = Math.max(50, (bounds.right-bounds.left) * buffer);
+      var dy = Math.max(50, (bounds.top - bounds.bottom) * buffer);
+      var dx = Math.max(50, (bounds.right - bounds.left) * buffer);
       bounds.top = bounds.top + dy;
       bounds.bottom = bounds.bottom - dy;
       bounds.right = bounds.right + dx;
@@ -242,7 +245,7 @@ var destroyAllFeatures;
       var styletype;
       // This replaces other features of the same type
       removeAllFeatures(layer, type);
-      if (wkt ){
+      if (wkt) {
         feature = parser.read(wkt);
         // this could be an array of features for a GEOMETRYCOLLECTION
         if ($.isArray(feature) === false) {
@@ -275,7 +278,7 @@ var destroyAllFeatures;
           // give the invisible features a type so that they are replaced too
           feature.attributes.type = type;
           if (temporary) {
-            feature.attributes.temp=true;
+            feature.attributes.temp = true;
           }
           features.push(feature);
           bounds.extend(feature.geometry);
@@ -296,7 +299,7 @@ var destroyAllFeatures;
           // Set the default view to show something a bit larger than the size of the grid square
           div.map.zoomToExtent(bounds);
           // If map not yet drawn, e.g. on another tab, remember this boundary to zoom into
-          if ($('div#map:visible').length === 0 && typeof indiciaData.zoomedBounds === "undefined") {
+          if ($('div#map:visible').length === 0 && typeof indiciaData.zoomedBounds === 'undefined') {
             indiciaData.zoomedBounds = bounds;
           }
         }
@@ -361,7 +364,7 @@ var destroyAllFeatures;
      * Hides graticules other than the one currently selected as a system.
      */
     function _hideOtherGraticules(div) {
-      if (typeof div.settings.graticules[$('#' + opts.srefSystemId).val()] !== "undefined") {
+      if (typeof div.settings.graticules[$('#' + opts.srefSystemId).val()] !== 'undefined') {
         $.each(div.map.controls, function updateGratControl() {
           if (this.CLASS_NAME === 'OpenLayers.Control.Graticule') {
             this.gratLayer.setVisibility(this.projection === 'EPSG:' +
@@ -379,7 +382,7 @@ var destroyAllFeatures;
       var currentZoom;
 
       // If the spatial ref input control exists, bind it to the map, so entering a ref updates the map
-      $('#' + opts.srefId).change(function() {
+      $('#' + opts.srefId).change(function () {
         _handleEnteredSref($(this).val(), div);
         _hideOtherGraticules(div);
       });
@@ -388,13 +391,13 @@ var destroyAllFeatures;
         // Only do something if both the lat and long are populated
         if ($.trim($(this).val()) !== '' && $.trim($('#' + opts.srefLongId).val()) !== '') {
           // copy the complete sref into the sref field
-          $('#' + opts.srefId).val($.trim($(this).val()) + ', ' + $.trim($('#'+opts.srefLongId).val()));
+          $('#' + opts.srefId).val($.trim($(this).val()) + ', ' + $.trim($('#' + opts.srefLongId).val()));
           _handleEnteredSref($('#' + opts.srefId).val(), div);
         }
       });
       $('#' + opts.srefLongId).change(function () {
         // Only do something if both the lat and long are populated
-        if ($.trim($('#'+opts.srefLatId).val()) !== '' && $.trim($(this).val())!=='') {
+        if ($.trim($('#'+opts.srefLatId).val()) !== '' && $.trim($(this).val()) !== '') {
           // copy the complete sref into the sref field
           $('#'+opts.srefId).val($.trim($('#' + opts.srefLatId).val()) + ', ' + $.trim($(this).val()));
           _handleEnteredSref($('#' + opts.srefId).val(), div);
@@ -1711,6 +1714,15 @@ var destroyAllFeatures;
       $('.grid-ref-hint').css('opacity', 0);
     }
 
+    function mapLayerChanged(event) {
+      if (event.property === 'visibility' &&
+          typeof indiciaData.reportlayer !== 'undefined' &&
+          event.layer === indiciaData.reportlayer &&
+          typeof indiciaData.reportlayer.needsRedraw !== 'undefined') {
+        indiciaData.mapdiv.map.events.triggerEvent('moveend');
+      }
+    }
+
     // Extend our default options with those provided, basing this on an empty object
     // so the defaults don't get changed.
     var opts = $.extend({}, $.fn.indiciaMapPanel.defaults, options);
@@ -1801,6 +1813,11 @@ var destroyAllFeatures;
             new OpenLayers.Control.ArgParser(),
             new OpenLayers.Control.Attribution()
       ];
+      $.extend(olOptions, {
+        eventListeners: {
+          changelayer: mapLayerChanged
+        }
+      });
 
       // Constructs the map
       div.map = new OpenLayers.Map($(this)[0], olOptions);

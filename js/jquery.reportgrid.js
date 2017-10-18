@@ -831,12 +831,16 @@
      * The request is handled in chunks of 1000 records. Optionally supply an id to map just 1 record.
      */
     function mapRecords(div, zooming, id, callback) {
-      if (typeof indiciaData.mapdiv === 'undefined' || typeof indiciaData.reportlayer === 'undefined') {
-        return false;
-      }
       var layerInfo = {bounds: null}, map=indiciaData.mapdiv.map, currentBounds=null;
       // we need to reload the map layer using the mapping report, so temporarily switch the report
       var origReport=div.settings.dataSource, request;
+      if (typeof indiciaData.mapdiv === 'undefined'
+          || typeof indiciaData.reportlayer === 'undefined'
+          || indiciaData.reportlayer.visibility === false) {
+        indiciaData.reportlayer.needsRedraw = true;
+        return false;
+      }
+      delete indiciaData.reportlayer.needsRedraw;
       if (div.settings.mapDataSource !== '') {
         if (map.resolution>30 && div.settings.mapDataSourceLoRes) {
           div.settings.dataSource=div.settings.mapDataSourceLoRes;
@@ -950,7 +954,7 @@
         if (featureArr.length === 0) {
           // feature not available on the map, probably because we are loading just the viewport and
           // and the point is not visible. So try to load it with a callback to zoom in.
-          mapRecords(this[0], false, featureId, function () {
+          mapRecords(div, false, featureId, function () {
             featureArr = map.div.getFeaturesByVal(indiciaData.reportlayer, featureId, div.settings.rowId);
             zoomToFeature();
           });

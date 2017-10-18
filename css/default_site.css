@@ -463,6 +463,11 @@ td.row-buttons img {
   *display:inline;
 }
 
+.olControlLayerSwitcher label {
+  width: auto;
+  margin: 0 0 0 1em;
+}
+
 .linear-form * {
   vertical-align: middle;
   width: auto;
