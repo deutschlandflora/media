@@ -1129,10 +1129,10 @@
         colPickerHtml += '<ul><li id="col-checkbox-all-container" ' + opacity + '><input id="col-checkbox-all" type="checkbox" ' + checked + '/>' +
             '<label for="col-checkbox-all">Check/uncheck all</label></li>';
         $.each($(div).find('thead tr:first-child th'), function (idx) {
-          if ($(this).text() !== '') {
+          if ($(this).ignore('.skip-text').text() !== '') {
             checked = $(this).is(':visible') ? ' checked="checked"' : '';
             colPickerHtml += '<li><input id="show-col-' + idx + '" class="col-checkbox" type="checkbox" ' + checked +
-              '/><label for="show-col-' + idx + '">' + $(this).text() + '</label></li>';
+              '/><label for="show-col-' + idx + '">' + $(this).ignore('.skip-text').text() + '</label></li>';
           }
         });
         colPickerHtml += '</ul></div>';

@@ -30,6 +30,14 @@ if (typeof window.indiciaData === 'undefined') {
   'use strict';
 
   /**
+   * Add a handy jQuery function for ignoring certain content elements, e.g. $(el).ignore('.skip').text() gets the
+   * text from the outer element skipping anything inside with a .skip class.
+   */
+  $.fn.ignore = function(sel) {
+    return this.clone().find(sel || '>*').remove().end();
+  };
+
+  /**
    * Enable buttons hover Effect. Since jQuery 1.7 the 'live' function has been
    * deprecated and 'on' function should be used. Use this function to allow
    * non-version specific code.
