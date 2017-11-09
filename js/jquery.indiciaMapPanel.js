@@ -960,14 +960,40 @@ var destroyAllFeatures;
       return geom;
     }
 
+    /**
+     * Finds the minimum tolerance to apply when checking for features that intersect a click point.
+     */
+    function getMinTolerance(testGeom, div) {
+      var parser;
+      var buffer = $('#click-buffer').length === 0 ? 0 : $('#click-buffer input').val(); // from settings
+      var geom;
+      // If the buffer specified needs transforming for use on the map then do it.
+      if (div.settings.selectFeatureBufferProjection && buffer > 0
+          && div.map.projection.getCode() !== 'EPSG:' + div.settings.selectFeatureBufferProjection) {
+        geom = testGeom.clone();
+        geom.transform(div.map.projection, 'EPSG:' + div.settings.selectFeatureBufferProjection);
+        parser = new OpenLayers.Format.WKT();
+        feature = parser.read('LINESTRING(' +
+          geom.getCentroid().x + ' ' + geom.getCentroid().y + ',' +
+          (geom.getCentroid().x + parseInt(buffer)) + ' ' + geom.getCentroid().y
+          + ')');
+        feature.geometry.transform('EPSG:' + div.settings.selectFeatureBufferProjection, div.map.projection);
+        return feature.geometry.getLength();
+      } else {
+        return buffer;
+      }
+    }
+
     /*
      * Selects the features in the contents of a bounding box
      */
     function selectBox(position, layers, div) {
       var testGeom, tolerantGeom, layer, tolerance, testGeoms={},
           getRadius, getStrokeWidth, radius, strokeWidth, match;
+      var minTolerance;
       if (position instanceof OpenLayers.Bounds) {
-        testGeom=boundsToGeom(position, div);
+        testGeom = boundsToGeom(position, div);
+        minTolerance = getMinTolerance(testGeom, div);
         for(var l=0; l<layers.length; ++l) {
           // set defaults
           getRadius=null;
@@ -1032,7 +1058,7 @@ var destroyAllFeatures;
               }
             }
             tolerance = div.map.getResolution() * (radius + (strokeWidth/2));
-            tolerance=Math.round(tolerance);
+            tolerance=Math.max(minTolerance, Math.round(tolerance));
             // keep geoms we create so we don't keep rebuilding them
             if (typeof testGeoms['geom-'+Math.round(tolerance/100)]!=='undefined') {
               tolerantGeom = testGeoms['geom-'+Math.round(tolerance/100)];
@@ -1077,6 +1103,8 @@ var destroyAllFeatures;
           lastclick: {},
           allowBox: clickableVectorLayers.length>0 && div.settings.allowBox===true,
           deactivate: function() {
+            // Disable the click buffer tolerance control.
+            $('#click-buffer').hide();
             //If the map is setup to use popups, then we need to switch off popups when moving to use a different tool icon
             //on the map (such as drawing boundaries) otheriwise they will continue to show.
             if (clickableVectorLayers.length>0 && this.allowBox) {
@@ -1090,6 +1118,20 @@ var destroyAllFeatures;
             OpenLayers.Control.prototype.deactivate.call(this);
           },
           activate: function() {
+            if (div.settings.selectFeatureBufferProjection) {
+              if ($('#click-buffer').length === 0) {
+                $('.olControlEditingToolbar').append(
+                  '<label id="click-buffer">Tolerance:<input type="text" value="1000"/>m</label>');
+                $("#click-buffer input").click(function(e) {
+                  $("#click-buffer input").focus();
+                });
+                $("#click-buffer input").keyup(function() {
+                  $("#click-buffer input").val(this.value.match(/[0-9]*/));
+                });
+              } else {
+                $('#click-buffer').show();
+              }
+            }
             var handlerOptions = {
               'single': true,
               'double': false,
@@ -2467,6 +2509,7 @@ jQuery.fn.indiciaMapPanel.defaults = {
     clickableLayersOutputFn: format_selected_features,
     clickableLayersOutputDiv: '',
     clickableLayersOutputColumns: [],
+    selectFeatureBufferProjection: false,
     allowBox: true, // can disable drag boxes for querying info, so navigation works
     featureIdField: '',
     clickPixelTolerance: 5,
