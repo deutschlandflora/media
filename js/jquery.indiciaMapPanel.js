@@ -902,7 +902,7 @@ var destroyAllFeatures;
         multimap_landranger : function() {return new OpenLayers.Layer.OSM();},
         osm : function() {
           // OpenStreetMap standard tile layer
-          return new OpenLayers.Layer.OSM("Topografie", [
+          return new OpenLayers.Layer.OSM("OpenStreetMap", [
             "https://a.tile.openstreetmap.org/${z}/${x}/${y}.png",
             "https://b.tile.openstreetmap.org/${z}/${x}/${y}.png",
             "https://c.tile.openstreetmap.org/${z}/${x}/${y}.png"]);
