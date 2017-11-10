@@ -723,7 +723,9 @@ div.olControlEditingToolbar .olControlFullscreenItemActive {
 }
 
 /* Click tolerance input */
-div.olControlEditingToolbar label {
+label#click-buffer {
+  position: absolute;
+  top: 8px;
   width: auto;
   /*display: inline-block;
   vertical-align: middle;*/
@@ -1120,6 +1122,17 @@ div.note-fail, p.note-fail {
 .licence-cc0 {
   background-position: 0 -54px;
 }
+/* Flags for record details panes, e.g. verification or record_details prebuilt forms. */
+#record-flags span {
+  padding: 0.5em;
+  margin: 0.5em;
+  border: solid red 1px;
+  border-radius: 4px;
+  display: inline-block;
+  font-weight: bold;
+  background-color: #ffcccc;
+}
+
 .resolveLocationPopup li {
   list-style-type: none;
 }
