@@ -9,5 +9,9 @@
     margin-left: 0; }
   .form-group:last-child {
     margin-bottom: 15px; }
+  .form-group input[type="checkbox"] {
+    margin-left: 8px;
+    margin-right: 8px;
+    font-size: 150%; }
 
 /*# sourceMappingURL=theme-bootstrap-3.css.map */
