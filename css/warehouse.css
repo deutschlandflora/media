@@ -1,0 +1,11 @@
+#banner {
+  background: #000000 url(../images/banner.png) no-repeat top right;
+  color: #FEFEFE;
+  height: 126px; }
+  #banner #logo {
+    margin: 12px; }
+
+#footer {
+  padding: 15px 0; }
+
+/*# sourceMappingURL=warehouse.css.map */
