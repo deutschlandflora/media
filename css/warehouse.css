@@ -8,6 +8,10 @@
 #footer {
   padding: 15px 0; }
 
+.report-grid {
+  width: 100%;
+  margin-bottom: 15px; }
+
 #attribute-by-survey-index li {
   list-style-type: none; }
 #attribute-by-survey-index input.caption {
@@ -67,16 +71,11 @@ ul#top-blocks ul {
 .block-list span.caption {
   margin: 3px 2px; }
 
-.form-inline {
-  line-height: 35px; }
-
-.checkbox {
-  min-height: 35px; }
-
-.form-inline, .checkbox {
+fieldset.validation-rules .form-inline, fieldset.validation-rules .checkbox {
+  min-height: 35px;
   margin-top: 8px;
   margin-bottom: 8px; }
-  .form-inline label, .checkbox label {
+  fieldset.validation-rules .form-inline label, fieldset.validation-rules .checkbox label {
     min-width: 280px; }
 
 /*# sourceMappingURL=warehouse.css.map */

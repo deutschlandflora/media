@@ -55,3 +55,14 @@ input.findme {
   vertical-align: top;
   padding-right: 2px;
 }
+
+.form-inline {
+  * {
+    vertical-align: middle;
+    width: auto;
+    margin-left: 0;
+  }
+  div:first-child label, .linear-form > label:first-child {
+    width: 160px;
+  }
+}

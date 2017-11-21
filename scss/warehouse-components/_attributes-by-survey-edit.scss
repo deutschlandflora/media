@@ -1,8 +1,10 @@
-.form-inline, .checkbox {
-  min-height: 35px;
-  margin-top: 8px;
-  margin-bottom: 8px;
-  label {
-    min-width: 280px;
+fieldset.validation-rules {
+  .form-inline, .checkbox {
+    min-height: 35px;
+    margin-top: 8px;
+    margin-bottom: 8px;
+    label {
+      min-width: 280px;
+    }
   }
 }

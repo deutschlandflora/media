@@ -10,4 +10,7 @@
   .form-group:last-child {
     margin-bottom: 15px; }
 
+.report-grid .pager {
+  margin: 0; }
+
 /*# sourceMappingURL=theme-bootstrap-3.css.map */

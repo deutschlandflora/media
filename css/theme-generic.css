@@ -1,22 +1,59 @@
 /* Theme extension to the default_site.css file which provides the default Indicia style output */
-label, form label { width: 160px; display: -moz-inline-stack; display: inline-block; zoom: 1; *display: inline; vertical-align: top; margin: 8px 0; font-weight: bold; }
+label, form label {
+  width: 160px;
+  display: -moz-inline-stack;
+  display: inline-block;
+  zoom: 1;
+  *display: inline;
+  vertical-align: top;
+  margin: 8px 0;
+  font-weight: bold; }
 
-form input:not([type="submit"]), form select, form textarea, #form-params textarea, .timeEntry_control, .inline-control, button.inline-control, input.inline-control { vertical-align: top; margin: 4px 0; display: inline; padding: 4px; -webkit-border-radius: 4px; -moz-border-radius: 4px; border-radius: 4px; }
+form input:not([type="submit"]), form select, form textarea, #form-params textarea, .timeEntry_control,
+.inline-control, button.inline-control, input.inline-control {
+  vertical-align: top;
+  margin: 4px 0;
+  display: inline;
+  padding: 4px;
+  -webkit-border-radius: 4px;
+  -moz-border-radius: 4px;
+  border-radius: 4px; }
 
-.helpText { margin-left: 164px; }
+.helpText {
+  margin-left: 164px; }
 
 /* Required asterisk can be large */
-.deh-required { font-size: 150%; }
+.deh-required {
+  font-size: 150%; }
 
 /* Control box is div class used to group controls with a single label, e.g. hierarchical select. */
-.control-box { display: inline-block; zoom: 1; *display: inline; }
+.control-box {
+  display: inline-block;
+  zoom: 1;
+  *display: inline; }
 
 /* Some default button spacing. */
-.indicia-button { padding: 0.3em 1.5em; margin: 0.25em; min-height: 23px; width: auto; line-height: 1.5; }
+.indicia-button {
+  padding: 0.3em 1.5em;
+  margin: 0.25em;
+  min-height: 23px;
+  width: auto;
+  line-height: 1.5; }
 
 /* Find-me icon position inside edge of sref control */
-input.findme { padding-right: 18px; }
+input.findme {
+  padding-right: 18px; }
 
-#findme-icon { margin: 8px 0 0 -18px; vertical-align: top; padding-right: 2px; }
+#findme-icon {
+  margin: 8px 0 0 -18px;
+  vertical-align: top;
+  padding-right: 2px; }
+
+.form-inline * {
+  vertical-align: middle;
+  width: auto;
+  margin-left: 0; }
+.form-inline div:first-child label, .form-inline .linear-form > label:first-child {
+  width: 160px; }
 
 /*# sourceMappingURL=theme-generic.css.map */
