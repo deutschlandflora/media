@@ -245,7 +245,10 @@
     }
 
     function advancedPager (pager, div, hasMore) {
-      var pagerContent=div.settings.pagingTemplate, pagelist = '', page, showing = div.settings.langShowing;
+      var pagerContent = div.settings.pagingTemplate;
+      var pagelist = '';
+      var page;
+      var showing = div.settings.langShowing;
       if (div.settings.offset !== 0) {
         pagerContent = pagerContent.replace('{prev}', '<a class="pag-prev pager-button" rel="nofollow" href="#">' + div.settings.langPrev + '</a> ');
         pagerContent = pagerContent.replace('{first}', '<a class="pag-first pager-button" rel="nofollow" href="#">' + div.settings.langFirst + '</a> ');
@@ -254,7 +257,7 @@
         pagerContent = pagerContent.replace('{first}', '<span class="pag-first pager-button ui-state-disabled">' + div.settings.langFirst + '</span> ');
       }
 
-      if (hasMore)  {
+      if (hasMore) {
         pagerContent = pagerContent.replace('{next}', '<a class="pag-next pager-button" rel="nofollow" href="#">' + div.settings.langNext + '</a> ');
         pagerContent = pagerContent.replace('{last}', '<a class="pag-last pager-button" rel="nofollow" href="#">' + div.settings.langLast + '</a> ');
       } else {
@@ -284,6 +287,65 @@
       pager.append(pagerContent);
     }
 
+    /**
+     * Attach event handlers to the pager buttons.
+     *
+     * @param DOM div
+     *   Report grid container.
+     */
+    function setupPagerEvents(div) {
+      var lastPageOffset = Math.max(0, Math.floor((div.settings.recordCount - 1) / div.settings.itemsPerPage)
+        * div.settings.itemsPerPage);
+      // Define pagination clicks.
+      if (div.settings.itemsPerPage !== null) {
+        $(div).find('.pager .pag-next').click(function (e) {
+          e.preventDefault();
+          if (div.loading) { return; }
+          div.loading = true;
+          div.settings.offset += div.settings.currentPageCount; // in case not showing full page after deletes
+          if (div.settings.offset > lastPageOffset) {
+            div.settings.offset = lastPageOffset;
+          }
+          load(div, false);
+        });
+
+        $(div).find('.pager .pag-prev').click(function (e) {
+          e.preventDefault();
+          if (div.loading) { return; }
+          div.loading = true;
+          div.settings.offset -= div.settings.itemsPerPage;
+          // Min offset is zero.
+          if (div.settings.offset < 0) { div.settings.offset = 0; }
+          load(div, false);
+        });
+
+        $(div).find('.pager .pag-first').click(function (e) {
+          e.preventDefault();
+          if (div.loading) { return; }
+          div.loading = true;
+          div.settings.offset = 0;
+          load(div, false);
+        });
+
+        $(div).find('.pager .pag-last').click(function (e) {
+          e.preventDefault();
+          if (div.loading) { return; }
+          div.loading = true;
+          div.settings.offset = lastPageOffset;
+          load(div, false);
+        });
+
+        $(div).find('.pager .pag-page').click(function (e) {
+          e.preventDefault();
+          if (div.loading) { return; }
+          div.loading = true;
+          var page = this.id.replace('page-' + div.settings.id + '-', '');
+          div.settings.offset = (page - 1) * div.settings.itemsPerPage;
+          load(div, false);
+        });
+      }
+    }
+
     // recreate the pagination footer
     function updatePager (div, hasMore) {
       var pager=$(div).find('.pager');
@@ -293,6 +355,7 @@
       } else {
         advancedPager(pager, div, hasMore);
       }
+      setupPagerEvents(div);
     }
 
     /**
@@ -334,7 +397,7 @@
      * Returns an array containing the rows to keep.
      */
     function applyPopupFilterExclusionsToRows(rows,div) {
-      indiciaData.popupFilteRemovedRowsCount=0;
+      indiciaData.popupFilterRemovedRowsCount=0;
       indiciaData.allReportGridRecords=[];
       var rowsToDisplay = [];
       var keepRow;
@@ -351,7 +414,7 @@
             // item in the dataToExclude array, then we know to exclude it.
             if (theRow[exclusionData[0]]==exclusionData[1]) {
               keepRow = false;
-              indiciaData.popupFilteRemovedRowsCount++;
+              indiciaData.popupFilterRemovedRowsCount++;
             }
           });
         }
@@ -375,7 +438,7 @@
       return rowsToDisplay;
     }
 
-    function loadGridFrom(div, request, clearExistingRows) {
+    function loadGridFrom(div, request, clearExistingRows, callback) {
       var rowTitle;
       $(div).find('.loading-overlay').show();
       $.ajax({
@@ -412,18 +475,6 @@
           // data from the grid e.g. if there is a location column, then the user can select not to show rows containing the data East Sussex.
           if (indiciaData.includePopupFilter) {
             rows = applyPopupFilterExclusionsToRows(rows, div);
-            if (typeof response.count !== 'undefined') {
-              response.records = rows;
-              // response.count can be included in the response data, however as we applied a filter we
-              // need to override this.
-              response.count = response.count - indiciaData.popupFilteRemovedRowsCount;
-            } else {
-              response = rows;
-            }
-          }
-          if (typeof response.count !== 'undefined') {
-            div.settings.recordCount = parseInt(response.count, 10);
-            div.settings.extraParams.knownCount = div.settings.recordCount;
           }
           div.settings.currentPageCount = Math.min(rows.length, div.settings.itemsPerPage);
           // clear current grid rows
@@ -572,6 +623,9 @@
           if (div.settings.callback !== '') {
             window[div.settings.callback]();
           }
+          if (typeof callback !== 'undefined') {
+            callback();
+          }
 
         },
         error: function () {
@@ -609,9 +663,7 @@
         delete div.settings.extraParams.knownCount;
       }
       request = getFullRequestPathWithoutPaging(div, true, true);
-      if (recount) {
-        request += '&wantCount=1';
-      }
+
       // If using the popup filter, we don't want to perform any offset until after records are returned and filtered.
       if (!indiciaData.includePopupFilter) {
         request += '&offset=' + div.settings.offset;
@@ -623,62 +675,31 @@
         // know if there is a next page of records (not necessary when loading 0 records to get just column metadata etc).
         request += '&limit=' + (div.settings.itemsPerPage === 0 ? 0 : div.settings.itemsPerPage + 1);
       }
-      loadGridFrom(div, request, true);
+      if (recount) {
+        loadGridFrom(div, request, true, function doRecount () {
+          request = getFullRequestPathWithoutPaging(div, true, true);
+          request += '&wantCount=1&wantRecords=0';
+          $.ajax({
+            dataType: 'json',
+            url: request,
+            data: null,
+            success: function(response) {
+              if (indiciaData.includePopupFilter) {
+                response.count = response.count - indiciaData.popupFilterRemovedRowsCount;
+              }
+              div.settings.recordCount = parseInt(response.count, 10);
+              div.settings.extraParams.knownCount = div.settings.recordCount;
+              updatePager(div, false);
+            }
+          });
+        });
+      } else {
+        loadGridFrom(div, request, true);
+      }
     }
 
     // Sets up various clickable things like the filter button on a direct report, or the pagination links.
     function setupReloadLinks(div) {
-      var lastPageOffset = Math.max(0, Math.floor((div.settings.recordCount - 1) / div.settings.itemsPerPage)
-          * div.settings.itemsPerPage);
-      // Define pagination clicks.
-      if (div.settings.itemsPerPage !== null) {
-        $(div).find('.pager .pag-next').click(function (e) {
-          e.preventDefault();
-          if (div.loading) { return; }
-          div.loading = true;
-          div.settings.offset += div.settings.currentPageCount; // in case not showing full page after deletes
-          if (div.settings.offset > lastPageOffset) {
-            div.settings.offset = lastPageOffset;
-          }
-          load(div, false);
-        });
-
-        $(div).find('.pager .pag-prev').click(function (e) {
-          e.preventDefault();
-          if (div.loading) { return; }
-          div.loading = true;
-          div.settings.offset -= div.settings.itemsPerPage;
-          // Min offset is zero.
-          if (div.settings.offset < 0) { div.settings.offset = 0; }
-          load(div, false);
-        });
-
-        $(div).find('.pager .pag-first').click(function (e) {
-          e.preventDefault();
-          if (div.loading) { return; }
-          div.loading = true;
-          div.settings.offset = 0;
-          load(div, false);
-        });
-
-        $(div).find('.pager .pag-last').click(function (e) {
-          e.preventDefault();
-          if (div.loading) { return; }
-          div.loading = true;
-          div.settings.offset = lastPageOffset;
-          load(div, false);
-        });
-
-        $(div).find('.pager .pag-page').click(function (e) {
-          e.preventDefault();
-          if (div.loading) { return; }
-          div.loading = true;
-          var page = this.id.replace('page-' + div.settings.id + '-', '');
-          div.settings.offset = (page - 1) * div.settings.itemsPerPage;
-          load(div, false);
-        });
-      }
-
       if (div.settings.mode === 'direct' && div.settings.autoParamsForm) {
         // define a filter form click
         $(div).find('.run-filter').click(function(e) {
@@ -788,7 +809,7 @@
             if (typeof response.count !== 'undefined') {
               //response.count can be included in the response data, however as we applied a filter we
               //need to override this.
-              response.count=response.count-indiciaData.popupFilteRemovedRowsCount;
+              response.count=response.count-indiciaData.popupFilterRemovedRowsCount;
             }
           }
           // implement a crude way of aborting out of date requests, since jsonp does not support xhr
@@ -1129,10 +1150,10 @@
         colPickerHtml += '<ul><li id="col-checkbox-all-container" ' + opacity + '><input id="col-checkbox-all" type="checkbox" ' + checked + '/>' +
             '<label for="col-checkbox-all">Check/uncheck all</label></li>';
         $.each($(div).find('thead tr:first-child th'), function (idx) {
-          if ($(this).text() !== '') {
+          if ($(this).ignore('.skip-text').text() !== '') {
             checked = $(this).is(':visible') ? ' checked="checked"' : '';
             colPickerHtml += '<li><input id="show-col-' + idx + '" class="col-checkbox" type="checkbox" ' + checked +
-              '/><label for="show-col-' + idx + '">' + $(this).text() + '</label></li>';
+              '/><label for="show-col-' + idx + '">' + $(this).ignore('.skip-text').text() + '</label></li>';
           }
         });
         colPickerHtml += '</ul></div>';

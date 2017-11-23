@@ -900,7 +900,13 @@ var destroyAllFeatures;
         // multimap layers are no longer provided, so map any requests to OSM for backwards compatibility.
         multimap_default : function() {return new OpenLayers.Layer.OSM();},
         multimap_landranger : function() {return new OpenLayers.Layer.OSM();},
-        osm : function() {return new OpenLayers.Layer.OSM();} // default OpenStreetMap Mapnik layer
+        osm : function() {
+          // OpenStreetMap standard tile layer
+          return new OpenLayers.Layer.OSM("OpenStreetMap", [
+            "https://a.tile.openstreetmap.org/${z}/${x}/${y}.png",
+            "https://b.tile.openstreetmap.org/${z}/${x}/${y}.png",
+            "https://c.tile.openstreetmap.org/${z}/${x}/${y}.png"]);
+          }
       };
       // To protect ourselves against exceptions because the Google script would not link up, we
       // only enable these layers if the Google constants are available. We separately check for google V2 and V3 layers
@@ -954,14 +960,39 @@ var destroyAllFeatures;
       return geom;
     }
 
-    /*
-     * Selects the features in the contents of a bounding box
+    /**
+     * Finds the minimum tolerance to apply when checking for features that intersect a click point.
      */
-    function selectBox(position, layers, div) {
+    function getMinTolerance(testGeom, div) {
+      var parser;
+      var buffer = $('#click-buffer').length === 0 ? 0 : $('#click-buffer input').val(); // from settings
+      var geom;
+      // If the buffer specified needs transforming for use on the map then do it.
+      if (div.settings.selectFeatureBufferProjection && buffer > 0
+          && div.map.projection.getCode() !== 'EPSG:' + div.settings.selectFeatureBufferProjection) {
+        geom = testGeom.clone();
+        geom.transform(div.map.projection, 'EPSG:' + div.settings.selectFeatureBufferProjection);
+        parser = new OpenLayers.Format.WKT();
+        feature = parser.read('LINESTRING(' +
+          geom.getCentroid().x + ' ' + geom.getCentroid().y + ',' +
+          (geom.getCentroid().x + parseInt(buffer)) + ' ' + geom.getCentroid().y
+          + ')');
+        feature.geometry.transform('EPSG:' + div.settings.selectFeatureBufferProjection, div.map.projection);
+        return feature.geometry.getLength();
+      } else {
+        return buffer;
+      }
+    }
+
+    /*
+     * Selects the features in the contents of a geom, appying user specified buffer.
+     */
+    function selectFeaturesInBufferedGeom(geom, layers, div) {
       var testGeom, tolerantGeom, layer, tolerance, testGeoms={},
           getRadius, getStrokeWidth, radius, strokeWidth, match;
-      if (position instanceof OpenLayers.Bounds) {
-        testGeom=boundsToGeom(position, div);
+      var minTolerance;
+      if (geom instanceof OpenLayers.Geometry) {
+        minTolerance = getMinTolerance(geom, div);
         for(var l=0; l<layers.length; ++l) {
           // set defaults
           getRadius=null;
@@ -972,7 +1003,7 @@ var destroyAllFeatures;
           // when testing a click point, use a circle drawn around the click point so the
           // click does not have to be exact. At this stage, we just look for the layer default
           // pointRadius and strokeWidth, so we can calculate the geom size to test.
-          if (testGeom.CLASS_NAME==='OpenLayers.Geometry.Point') {
+          if (geom.CLASS_NAME==='OpenLayers.Geometry.Point') {
             if (typeof layer.styleMap.styles['default'].defaultStyle.pointRadius!=='undefined') {
               radius = layer.styleMap.styles['default'].defaultStyle.pointRadius;
               if (typeof radius === "string") {
@@ -1005,6 +1036,7 @@ var destroyAllFeatures;
           var featuresToSelect = [];
           for(var i=0, len = layer.features.length; i<len; ++i) {
             var feature = layer.features[i];
+            var testGeom;
             // check if the feature is displayed
             if (!feature.onScreen()) {
               continue;
@@ -1026,7 +1058,8 @@ var destroyAllFeatures;
               }
             }
             tolerance = div.map.getResolution() * (radius + (strokeWidth/2));
-            tolerance=Math.round(tolerance);
+            tolerance=Math.max(minTolerance, Math.round(tolerance));
+            testGeom = geom.getCentroid();
             // keep geoms we create so we don't keep rebuilding them
             if (typeof testGeoms['geom-'+Math.round(tolerance/100)]!=='undefined') {
               tolerantGeom = testGeoms['geom-'+Math.round(tolerance/100)];
@@ -1034,13 +1067,118 @@ var destroyAllFeatures;
               tolerantGeom = OpenLayers.Geometry.Polygon.createRegularPolygon(testGeom, tolerance, 8, 0);
               testGeoms['geom-'+Math.round(tolerance/100)] = tolerantGeom;
             }
-            if ((tolerantGeom.intersects(feature.geometry) || testGeom.intersects(feature.geometry)) &&
-                $.inArray(feature, layer.selectedFeatures)===-1) {
+            if ((tolerantGeom.intersects(feature.geometry) || testGeom.intersects(feature.geometry))) {
               featuresToSelect.push(feature);
             }
           }
           layer.map.setSelection(layer, featuresToSelect);
         }
+      }
+    }
+
+    function selectFeaturesAndRowsInBufferedGeom(geom, clickableLayers, div) {
+      var features = [];
+      var origfeatures = [];
+      var ids = [];
+      var len = 0;
+      var clickableVectorLayers = [];
+      // build an array of all previuosly selected features in one
+      $.each(clickableLayers, function() {
+        if (this.CLASS_NAME==='OpenLayers.Layer.Vector') {
+          clickableVectorLayers.push(this);
+        }
+        origfeatures = origfeatures.concat(this.selectedFeatures);
+      });
+      // select all the features that were clicked or boxed.
+      selectFeaturesInBufferedGeom(geom, clickableVectorLayers, div);
+      // build an array of all newly selected features in one
+      $.each(clickableVectorLayers, function() {
+        features = features.concat(this.selectedFeatures);
+      });
+      // now filter the report, highlight rows, or display output in a popup or div depending on settings.
+      if (div.settings.clickableLayersOutputMode==='report' && div.settings.reportGroup!==null &&
+          typeof indiciaData.reports!=='undefined') {
+        // grab the feature ids
+        $.each(features, function() {
+          if (len > 1500) { // approaching 2K IE limit
+            alert('Too many records have been selected to show them all in the grid. Trying zooming in and selecting fewer records.');
+            return false;
+          }
+          if (typeof this.attributes[div.settings.featureIdField]!=='undefined') {
+            ids.push(this.attributes[div.settings.featureIdField]);
+            len += this.attributes[div.settings.featureIdField].length;
+          } else if (typeof this.attributes[div.settings.featureIdField+'s']!=='undefined') {
+            // allow for plural, list fields
+            ids.push(this.attributes[div.settings.featureIdField+'s']);
+            len += this.attributes[div.settings.featureIdField+'s'].length;
+          }
+        });
+        $('.'+div.settings.reportGroup+'-idlist-param').val(ids.join(','));
+        // find the associated reports, charts etc and reload them to show the selected data. No need to if we started with no selection
+        // and still have no selection.
+        if (origfeatures.length!==0 || features.length!==0) {
+          $.each(indiciaData.reports[div.settings.reportGroup], function() {
+            this[0].settings.offset=0;
+            // force the param in, in case there is no params form.
+            this[0].settings.extraParams.idlist=ids.join(',');
+            this.reload(true);
+          });
+          $('table.report-grid tr').removeClass('selected');
+          $.each(ids, function() {
+            $('table.report-grid tr#row'+this).addClass('selected');
+          });
+        }
+      } else if (div.settings.clickableLayersOutputMode==='reportHighlight' && typeof indiciaData.reports!=='undefined') {
+        // deselect existing selection in grid as well as on feature layer
+        $('table.report-grid tr').removeClass('selected');
+        // grab the features which should have an id corresponding to the rows to select
+        $.each(features, function() {
+          $('table.report-grid tr#row'+this.id).addClass('selected');
+        });
+      } else if (div.settings.clickableLayersOutputMode==='div') {
+        $('#'+div.settings.clickableLayersOutputDiv).html(div.settings.clickableLayersOutputFn(features, div));
+        //allows a custom function to be run when a user clicks on a map
+      } else if (div.settings.clickableLayersOutputMode==='customFunction') {
+        // features is already the list of clicked on objects, div.setting's.customClickFn must be a function passed to the map as a param.
+        div.settings.customClickFn(features);
+      } else {
+        for (var i=0; i<div.map.popups.length; i++) {
+          div.map.removePopup(div.map.popups[i]);
+        }
+        div.map.addPopup(new OpenLayers.Popup.FramedCloud(
+            "popup",
+            div.map.getLonLatFromPixel(this.lastclick),
+            null,
+            div.settings.clickableLayersOutputFn(features, div),
+            null,
+            true
+        ));
+      }
+    }
+
+    /**
+     * Filters to show records within a buffer of the selected record in the grid.
+     */
+    function bufferRoundSelectedRecord(div, buffer) {
+      var row = $('.report-grid tr.selected');
+      var id;
+      if (row.length > 0) {
+        id = row[0].id.replace(/^row/, '');
+        // Call warehouse to obtain best precision available for this record, as map feature could be low res.
+        $.ajax({
+          dataType: 'jsonp',
+          url: div.settings.indiciaSvc + 'index.php/services/report/requestReport?' +
+            'report=library/occurrences/filterable_explore_list_mapping.xml' +
+            '&reportSource=local&occurrence_id=' + id + div.settings.readAuth +
+            '&quality=all&confidential=all&release_status=A' +
+            '&mode=json&callback=?',
+          success: function(data) {
+            parser = new OpenLayers.Format.WKT();
+            feature = parser.read(data[0].geom);
+            selectFeaturesAndRowsInBufferedGeom(feature.geometry, div.settings.clickableLayers, div);
+          }
+        });
+
       }
     }
 
@@ -1071,6 +1209,8 @@ var destroyAllFeatures;
           lastclick: {},
           allowBox: clickableVectorLayers.length>0 && div.settings.allowBox===true,
           deactivate: function() {
+            // Disable the click buffer tolerance control.
+            $('#click-buffer').hide();
             //If the map is setup to use popups, then we need to switch off popups when moving to use a different tool icon
             //on the map (such as drawing boundaries) otheriwise they will continue to show.
             if (clickableVectorLayers.length>0 && this.allowBox) {
@@ -1084,6 +1224,21 @@ var destroyAllFeatures;
             OpenLayers.Control.prototype.deactivate.call(this);
           },
           activate: function() {
+            if (div.settings.selectFeatureBufferProjection) {
+              if ($('#click-buffer').length === 0) {
+                $('#map-container').append(
+                  '<label id="click-buffer" class="olButton">Tolerance:<input type="text" value="1000"/>m</label>');
+                  $('#click-buffer').css('right', $('.olControlEditingToolbar').outerWidth() + 10);
+                $("#click-buffer input").keyup(function() {
+                  $("#click-buffer input").val(this.value.match(/[0-9]*/));
+                });
+                $("#click-buffer input").change(function() {
+                  bufferRoundSelectedRecord(div, $("#click-buffer input").val());
+                });
+              } else {
+                $('#click-buffer').show();
+              }
+            }
             var handlerOptions = {
               'single': true,
               'double': false,
@@ -1117,7 +1272,8 @@ var destroyAllFeatures;
           },
           // handler for the click or bounding box action
           onGetInfo: function(position) {
-            var bounds, features;
+            var bounds;
+            var geom;
             // we could have a point or a bounds
             if (position instanceof OpenLayers.Bounds) {
               bounds = position;
@@ -1133,6 +1289,7 @@ var destroyAllFeatures;
               }
               bounds = new OpenLayers.Bounds(this.lastclick.x, this.lastclick.y, this.lastclick.x, this.lastclick.y);
             }
+            geom = boundsToGeom(bounds, div);
             if (clickableWMSLayerNames!=='') {
               // Do a WMS request
               var params={
@@ -1141,8 +1298,8 @@ var destroyAllFeatures;
                   VERSION: "1.1.0",
                   STYLES: '',
                   BBOX: div.map.getExtent().toBBOX(),
-                  X: Math.round(this.lastclick.x),
-                  Y: Math.round(this.lastclick.y),
+                  X: Math.round(geom.getCentroid().x),
+                  Y: Math.round(geom.getCentroid().y),
                   INFO_FORMAT: 'text/javascript',
                   LAYERS: clickableWMSLayerNames,
                   QUERY_LAYERS: clickableWMSLayerNames,
@@ -1180,78 +1337,7 @@ var destroyAllFeatures;
             }
             // now handle any vector clickable layers
             if (clickableVectorLayers.length>0) {
-              // build an array of all previuosly selected features in one
-              var origfeatures = [];
-              $.each(clickableVectorLayers, function() {
-                origfeatures = origfeatures.concat(this.selectedFeatures);
-              });
-              // select all the features that were clicked or boxed.
-              selectBox(bounds, clickableVectorLayers, div);
-              // build an array of all newly selected features in one
-              features = [];
-              $.each(clickableVectorLayers, function() {
-                features = features.concat(this.selectedFeatures);
-              });
-              // now filter the report, highlight rows, or display output in a popup or div depending on settings.
-              if (div.settings.clickableLayersOutputMode==='report' && div.settings.reportGroup!==null &&
-                  typeof indiciaData.reports!=='undefined') {
-                // grab the feature ids
-                var ids = [], len=0;
-                $.each(features, function() {
-                  if (len>1500) { // approaching 2K IE limit
-                    alert('Too many records have been selected to show them all in the grid. Trying zooming in and selecting fewer records.');
-                    return false;
-                  }
-                  if (typeof this.attributes[div.settings.featureIdField]!=='undefined') {
-                    ids.push(this.attributes[div.settings.featureIdField]);
-                    len += this.attributes[div.settings.featureIdField].length;
-                  } else if (typeof this.attributes[div.settings.featureIdField+'s']!=='undefined') {
-                    // allow for plural, list fields
-                    ids.push(this.attributes[div.settings.featureIdField+'s']);
-                    len += this.attributes[div.settings.featureIdField+'s'].length;
-                  }
-                });
-                $('.'+div.settings.reportGroup+'-idlist-param').val(ids.join(','));
-                // find the associated reports, charts etc and reload them to show the selected data. No need to if we started with no selection
-                // and still have no selection.
-                if (origfeatures.length!==0 || features.length!==0) {
-                  $.each(indiciaData.reports[div.settings.reportGroup], function() {
-                    this[0].settings.offset=0;
-                    // force the param in, in case there is no params form.
-                    this[0].settings.extraParams.idlist=ids.join(',');
-                    this.reload(true);
-                  });
-                  $('table.report-grid tr').removeClass('selected');
-                  $.each(ids, function() {
-                    $('table.report-grid tr#row'+this).addClass('selected');
-                  });
-                }
-              } else if (div.settings.clickableLayersOutputMode==='reportHighlight' && typeof indiciaData.reports!=='undefined') {
-                // deselect existing selection in grid as well as on feature layer
-                $('table.report-grid tr').removeClass('selected');
-                // grab the features which should have an id corresponding to the rows to select
-                $.each(features, function() {
-                  $('table.report-grid tr#row'+this.id).addClass('selected');
-                });
-              } else if (div.settings.clickableLayersOutputMode==='div') {
-                $('#'+div.settings.clickableLayersOutputDiv).html(div.settings.clickableLayersOutputFn(features, div));
-                //allows a custom function to be run when a user clicks on a map
-              } else if (div.settings.clickableLayersOutputMode==='customFunction') {
-                // features is already the list of clicked on objects, div.setting's.customClickFn must be a function passed to the map as a param.
-                div.settings.customClickFn(features);
-              } else {
-                for (var i=0; i<div.map.popups.length; i++) {
-                  div.map.removePopup(div.map.popups[i]);
-                }
-                div.map.addPopup(new OpenLayers.Popup.FramedCloud(
-                    "popup",
-                    div.map.getLonLatFromPixel(this.lastclick),
-                    null,
-                    div.settings.clickableLayersOutputFn(features, div),
-                    null,
-                    true
-                ));
-              }
+              selectFeaturesAndRowsInBufferedGeom(geom, clickableVectorLayers, div);
             }
           },
           // handler for response from a WMS call.
@@ -2461,6 +2547,7 @@ jQuery.fn.indiciaMapPanel.defaults = {
     clickableLayersOutputFn: format_selected_features,
     clickableLayersOutputDiv: '',
     clickableLayersOutputColumns: [],
+    selectFeatureBufferProjection: false,
     allowBox: true, // can disable drag boxes for querying info, so navigation works
     featureIdField: '',
     clickPixelTolerance: 5,
