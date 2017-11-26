@@ -1272,8 +1272,8 @@ var destroyAllFeatures;
           },
           // handler for the click or bounding box action
           onGetInfo: function(position) {
-            alert('onGetInfo');
             var bounds;
+            var geom;
             // we could have a point or a bounds
             if (position instanceof OpenLayers.Bounds) {
               bounds = position;
@@ -1289,6 +1289,7 @@ var destroyAllFeatures;
               }
               bounds = new OpenLayers.Bounds(this.lastclick.x, this.lastclick.y, this.lastclick.x, this.lastclick.y);
             }
+            geom = boundsToGeom(bounds, div);
             if (clickableWMSLayerNames!=='') {
               // Do a WMS request
               var params={
@@ -1297,8 +1298,8 @@ var destroyAllFeatures;
                   VERSION: "1.1.0",
                   STYLES: '',
                   BBOX: div.map.getExtent().toBBOX(),
-                  X: Math.round(this.lastclick.x),
-                  Y: Math.round(this.lastclick.y),
+                  X: Math.round(geom.getCentroid().x),
+                  Y: Math.round(geom.getCentroid().y),
                   INFO_FORMAT: 'text/javascript',
                   LAYERS: clickableWMSLayerNames,
                   QUERY_LAYERS: clickableWMSLayerNames,
@@ -1336,7 +1337,7 @@ var destroyAllFeatures;
             }
             // now handle any vector clickable layers
             if (clickableVectorLayers.length>0) {
-              selectFeaturesAndRowsInBufferedGeom(bounds.toGeometry(), clickableVectorLayers, div);
+              selectFeaturesAndRowsInBufferedGeom(geom, clickableVectorLayers, div);
             }
           },
           // handler for response from a WMS call.
