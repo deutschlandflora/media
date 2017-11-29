@@ -356,23 +356,8 @@ li.ui-state-error {
   background: url(../images/desc.gif) no-repeat right;
 }
 
-table tr.odd {
-  background-color: #f7f7f7;
-  border: none;
-}
-
 .report-grid .ui-widget td {
   padding: 0 0.3em;
-}
-
-.report-grid .single img {
-  width: 100px;
-  margin: 2px;
-}
-
-.report-grid .multi img {
-  width: 50px;
-  margin: 1px;
 }
 
 #verification-grid .report-grid .single img {
