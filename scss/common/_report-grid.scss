@@ -1,0 +1,25 @@
+table.report-grid {
+  tr {
+    /* Odd row colouration */
+    &.odd {
+      background-color: #eeeeee;
+      border: none;
+    }
+    /* Workflow related styling */
+    &.overdue {
+      border-left: solid 8px $colour-range-1-a;
+    }
+    &.overdue-soon {
+      border-left: solid 8px $colour-range-1-b;
+    }
+  }
+  /* Sizing of thumbnails in image columns */
+  .single img {
+    width: 100px;
+    margin: 2px;
+  }
+  .multi img {
+    width: 50px;
+    margin: 1px;
+  }
+}
