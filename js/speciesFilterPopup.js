@@ -15,13 +15,13 @@
 
 (function ($) {
   'use strict';
-  
+
   function applySpeciesFilterMode(gridId, type, group_id, nameFilterMode) {
     var currentFilter;
-    //get the filter we are going to use. Use a) the provided parameter, when loading from a cookie,
+    // Get the filter we are going to use. Use a) the provided parameter, when loading from a cookie,
     // b) the default name filter, when not in cookie and loading for first time, or c) the one selected on the form.
-    if (typeof nameFilterMode==='undefined') {
-      nameFilterMode = $('#filter-name').length===0 ? '$defaultFilterMode' : $('#filter-name').val();
+    if (typeof nameFilterMode === 'undefined') {
+      nameFilterMode = $('#filter-name').length === 0 ? '$defaultFilterMode' : $('#filter-name').val();
     }
     currentFilter=$.extend({}, indiciaData.speciesChecklistFilterOpts.nameFilter[nameFilterMode]);
     // User preferred groups option should not be available if no groups set.
@@ -35,7 +35,7 @@
         break;
       case 'default':
         $('.scTaxonCell input').unsetExtraParams('taxon_group_id');
-        break; 
+        break;
       case 'user':
         currentFilter.taxon_group_id = JSON.stringify(indiciaData.usersPreferredTaxonGroups);
         break;
@@ -49,7 +49,7 @@
     $('.scTaxonCell input').unsetExtraParams("language");
     $('.scTaxonCell input').unsetExtraParams("preferred");
     $('.scTaxonCell input').unsetExtraParams("synonyms");
-    //Tell the system to use the current filter.
+    // Tell the system to use the current filter.
     indiciaData['taxonExtraParams-' + gridId] = currentFilter;
     $('.scTaxonCell input').setExtraParams(currentFilter);
     // store in cookie
@@ -59,7 +59,7 @@
       name_filter: nameFilterMode
     }));
   }
-  
+
   function applyButtonClicked(gridId) {
     if ($('#filter-mode-default:checked').length>0) {
       applySpeciesFilterMode(gridId, 'default');
@@ -70,7 +70,7 @@
     }
     $.fancybox.close();
   }
-  
+
   function buildPopupFormHtml(userFilter) {
     var t = indiciaData.lang.speciesChecklistFilter;
     var defaultChecked = '';
@@ -94,10 +94,10 @@
         '<label class="auto"><input type="radio" name="filter-mode" id="filter-mode-default"' + defaultChecked + '/>' +
           indiciaData.speciesChecklistFilterOpts.defaultOptionLabel + '</label>';
     if (typeof indiciaData.usersPreferredTaxonGroups !== "undefined") {
-      popupFormHtml += '<label class="auto"><input type="radio" name="filter-mode" id="filter-mode-user"' + userChecked+ '/>' + 
+      popupFormHtml += '<label class="auto"><input type="radio" name="filter-mode" id="filter-mode-user"' + userChecked+ '/>' +
           t.preferredGroupsOptionLabel+ '</label>';
     }
-    popupFormHtml += '<label class="auto"><input type="radio" name="filter-mode" id="filter-mode-selected"'+selectedChecked+'/>' + 
+    popupFormHtml += '<label class="auto"><input type="radio" name="filter-mode" id="filter-mode-selected"'+selectedChecked+'/>' +
         t.singleGroupOptionLabel + '</label>' +
         '<select name="filter-group" id="filter-group"></select>' +
         '<label class="auto" for="filter-name">' + t.chooseSpeciesLabel + '</label>' +
@@ -111,7 +111,7 @@
         '<button type="button" class="default-button" id="filter-popup-cancel">' + t.cancel + '</button></div>';
     return popupFormHtml;
   }
-  
+
   function speciesFilterButtonClicked() {
     var gridId = $(this).closest('table').attr('id');
     var userFilter = $.cookie('user_selected_taxon_filter');
@@ -123,9 +123,9 @@
     popupFormHtml = buildPopupFormHtml(userFilter);
     $.fancybox(popupFormHtml);
     // Fill in the list of available taxon groups to choose from.
-    $.getJSON(indiciaData.warehouseUrl + 
+    $.getJSON(indiciaData.warehouseUrl +
         'index.php/services/report/requestReport?report=library/taxon_groups/taxon_groups_used_in_checklist.xml&reportSource=local&mode=json' +
-        '&taxon_list_id=' + indiciaData.speciesChecklistFilterOpts.taxon_list_id + 
+        '&taxon_list_id=' + indiciaData.speciesChecklistFilterOpts.taxon_list_id +
         '&auth_token=' + indiciaData.read.auth_token + '&nonce=' + indiciaData.read.nonce + '&callback=?', function(data) {
       $.each(data, function(idx, item) {
         var selected = userFilter!==null && (item.id===userFilter.group_id) ? ' selected="selected"' : '';
@@ -134,8 +134,8 @@
     });
     // By defult assume that the filter mode is the default one
     var filterMode = indiciaData.speciesChecklistFilterOpts.defaultFilterMode;
-    // If the cookie is present and it holds one of the name type filters it  means the last time the user used the 
-    // screen they selected to filter for a particular name type, so auto-select those previous settings when the user 
+    // If the cookie is present and it holds one of the name type filters it  means the last time the user used the
+    // screen they selected to filter for a particular name type, so auto-select those previous settings when the user
     // opens the popup (overriding the defaultFilterMode)
     if(userFilter) {
       if (typeof indiciaData.speciesChecklistFilterOpts.nameFilter[userFilter.name_filter] !== "undefined") {
@@ -158,11 +158,11 @@
     $('#filter-popup-apply').click(function() { applyButtonClicked(gridId); });
     $('#filter-popup-cancel').click(jQuery.fancybox.close);
   }
-  
+
   /* Public functions */
-  
+
   /**
-   * 
+   *
    * @param string gridId
    */
   indiciaFns.applyInitialSpeciesFilterMode = function(gridId) {
@@ -173,7 +173,7 @@
       applySpeciesFilterMode(gridId, userFilter.type, userFilter.group_id, userFilter.name_filter);
     }
   };
-  
+
   /**
    * Sets up the click handled on the filter button in the column title of the species column of the species checklist
    * input grid.
@@ -182,5 +182,5 @@
   indiciaFns.setupSpeciesFilterPopup = function(gridId) {
     $('#' + gridId + ' .species-filter').click(speciesFilterButtonClicked);
   };
-  
+
 }(jQuery));

@@ -1,4 +1,24 @@
 /* Theme extension to the default_site.css file which provides Bootstrap 3 optimised style output */
+/* Accessible colour ranges from colorbrewer */
+table.report-grid {
+  /* Sizing of thumbnails in image columns */ }
+  table.report-grid tr {
+    /* Odd row colouration */
+    /* Workflow related styling */ }
+    table.report-grid tr.odd {
+      background-color: #eeeeee;
+      border: none; }
+    table.report-grid tr.overdue {
+      border-left: solid 8px #d7191c; }
+    table.report-grid tr.overdue-soon {
+      border-left: solid 8px #fdae61; }
+  table.report-grid .single img {
+    width: 100px;
+    margin: 2px; }
+  table.report-grid .multi img {
+    width: 50px;
+    margin: 1px; }
+
 /* Reintroduce spacing that is removed from the last control in a list */
 #controls > div {
   padding-bottom: 15px; }
@@ -9,5 +29,9 @@
     margin-left: 0; }
   .form-group:last-child {
     margin-bottom: 15px; }
+  .form-group input[type="checkbox"] {
+    margin-left: 8px;
+    margin-right: 8px;
+    font-size: 150%; }
 
 /*# sourceMappingURL=theme-bootstrap-3.css.map */
