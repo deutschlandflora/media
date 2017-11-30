@@ -638,8 +638,10 @@ jQuery(document).ready(function ($) {
             $('#identification_difficulty_op').find("option[value='" + op + "']").html() +
             ' ' + indiciaData.filter.def.identification_difficulty);
         }
-        if (indiciaData.filter.def.has_photos) {
+        if (indiciaData.filter.def.has_photos && indiciaData.filter.def.has_photos === '1') {
           r.push(indiciaData.lang.HasPhotos);
+        } else if (indiciaData.filter.def.has_photos && indiciaData.filter.def.has_photos === '0') {
+          r.push(indiciaData.lang.HasNoPhotos);
         }
         return r.join('<br/>');
       },
@@ -1242,6 +1244,7 @@ jQuery(document).ready(function ($) {
     // regexp extracts the pane ID from the href. Loop through the controls in the pane
     $.each(pane.find(':input').not('#imp-sref-system,:checkbox,[type=button],[name="location_list[]"]'),
       function (idx, ctrl) {
+        var value;
         // set control value to the stored filter setting
         attrName = $(ctrl).attr('name');
         // Special case for dates where the filter value name is prefixed with the date type.
@@ -1250,7 +1253,8 @@ jQuery(document).ready(function ($) {
           attrName = indiciaData.filter.def.date_type + '_' + attrName;
         }
         if ($(ctrl).is('select')) {
-          option = $(ctrl).find('option[value="' + indiciaData.filter.def[attrName] + '"]');
+          value = typeof indiciaData.filter.def[attrName] === 'undefined' ? '' : indiciaData.filter.def[attrName];
+          option = $(ctrl).find('option[value="' + value + '"]');
           if (option) {
             option.attr('selected', 'selected');
           }
