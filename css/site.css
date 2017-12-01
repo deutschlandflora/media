@@ -118,17 +118,6 @@ h2
   font-size:1em;
 }
 
-#metadata_toggle {
-text-align: right;
-}
-
-#metadata_toggle span
-{
-  color: #103A6A;
-  display: none;
-  cursor: pointer;
-}
-
 .instruct
 {
   width: 600px;
