@@ -246,15 +246,15 @@ jQuery(document).ready(function ($) {
         }
       },
       loadForm: function (context) {
-        var firstTab = 0, disabled = [];
+        var firstTab = 'species-group-tab', disabled = [];
         // got a families or species level context. So may as well disable the less specific tabs as they won't be useful.
         if (context && context.higher_taxa_taxon_list_list) {
-          firstTab = 1;
+          firstTab = 'species-tab';
           disabled = [0];
           $('#families-tab').find('.context-instruct').show();
         }
         else if (context && context.taxa_taxon_list_list) {
-          firstTab = 2;
+          firstTab = 'designations-tab';
           disabled = [0, 1];
           $('#species-tab').find('.context-instruct').show();
         }
