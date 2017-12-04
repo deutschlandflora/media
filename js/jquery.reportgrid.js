@@ -621,7 +621,7 @@
 
           // execute callback it there is one
           if (div.settings.callback !== '') {
-            window[div.settings.callback]();
+            window[div.settings.callback](div);
           }
           if (typeof callback !== 'undefined') {
             callback();
@@ -1312,7 +1312,7 @@
 
       // execute callback it there is one
       if (div.settings.callback !== '') {
-        window[div.settings.callback]();
+        window[div.settings.callback](div);
       }
 
     });
