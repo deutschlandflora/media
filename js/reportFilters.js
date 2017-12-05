@@ -246,15 +246,15 @@ jQuery(document).ready(function ($) {
         }
       },
       loadForm: function (context) {
-        var firstTab = 0, disabled = [];
+        var firstTab = 'species-group-tab';
+        var disabled = [];
         // got a families or species level context. So may as well disable the less specific tabs as they won't be useful.
         if (context && context.higher_taxa_taxon_list_list) {
-          firstTab = 1;
+          firstTab = 'species-tab';
           disabled = [0];
           $('#families-tab').find('.context-instruct').show();
-        }
-        else if (context && context.taxa_taxon_list_list) {
-          firstTab = 2;
+        } else if (context && context.taxa_taxon_list_list) {
+          firstTab = 'designations-tab';
           disabled = [0, 1];
           $('#species-tab').find('.context-instruct').show();
         }
@@ -272,7 +272,9 @@ jQuery(document).ready(function ($) {
         $('#what-tabs').tabs('option', 'disabled', disabled);
         indiciaFns.activeTab($('#what-tabs'), firstTab);
         if (context && context.taxon_group_list) {
-          $('input#taxon_group_list\\:search\\:q').setExtraParams({'idlist': context.taxon_group_list});
+          $('input#taxon_group_list\\:search\\:q').setExtraParams({
+            idlist: context.taxon_group_list
+          });
           $('#species-group-tab .context-instruct').show();
         }
         else if ($('input#taxon_group_list\\:search\\:q').length > 0) {
@@ -307,8 +309,9 @@ jQuery(document).ready(function ($) {
               '<input type="hidden" value="' + id + '" name="taxon_designation_list[]"/></li>');
           });
         }
-        if (typeof hook_reportfilter_loadForm != 'undefined')
+        if (typeof hook_reportfilter_loadForm !== 'undefined') {
           hook_reportfilter_loadForm('what');
+        }
       }
     },
     when: {
@@ -439,7 +442,7 @@ jQuery(document).ready(function ($) {
               ids.push($(this).find('input[name="location_list[]"]').val());
               names.push($(this).text().trim());
             });
-            if ($.inArray(parseInt($('#site-type').val()), indiciaData.indexedLocationTypeIds) !== -1) {
+            if ($.inArray(parseInt($('#site-type').val(), 10), indiciaData.indexedLocationTypeIds) !== -1) {
               indiciaData.filter.def.indexed_location_list = ids.join(',');
             } else {
               indiciaData.filter.def.location_list = ids.join(',');
@@ -486,6 +489,8 @@ jQuery(document).ready(function ($) {
         $('#filter-map-container').css('height', $(window).height() - 380);
       },
       loadForm: function (context) {
+        var locationsToLoad;
+        var siteType;
         // legacy
         if (indiciaData.filter.def.location_id && !indiciaData.filter.def.location_list) {
           indiciaData.filter.def.location_list = indiciaData.filter.def.location_id;
@@ -502,8 +507,8 @@ jQuery(document).ready(function ($) {
           $("#site-type option[value='loc:" + indiciaData.filter.def.indexed_location_list + "']").length > 0) {
           $('#site-type').val('loc:' + indiciaData.filter.def.indexed_location_list);
         } else if (indiciaData.filter.def.indexed_location_list || indiciaData.filter.def.location_list) {
-          var locationsToLoad = indiciaData.filter.def.indexed_location_list ?
-            indiciaData.filter.def.indexed_location_list : indiciaData.filter.def.location_list, siteType;
+          locationsToLoad = indiciaData.filter.def.indexed_location_list ?
+            indiciaData.filter.def.indexed_location_list : indiciaData.filter.def.location_list;
           if (indiciaData.filter.def['site-type']) {
             siteType = indiciaData.filter.def['site-type'];
           } else {
