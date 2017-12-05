@@ -1,4 +1,8 @@
 #metadata {
   display: none;
-  font-size: 80%;
+  font-size: $base-font-size;
+  .list-group-item {
+    padding: 3px 10px;
+    border: none;
+  }
 }
