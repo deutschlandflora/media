@@ -1377,7 +1377,7 @@ var destroyAllFeatures;
           infoCtrl.hoverControl = new OpenLayers.Control.HoverFeature(
             {'layers': clickableVectorLayers});
         }
-        
+
         return infoCtrl;
       } else {
         return null;
@@ -2482,7 +2482,7 @@ var destroyAllFeatures;
         toolbar.addControls([nav]);
         toolbar.addControls(toolbarControls);
         div.map.addControl(toolbar);
-        if (clickInfoCtrl.hoverControl !== null) {
+        if (clickInfoCtrl !== null && clickInfoCtrl.hoverControl !== null) {
           div.map.addControl(clickInfoCtrl.hoverControl);
         }
         if (click) {
