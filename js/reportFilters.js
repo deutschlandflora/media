@@ -289,7 +289,7 @@ jQuery(document).ready(function ($) {
             ttlAttrTermDescriptions[indiciaData.taxaTaxonListAttributeLabels[groupIdx]] = groupTerms;
           }
         });
-        indiciaData.filter.def.taxa_taxon_list_attribute_ids = indiciaData.taxaTaxonListAttributeIds;
+        indiciaData.filter.def.taxa_taxon_list_attribute_ids = indiciaData.taxaTaxonListAttributeIds.join(',');
         indiciaData.filter.def.taxa_taxon_list_attribute_termlist_term_ids = ttlAttrTermIds.join(',');
         indiciaData.filter.def.taxa_taxon_list_attribute_term_descriptions = ttlAttrTermDescriptions;
       },
