@@ -44,6 +44,7 @@ mapClickForSpatialRefHooks = [];
 var lastClickedLatLonZoom = {};
 
 var destroyAllFeatures;
+
 /**
 * Class: indiciaMapPanel
 * JavaScript & OpenLayers based map implementation class for Indicia data entry forms.
@@ -1204,11 +1205,15 @@ var destroyAllFeatures;
         clickableWMSLayerNames = clickableWMSLayerNames.join(',');
         // Create a control that can handle both WMS and vector layer clicks.
         var infoCtrl = new OpenLayers.Control({
+          hoverControl: null,
           displayClass: align + 'olControlSelectFeature',
           title: div.settings.reportGroup===null ? '' : div.settings.hintQueryDataPointsTool,
           lastclick: {},
           allowBox: clickableVectorLayers.length>0 && div.settings.allowBox===true,
           deactivate: function() {
+            if(this.hoverControl !== null) {
+              this.hoverControl.deactivate();
+            }
             // Disable the click buffer tolerance control.
             $('#click-buffer').hide();
             //If the map is setup to use popups, then we need to switch off popups when moving to use a different tool icon
@@ -1267,6 +1272,9 @@ var destroyAllFeatures;
                 callback: this.onResponse,
                 scope: this
               });
+            }
+            if(clickableVectorLayers.length>0 && this.hoverControl !== null) {
+              this.hoverControl.activate();
             }
             OpenLayers.Control.prototype.activate.call(this);
           },
@@ -1361,6 +1369,14 @@ var destroyAllFeatures;
           }
 
         });
+
+        if (clickableVectorLayers.length>0 && div.settings.hoverShowsDetails === true) {
+          // If there are clickable layers and hover is enabled, we add a hidden control to handle the hover events
+          // It is not possible to have a single select control that does both. The select control itself
+          // interferes with select status of feature, even if in hover mode, so use our own custom control.
+          infoCtrl.hoverControl = new OpenLayers.Control.HoverFeature(
+            {'layers': clickableVectorLayers});
+        }
 
         return infoCtrl;
       } else {
@@ -2466,6 +2482,9 @@ var destroyAllFeatures;
         toolbar.addControls([nav]);
         toolbar.addControls(toolbarControls);
         div.map.addControl(toolbar);
+        if (clickInfoCtrl !== null && clickInfoCtrl.hoverControl !== null) {
+          div.map.addControl(clickInfoCtrl.hoverControl);
+        }
         if (click) {
           click.activate();
         }
@@ -2481,6 +2500,9 @@ var destroyAllFeatures;
         }
         if (clickInfoCtrl !== null) {
           div.map.addControl(clickInfoCtrl);
+          if (clickInfoCtrl.hoverControl !== null) {
+            div.map.addControl(clickInfoCtrl.hoverControl);
+          }
           clickInfoCtrl.activate();
         }
       }
@@ -2542,6 +2564,7 @@ jQuery.fn.indiciaMapPanel.defaults = {
     indiciaWMSLayers: {},
     indiciaWFSLayers : {},
     layers: [],
+    hoverShowsDetails: false,
     clickableLayers: [],
     clickableLayersOutputMode: 'popup', // options are popup, div or customFunction
     clickableLayersOutputFn: format_selected_features,

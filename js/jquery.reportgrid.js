@@ -136,7 +136,7 @@
     }
 
     function getActions (div, row, actions, queryParams) {
-      var result='';
+      var result = '';
       var onclick;
       var href;
       var content;
@@ -151,9 +151,9 @@
         if (typeof action.visibility_field === 'undefined' || thisrow[action.visibility_field] !== 'f') {
           if (typeof action.javascript !== 'undefined') {
             rowCopy = thisrow;
-            $.each(rowCopy, function (idx) {
-              if (rowCopy[idx] !== null) {
-                rowCopy[idx] = rowCopy[idx].replace(/'/g,"\\'");
+            $.each(rowCopy, function replaceInField(field) {
+              if (typeof rowCopy[field] === 'string') {
+                rowCopy[field] = rowCopy[field].replace(/'/g, "\\'");
               }
             });
             onclick = ' onclick="' + mergeParamsIntoTemplate(div, rowCopy, action.javascript) + '"';
@@ -227,7 +227,7 @@
     }
 
     function simplePager (pager, div, hasMore) {
-      var pagerContent='';
+      var pagerContent = '';
       if (div.settings.offset !== 0) {
         pagerContent += '<a class="pag-prev pager-button" rel="nofollow" href="#">previous</a> ';
       } else {
@@ -268,7 +268,7 @@
       for (page = Math.max(1, div.settings.offset/div.settings.itemsPerPage - 4);
           page <= Math.min(div.settings.offset/div.settings.itemsPerPage + 6, Math.ceil(div.settings.recordCount / div.settings.itemsPerPage));
           page += 1) {
-        if (page === div.settings.offset/div.settings.itemsPerPage+1) {
+        if (page === div.settings.offset / div.settings.itemsPerPage + 1) {
           pagelist += '<span class="pag-page pager-button ui-state-disabled" id="page-' + div.settings.id + '-' + page + '">' + page + '</span> ';
         } else {
           pagelist += '<a href="#" class="pag-page pager-button" rel="nofollow" id="page-' + div.settings.id + '-' + page + '">' + page + '</a> ';
@@ -276,7 +276,7 @@
       }
       pagerContent = pagerContent.replace('{pagelist}', pagelist);
       if (div.settings.recordCount === 0) {
-        pagerContent=pagerContent.replace('{showing}', div.settings.noRecords);
+        pagerContent = pagerContent.replace('{showing}', div.settings.noRecords);
       } else {
         showing = showing.replace('{1}', div.settings.offset + 1);
         showing = showing.replace('{2}', div.settings.offset + div.settings.currentPageCount);
@@ -315,7 +315,9 @@
           div.loading = true;
           div.settings.offset -= div.settings.itemsPerPage;
           // Min offset is zero.
-          if (div.settings.offset < 0) { div.settings.offset = 0; }
+          if (div.settings.offset < 0) {
+            div.settings.offset = 0;
+          }
           load(div, false);
         });
 
@@ -348,7 +350,7 @@
 
     // recreate the pagination footer
     function updatePager (div, hasMore) {
-      var pager=$(div).find('.pager');
+      var pager = $(div).find('.pager');
       pager.empty();
       if (typeof div.settings.recordCount === 'undefined') {
         simplePager(pager, div, hasMore);
@@ -362,7 +364,8 @@
      * Returns the query parameter, which filters the output based on the filters and filtercol/filtervalue.
      */
     function getQueryParam (div) {
-      var query={}, needQuery = false;
+      var query = {};
+      var needQuery = false;
       if (div.settings.filterCol !== null && div.settings.filterValue !== null) {
         query.like = {};
         query.like[div.settings.filterCol] = div.settings.filterValue;
@@ -396,13 +399,13 @@
      * the user has made on the popup filter page.
      * Returns an array containing the rows to keep.
      */
-    function applyPopupFilterExclusionsToRows(rows,div) {
-      indiciaData.popupFilterRemovedRowsCount=0;
-      indiciaData.allReportGridRecords=[];
+    function applyPopupFilterExclusionsToRows(rows, div) {
       var rowsToDisplay = [];
       var keepRow;
       // Keep a count of each row we have worked on starting from 1.
       var rowCount = 1;
+      indiciaData.popupFilterRemovedRowsCount = 0;
+      indiciaData.allReportGridRecords = [];
       $.each(rows, function(rowIdx, theRow) {
         // To start assume we are keeping the data
         keepRow = true;
@@ -621,7 +624,7 @@
 
           // execute callback it there is one
           if (div.settings.callback !== '') {
-            window[div.settings.callback]();
+            window[div.settings.callback](div);
           }
           if (typeof callback !== 'undefined') {
             callback();
@@ -1312,7 +1315,7 @@
 
       // execute callback it there is one
       if (div.settings.callback !== '') {
-        window[div.settings.callback]();
+        window[div.settings.callback](div);
       }
 
     });
