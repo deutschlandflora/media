@@ -38,6 +38,18 @@
         $.inArray(locationId, indiciaData.allPossibleLocationIds) > -1;
   }, 'The location is not in the chosen grid square.');
 
+  // Validation for date pickers.
+  $.validator.addMethod('customDate', function(value, element) {
+    // parseDate throws exception if the value is invalid
+    try{
+      $.datepicker.parseDate(indiciaData.dateFormat, value);
+      return true;
+    }
+    catch (e) {
+      return false;
+    }
+  }, 'Please enter a valid date');
+
   // Override default error messages with our own if required.
   $.extend($.validator.messages, {
     integer: 'A whole number please'
