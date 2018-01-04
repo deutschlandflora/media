@@ -1805,7 +1805,7 @@ var destroyAllFeatures;
      * @param system The system code which is currently selected
      */
     function chooseBestSystem(div, point, system) {
-      var proj, testpoint, sys;
+      var proj, wmProj, wmPoint, testpoint, sys;
       // If no sref selector available, then just return the original system
       if ($('select#' + opts.srefSystemId).length === 0) {
         return system;
@@ -1814,39 +1814,48 @@ var destroyAllFeatures;
       if (system.toUpperCase()!=='OSGB' && system.toUpperCase()!=='OSIE' && system.toUpperCase()!=='LUGR') {
         return system;
       }
+      
       sys = false;
+      wmProj = new OpenLayers.Projection('EPSG:3857');
+      wmPoint = point.clone();
       // Use the web mercator projection to do a rough test for each possible system.
+      // With the advent of the Ordnance Survey Leisure Layer the point is not necessarily in web mercator though.
+      if (div.map.projection.projCode != 'EPSG:3857') {
+        // Convert to web mercator for rough tests.
+        wmPoint.transform(div.map.projection, wmProj)
+      }
+
       // First, OSIE
-//      if ($('#'+opts.srefSystemId+' option[value="OSIE"]').length
-//          && point.x >= -1196000 && point.x <= -599200 && point.y >= 6687800 && point.y <= 7442470) {
-//        // Got a rough match, now transform to the correct system so we can do exact match. Note that we are not testing against
-//        // a pure rectangle now.
+     if ($('#'+opts.srefSystemId+' option[value="OSIE"]').length
+         && wmPoint.x >= -1196000 && wmPoint.x <= -599200 && wmPoint.y >= 6687800 && wmPoint.y <= 7442470) {
+       // Got a rough match, now transform to the correct system so we can do exact match. Note that we are not testing against
+       // a pure rectangle now.
         proj = new OpenLayers.Projection('EPSG:29901');
-        testpoint = point.clone().transform(div.map.projection, proj);
+        testpoint = wmPoint.clone().transform(wmProj, proj);
         if (testpoint.x >= 10000 && testpoint.x <= 367300 && testpoint.y >= 10000 && testpoint.y <= 468100
             && (testpoint.x < 332000 || testpoint.y < 445900)) {
           sys = 'OSIE';
         }
-//      }
+     }
       // Next, OSGB
-//      if (!sys && $('#'+opts.srefSystemId+' option[value="OSGB"]').length
-//          && point.x >= -1081873 && point.x <= 422934 && point.y >= 6405988 && point.y <= 8944480) {
-//        // Got a rough match, now transform to the correct system so we can do exact match. This time we can do a pure
-//        // rectangle, as the IE grid refs have already been taken out
+     if (!sys && $('#'+opts.srefSystemId+' option[value="OSGB"]').length
+         && wmPoint.x >= -1081873 && wmPoint.x <= 422934 && wmPoint.y >= 6405988 && wmPoint.y <= 8944480) {
+       // Got a rough match, now transform to the correct system so we can do exact match. This time we can do a pure
+       // rectangle, as the IE grid refs have already been taken out
         proj = new OpenLayers.Projection('EPSG:27700');
-        testpoint = point.clone().transform(div.map.projection, proj);
+        testpoint = wmPoint.clone().transform(wmProj, proj);
         if (testpoint.x >= 0 && testpoint.x <= 700000 && testpoint.y >= 0 && testpoint.y <= 1400000) {
           sys = 'OSGB';
         }
-//      }
-//      if (!sys && $('#'+opts.srefSystemId+' option[value="LUGR"]').length
-//          && point.x >= 634030 && point.x <= 729730 && point.y >= 6348260 && point.y <= 6484930) {
+     }
+     if (!sys && $('#'+opts.srefSystemId+' option[value="LUGR"]').length
+         && wmPoint.x >= 634030 && wmPoint.x <= 729730 && wmPoint.y >= 6348260 && wmPoint.y <= 6484930) {
         proj = new OpenLayers.Projection('EPSG:2169');
-        testpoint = point.clone().transform(div.map.projection, proj);
+        testpoint = wmPoint.clone().transform(wmProj, proj);
         if (testpoint.x >= 46000 && testpoint.x <= 108000 && testpoint.y >= 55000 && testpoint.y <= 141000) {
           sys = 'LUGR';
         }
-//      }
+     }
       if (!sys) {
         var has4326 = $('#'+opts.srefSystemId+' option[value="' + "4326" + '"]');
         //If we still haven't found a system, then fall back on the original system
