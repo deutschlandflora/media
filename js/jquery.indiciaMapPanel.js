@@ -2238,8 +2238,6 @@ var destroyAllFeatures;
           alert('Requested preset layer ' + item + ' is not recognised.');
         }
       });
-      // OpenLayers take the first added base layer as map.baseLayer.
-      matchMapProjectionToLayer(div.map);
 
       // Convert indicia WMS/WFS layers into js objects
       $.each(this.settings.indiciaWMSLayers, function (key, value) {
@@ -2273,6 +2271,10 @@ var destroyAllFeatures;
           }
         });
       }
+      // OpenLayers takes the first added base layer as map.baseLayer if not
+      // overriden by cookie. Now find the projection for that layer.
+      matchMapProjectionToLayer(div.map);
+
 
       // Set zoom and centre from cookie, if present, else from initial settings.
       if (typeof zoom === 'undefined' || zoom === null) {
