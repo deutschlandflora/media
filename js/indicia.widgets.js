@@ -76,6 +76,7 @@ $.widget('indicia.indiciaAutocomplete', $.ui.autocomplete, {
    * Formats a species response from the taxa_search service.
    */
   _formatSpeciesItem: function (item) {
+    // Add the name we are searching for.
     var display = this._formatSingleName(
       item.taxon,
       item.preferred,
@@ -83,6 +84,8 @@ $.widget('indicia.indiciaAutocomplete', $.ui.autocomplete, {
       item.authority,
       true
     );
+    // Adds a common name (if searching for latin) or vice versa if configured
+    // to do so.
     if (this.options.speciesIncludeBothNames) {
       if (item.preferred === 't'
         && item.default_common_name !== item.taxon && item.default_common_name) {
@@ -104,8 +107,17 @@ $.widget('indicia.indiciaAutocomplete', $.ui.autocomplete, {
         );
       }
     }
+    // Add the taxon group.
     if (this.options.speciesIncludeTaxonGroup) {
       display += '<div class="taxon-group">' + item.taxon_group + '</div>';
+    }
+    // Adds an identification difficulty icon if required.
+    if (this.options.speciesIncludeIdDiff &&
+        item.identification_difficulty && item.identification_difficulty > 1) {
+      display += ' <span ' +
+        'class="item-icon id-diff id-diff-' + item.identification_difficulty + '" ' +
+        'data-diff="' + item.identification_difficulty + '" ' +
+        'data-rule="' + item.id_diff_verification_rule_id + '"></span>';
     }
     return display;
   },
