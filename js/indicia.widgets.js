@@ -10,11 +10,9 @@ $.widget('indicia.indiciaAutocomplete', $.ui.autocomplete, {
       $.getJSON(this.options.baseUrl, params, callback);
     },
     extraParams: {},
-    speciesMode: false,
-    speciesIncludeAuthorities: false,
-    speciesIncludeBothNames: false,
-    speciesIncludeTaxonGroup: false,
-    speciesIncludeIdDiff: true
+    // Mode options are default, species, person.
+    mode: 'default',
+    formatOptions: {}
   },
 
   /**
@@ -22,9 +20,18 @@ $.widget('indicia.indiciaAutocomplete', $.ui.autocomplete, {
    */
   _create: function () {
     this._super();
+    // Apply default format options depending on the mode.
+    if (this.options.mode === 'species') {
+      this.options.formatOptions = $.extend({}, {
+        speciesIncludeBothNames: false,
+        speciesIncludeAuthorities: false,
+        speciesIncludeTaxonGroup: false,
+        speciesIncludeIdDiff: true
+      }, this.options.formatOptions);
+    }
     // Autogenerate a hidden input to hold the selected ID.
     this.valueInput = $('<input>')
-      .attr('type', 'text')
+      .attr('type', 'hidden')
       .attr('id', this.options.id)
       .val(this.options.default);
     $(this.element).after(this.valueInput);
@@ -62,11 +69,13 @@ $.widget('indicia.indiciaAutocomplete', $.ui.autocomplete, {
       isSearchedName ? 'searched-name' : 'other-name',
       isLatin ? 'scientific' : 'common'
     ];
-    if (this.options.formattedName && authority !== null) {
+    if (this.options.formatOptions.speciesIncludeAuthorities && authority !== null) {
       formattedName += ' ' + authority;
     }
     if (preferred === 't') {
       classes.push('preferred');
+    } else if (isLatin) {
+      formattedName += '[syn]';
     }
     display = '<div class="' + classes.join(' ') + '">' + formattedName + '</div>';
     return display;
@@ -86,7 +95,7 @@ $.widget('indicia.indiciaAutocomplete', $.ui.autocomplete, {
     );
     // Adds a common name (if searching for latin) or vice versa if configured
     // to do so.
-    if (this.options.speciesIncludeBothNames) {
+    if (this.options.formatOptions.speciesIncludeBothNames) {
       if (item.preferred === 't'
         && item.default_common_name !== item.taxon && item.default_common_name) {
         display += this._formatSingleName(
@@ -108,11 +117,11 @@ $.widget('indicia.indiciaAutocomplete', $.ui.autocomplete, {
       }
     }
     // Add the taxon group.
-    if (this.options.speciesIncludeTaxonGroup) {
+    if (this.options.formatOptions.speciesIncludeTaxonGroup) {
       display += '<div class="taxon-group">' + item.taxon_group + '</div>';
     }
     // Adds an identification difficulty icon if required.
-    if (this.options.speciesIncludeIdDiff &&
+    if (this.options.formatOptions.speciesIncludeIdDiff &&
         item.identification_difficulty && item.identification_difficulty > 1) {
       display += ' <span ' +
         'class="item-icon id-diff id-diff-' + item.identification_difficulty + '" ' +
@@ -127,7 +136,7 @@ $.widget('indicia.indiciaAutocomplete', $.ui.autocomplete, {
    */
   _renderItem: function (ul, item) {
     var display;
-    if (this.options.speciesMode) {
+    if (this.options.mode === 'species') {
       display = this._formatSpeciesItem(item);
     } else {
       display = item[this.options.captionField];
