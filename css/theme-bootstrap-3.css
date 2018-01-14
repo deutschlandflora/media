@@ -37,4 +37,16 @@ table.report-grid {
 .report-grid .pager {
   margin: 0; }
 
+ul.ui-menu li {
+  list-style: none; }
+  ul.ui-menu li .ui-menu-item-wrapper {
+    padding: 4px;
+    border: solid transparent 1px; }
+    ul.ui-menu li .ui-menu-item-wrapper:hover {
+      border: solid silver 1px; }
+    ul.ui-menu li .ui-menu-item-wrapper .searched-name {
+      font-size: 120%; }
+    ul.ui-menu li .ui-menu-item-wrapper .taxon-group {
+      font-weight: bold; }
+
 /*# sourceMappingURL=theme-bootstrap-3.css.map */

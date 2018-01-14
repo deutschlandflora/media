@@ -418,8 +418,9 @@ var resetSpeciesTextOnEscape;
     if ($('#' + selectorId).width() < 200) {
       autocompleteSettings.width = 200;
     }
+    autocompleteSettings.baseUrl = url+'/taxa_search';
     // Attach auto-complete code to the input
-    ctrl = $('#' + selectorId).autocomplete(url+'/taxa_search', autocompleteSettings);
+    ctrl = $('#' + selectorId).indiciaAutocomplete(autocompleteSettings);
     ctrl.bind('result', handleSelectedTaxon);
     ctrl.bind('return', returnPressedInAutocomplete);
     // Check that the new entry control for taxa will remain in view with enough space for the autocomplete drop down
@@ -950,34 +951,19 @@ function species_checklist_add_another_row(gridId) {
 
 }
 
-//function to get settings to setup for an autocomplete cell
+/**
+ * Function to get settings to setup for an autocomplete cell.
+ */
 function getAutocompleteSettings(extraParams, gridId) {
-
   var autocompleterSettingsToReturn = {
-    extraParams : extraParams,
+    extraParams: extraParams,
+    mode: 'species',
+    captionField: 'searchterm',
+    valueField: 'taxa_taxon_list_id',
     continueOnBlur: true,
     max: indiciaData.speciesGrid[gridId].numValues,
     selectMode: indiciaData.speciesGrid[gridId].selectMode,
-    matchContains: indiciaData.speciesGrid[gridId].matchContains,
-    parse: function(data) {
-      var results = [], done={}, display;
-      jQuery.each(data, function(i, item) {
-        // note we track the distinct meaning id and display term, so we don't output duplicates
-        // display field does not seem to be available, though there may be some form somewhere which uses it.
-        display = (typeof item.display != 'undefined' ? item.display : item.taxon).replace(/\W+/g, "");
-        if (!done.hasOwnProperty(item.taxon_meaning_id + '_' + display)) {
-          results[results.length] =
-          {
-            data: item,
-            result: item.searchterm,
-            value: item.taxa_taxon_list_id
-          };
-          done[item.taxon_meaning_id + '_' + display] = true;
-        }
-      });
-      return results;
-    },
-    formatItem: formatter
+    matchContains: indiciaData.speciesGrid[gridId].matchContains
   };
   return autocompleterSettingsToReturn;
 }

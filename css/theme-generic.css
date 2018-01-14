@@ -76,4 +76,16 @@ input.findme {
 .form-inline div:first-child label, .form-inline .linear-form > label:first-child {
   width: 160px; }
 
+ul.ui-menu li {
+  list-style: none; }
+  ul.ui-menu li .ui-menu-item-wrapper {
+    padding: 4px;
+    border: solid transparent 1px; }
+    ul.ui-menu li .ui-menu-item-wrapper:hover {
+      border: solid silver 1px; }
+    ul.ui-menu li .ui-menu-item-wrapper .searched-name {
+      font-size: 120%; }
+    ul.ui-menu li .ui-menu-item-wrapper .taxon-group {
+      font-weight: bold; }
+
 /*# sourceMappingURL=theme-generic.css.map */

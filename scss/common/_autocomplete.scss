@@ -1,0 +1,18 @@
+ul.ui-menu {
+  li {
+    list-style: none;
+    .ui-menu-item-wrapper {
+      padding: $list-padding;
+      border: solid transparent 1px;
+      &:hover {
+        border: solid silver 1px;
+      }
+      .searched-name {
+        font-size: 120%;
+      }
+      .taxon-group {
+        font-weight: bold;
+      }
+    }
+  }
+}
