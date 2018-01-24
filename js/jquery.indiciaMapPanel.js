@@ -1792,7 +1792,8 @@ var destroyAllFeatures;
         var system = chooseBestSystem(div, point, _getSystem());
         $('select#'+opts.srefSystemId).val(system);
         pointToSref(div, point, system, function(data){
-          handleSelectedPositionOnMap(lonlat,div,data);
+          handleSelectedPositionOnMap(lonlat, div, data);
+          chooseBestLayer(div, point);
         });
       }
     }
@@ -1868,6 +1869,71 @@ var destroyAllFeatures;
       return sys;
 
     }
+
+    /**
+     * Given a point, checks whether the current baselayer is appropriate to show it. 
+     * For example, Ordnance Survey layers are not appropriate for points outside Great Britain. 
+     * If unsuitable, switches to the first suitable layer.
+     * NOTE This may result in a change in projection meaning that point is no longer valid.
+     * @param div The map div
+     * @param point A point object with x, y coordinates, in the current map projection
+     */
+    function chooseBestLayer(div, point) {
+
+      let proj, wmProj, wmPoint, testpoint, sys;
+      let currentLayer = div.map.baseLayer.name;
+      if (currentLayer.startsWith('Ordnance Survey')) {
+        // Check that the point is within Britain
+
+        sys = false;
+        wmProj = new OpenLayers.Projection('EPSG:3857');
+        wmPoint = point.clone();
+        // Use the web mercator projection to do a rough test for each possible system.
+        // With the advent of the Ordnance Survey Leisure Layer the point is not necessarily in web mercator though.
+        if (div.map.projection.projCode != 'EPSG:3857') {
+          // Convert to web mercator for rough tests.
+          wmPoint.transform(div.map.projection, wmProj)
+        }
+  
+        // First check out OSIE which overlaps OSGB
+       if (wmPoint.x >= -1196000 && wmPoint.x <= -599200 && wmPoint.y >= 6687800 && wmPoint.y <= 7442470) {
+         // Got a rough match, now transform to the correct system so we can do exact match. Note that we are not testing against
+         // a pure rectangle now.
+          proj = new OpenLayers.Projection('EPSG:29901');
+          testpoint = wmPoint.clone().transform(wmProj, proj);
+          if (testpoint.x >= 10000 && testpoint.x <= 367300 && testpoint.y >= 10000 && testpoint.y <= 468100
+              && (testpoint.x < 332000 || testpoint.y < 445900)) {
+            sys = 'OSIE';
+          }
+        }
+        // Next, OSGB
+        if (!sys 
+           && wmPoint.x >= -1081873 && wmPoint.x <= 422934 && wmPoint.y >= 6405988 && wmPoint.y <= 8944480) {
+         // Got a rough match, now transform to the correct system so we can do exact match. This time we can do a pure
+         // rectangle, as the IE grid refs have already been taken out
+          proj = new OpenLayers.Projection('EPSG:27700');
+          testpoint = wmPoint.clone().transform(wmProj, proj);
+          if (testpoint.x >= 0 && testpoint.x <= 700000 && testpoint.y >= 0 && testpoint.y <= 1400000) {
+            sys = 'OSGB';
+          }
+        }
+
+        if (sys !== 'OSGB') {
+          // Try to switch to a layer with coverage of the point that was clicked.
+          let name = '';
+          for (let layer of div.map.layers) {
+            if (layer.isBaseLayer) {
+              name = layer.name;
+              if (name.startsWith('Google') || name.startsWith('Bing') || name.startsWith('OpenStreetMap')) {
+                div.map.setBaseLayer(layer);
+                break;
+              }
+            }
+          }
+        }
+      }
+    }
+  
 
     function showGridRefHints(div) {
       if (overMap && div.settings.gridRefHint && typeof indiciaData.srefHandlers!=='undefined' &&
