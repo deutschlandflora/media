@@ -383,8 +383,7 @@ var destroyAllFeatures;
       var currentZoom;
 
       // If the spatial ref input control exists, bind it to the map, so entering a ref updates the map
-      // Note: Changed from .change to .keyup as .change wasn't working in IE
-      $('#' + opts.srefId).keyup(function () {
+      $('#' + opts.srefId).change(function () {
         _handleEnteredSref($(this).val(), div);
         _hideOtherGraticules(div);
       });
