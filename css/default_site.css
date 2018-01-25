@@ -1084,3 +1084,8 @@ div.note-fail, p.note-fail {
 .resolveLocationPopup li {
   list-style-type: none;
 }
+
+/* Tidy map layer picker */
+#preset_layers li * {
+  display: inline-block;
+}
