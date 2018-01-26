@@ -2089,6 +2089,31 @@ var destroyAllFeatures;
       }
     }
 
+    /**
+     * Callback on inital load of a Google layer. If it is not the current
+     * base layer then ensure it is hidden.
+     */
+    function hideGMapCallback() {
+      var map = indiciaData.mapdiv.map;
+      var gLayer = this;
+      var olLayer;
+      // Find the OpenLayers layer containing the mapObject which is the Google layer.
+      $.each(map.layers, function(idx, layer){
+        if(layer.mapObject == gLayer) {
+          olLayer = layer;
+          return false;
+        }
+      });
+      // Hide the Google layer if it is not the current base layer.
+      if(map.baseLayer != olLayer) {
+        olLayer.display(false);
+      }
+    }
+
+
+
+
+
     // Extend our default options with those provided, basing this on an empty object
     // so the defaults don't get changed.
     var opts = $.extend({}, $.fn.indiciaMapPanel.defaults, options);
@@ -2300,6 +2325,13 @@ var destroyAllFeatures;
           if (typeof layer.mapObject !== 'undefined') {
             layer.mapObject.setTilt(0);
           }
+          if (item.startsWith('google')) {
+            // Workaround.
+            // If there is a Google layer loaded but the initial layer is smaller (e.g. OS Leisure)
+            // then both may appear. This occurs because the Google layer cannot be
+            // hidden until it has been loaded. Therefore, set up a callback to handle this.
+            google.maps.event.addListenerOnce(layer.mapObject, 'tilesloaded', hideGMapCallback);
+          }
         } else {
           alert('Requested preset layer ' + item + ' is not recognised.');
         }
@@ -2340,7 +2372,6 @@ var destroyAllFeatures;
       // OpenLayers takes the first added base layer as map.baseLayer if not
       // overriden by cookie. Now find the projection for that layer.
       matchMapProjectionToLayer(div.map);
-
 
       // Set zoom and centre from cookie, if present, else from initial settings.
       if (typeof zoom === 'undefined' || zoom === null) {
