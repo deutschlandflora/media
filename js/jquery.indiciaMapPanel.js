@@ -916,6 +916,8 @@ var destroyAllFeatures;
                 0.5971642833948136,
                 0.2985821416974068,
                 0.1492910708487034], 
+        // 49.52834N 10.76418W ; 61.33122N 1.7801E
+        maxExtent: [-1198264, 6364988, 198162, 8702278],
         matrixIds: [
           {identifier:"EPSG:3857:0",scaleDenominator:559082263.9508929},
           {identifier:"EPSG:3857:1",scaleDenominator:279541131.97544646},
