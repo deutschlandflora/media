@@ -381,11 +381,21 @@ var destroyAllFeatures;
      */
     function _bindControls(div) {
       var currentZoom;
+      var spatialRefWhenFieldFocussed
+
+      $('#' + opts.srefId).focus(function () {
+        spatialRefWhenFieldFocussed=$(this).val();    
+      });
 
       // If the spatial ref input control exists, bind it to the map, so entering a ref updates the map
-      $('#' + opts.srefId).change(function () {
-        _handleEnteredSref($(this).val(), div);
-        _hideOtherGraticules(div);
+      // Note .change event wasn't working in IE
+      // Changed to a .blur that then checks to make sure it is different to previous value before proceeding
+      $('#' + opts.srefId).blur(function () {
+        //We know value has been changed if it is different when the user moves off the field
+        if ($(this).val()!==spatialRefWhenFieldFocussed) {
+          _handleEnteredSref($(this).val(), div);
+          _hideOtherGraticules(div);
+        }
       });
       // If the spatial ref latitude or longitude input control exists, bind it to the map, so entering a ref updates the map
       $('#' + opts.srefLatId).change(function () {
@@ -916,6 +926,8 @@ var destroyAllFeatures;
                 0.5971642833948136,
                 0.2985821416974068,
                 0.1492910708487034], 
+        // 49.52834N 10.76418W ; 61.33122N 1.7801E
+        maxExtent: [-1198264, 6364988, 198162, 8702278],
         matrixIds: [
           {identifier:"EPSG:3857:0",scaleDenominator:559082263.9508929},
           {identifier:"EPSG:3857:1",scaleDenominator:279541131.97544646},
@@ -1792,7 +1804,8 @@ var destroyAllFeatures;
         var system = chooseBestSystem(div, point, _getSystem());
         $('select#'+opts.srefSystemId).val(system);
         pointToSref(div, point, system, function(data){
-          handleSelectedPositionOnMap(lonlat,div,data);
+          handleSelectedPositionOnMap(lonlat, div, data);
+          chooseBestLayer(div, point);
         });
       }
     }
@@ -1868,6 +1881,71 @@ var destroyAllFeatures;
       return sys;
 
     }
+
+    /**
+     * Given a point, checks whether the current baselayer is appropriate to show it. 
+     * For example, Ordnance Survey layers are not appropriate for points outside Great Britain. 
+     * If unsuitable, switches to the first suitable layer.
+     * NOTE This may result in a change in projection meaning that point is no longer valid.
+     * @param div The map div
+     * @param point A point object with x, y coordinates, in the current map projection
+     */
+    function chooseBestLayer(div, point) {
+
+      let proj, wmProj, wmPoint, testpoint, sys;
+      let currentLayer = div.map.baseLayer.name;
+      if (currentLayer.startsWith('Ordnance Survey')) {
+        // Check that the point is within Britain
+
+        sys = false;
+        wmProj = new OpenLayers.Projection('EPSG:3857');
+        wmPoint = point.clone();
+        // Use the web mercator projection to do a rough test for each possible system.
+        // With the advent of the Ordnance Survey Leisure Layer the point is not necessarily in web mercator though.
+        if (div.map.projection.projCode != 'EPSG:3857') {
+          // Convert to web mercator for rough tests.
+          wmPoint.transform(div.map.projection, wmProj)
+        }
+  
+        // First check out OSIE which overlaps OSGB
+       if (wmPoint.x >= -1196000 && wmPoint.x <= -599200 && wmPoint.y >= 6687800 && wmPoint.y <= 7442470) {
+         // Got a rough match, now transform to the correct system so we can do exact match. Note that we are not testing against
+         // a pure rectangle now.
+          proj = new OpenLayers.Projection('EPSG:29901');
+          testpoint = wmPoint.clone().transform(wmProj, proj);
+          if (testpoint.x >= 10000 && testpoint.x <= 367300 && testpoint.y >= 10000 && testpoint.y <= 468100
+              && (testpoint.x < 332000 || testpoint.y < 445900)) {
+            sys = 'OSIE';
+          }
+        }
+        // Next, OSGB
+        if (!sys 
+           && wmPoint.x >= -1081873 && wmPoint.x <= 422934 && wmPoint.y >= 6405988 && wmPoint.y <= 8944480) {
+         // Got a rough match, now transform to the correct system so we can do exact match. This time we can do a pure
+         // rectangle, as the IE grid refs have already been taken out
+          proj = new OpenLayers.Projection('EPSG:27700');
+          testpoint = wmPoint.clone().transform(wmProj, proj);
+          if (testpoint.x >= 0 && testpoint.x <= 700000 && testpoint.y >= 0 && testpoint.y <= 1400000) {
+            sys = 'OSGB';
+          }
+        }
+
+        if (sys !== 'OSGB') {
+          // Try to switch to a layer with coverage of the point that was clicked.
+          let name = '';
+          for (let layer of div.map.layers) {
+            if (layer.isBaseLayer) {
+              name = layer.name;
+              if (name.startsWith('Google') || name.startsWith('Bing') || name.startsWith('OpenStreetMap')) {
+                div.map.setBaseLayer(layer);
+                break;
+              }
+            }
+          }
+        }
+      }
+    }
+  
 
     function showGridRefHints(div) {
       if (overMap && div.settings.gridRefHint && typeof indiciaData.srefHandlers!=='undefined' &&
@@ -2022,6 +2100,31 @@ var destroyAllFeatures;
         }
       }
     }
+
+    /**
+     * Callback on inital load of a Google layer. If it is not the current
+     * base layer then ensure it is hidden.
+     */
+    function hideGMapCallback() {
+      var map = indiciaData.mapdiv.map;
+      var gLayer = this;
+      var olLayer;
+      // Find the OpenLayers layer containing the mapObject which is the Google layer.
+      $.each(map.layers, function(idx, layer){
+        if(layer.mapObject == gLayer) {
+          olLayer = layer;
+          return false;
+        }
+      });
+      // Hide the Google layer if it is not the current base layer.
+      if(map.baseLayer != olLayer) {
+        olLayer.display(false);
+      }
+    }
+
+
+
+
 
     // Extend our default options with those provided, basing this on an empty object
     // so the defaults don't get changed.
@@ -2234,6 +2337,13 @@ var destroyAllFeatures;
           if (typeof layer.mapObject !== 'undefined') {
             layer.mapObject.setTilt(0);
           }
+          if (item.startsWith('google')) {
+            // Workaround.
+            // If there is a Google layer loaded but the initial layer is smaller (e.g. OS Leisure)
+            // then both may appear. This occurs because the Google layer cannot be
+            // hidden until it has been loaded. Therefore, set up a callback to handle this.
+            google.maps.event.addListenerOnce(layer.mapObject, 'tilesloaded', hideGMapCallback);
+          }
         } else {
           alert('Requested preset layer ' + item + ' is not recognised.');
         }
@@ -2274,7 +2384,6 @@ var destroyAllFeatures;
       // OpenLayers takes the first added base layer as map.baseLayer if not
       // overriden by cookie. Now find the projection for that layer.
       matchMapProjectionToLayer(div.map);
-
 
       // Set zoom and centre from cookie, if present, else from initial settings.
       if (typeof zoom === 'undefined' || zoom === null) {

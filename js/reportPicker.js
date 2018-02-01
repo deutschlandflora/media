@@ -53,6 +53,9 @@ jQuery(document).ready(function($) {
           $.each(data.parameters, function(parameter, def) {
             display = def.display===null ? ns : def.display;
             description = def.description===null ? ns : def.description;
+            if (typeof def.description_extra !== 'undefined') {
+              description += '<br/>' + def.description_extra;
+            }
             datatype = def.datatype===null ? ns : def.datatype;
             paramRows += '<tr><th scope="row">' + parameter + '</th><td>' + display +
               '</td><td>' + description + '</td><td>' + datatype + '</td></tr>';
