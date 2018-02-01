@@ -703,7 +703,7 @@ jQuery(document).ready(function ($) {
         var r = [];
         var op;
         if (indiciaData.filter.def.quality !== 'all') {
-          r.push($('#quality-filter option[value=' + indiciaData.filter.def.quality.replace('!', '\\!') + ']').html());
+          r.push($('#quality-filter option[value=' + indiciaData.filter.def.quality.toString().replace('!', '\\!') + ']').html());
         }
         if (indiciaData.filter.def.autochecks === 'F') {
           r.push(indiciaData.lang.reportFilters.AutochecksFailed);
