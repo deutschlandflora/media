@@ -278,20 +278,22 @@ jQuery(document).ready(function ($) {
         if (typeof indiciaData.filter.def.taxon_rank_sort_order_combined !== 'undefined') {
           indiciaData.filter.def.taxon_rank_sort_order = indiciaData.filter.def.taxon_rank_sort_order_combined.split(':')[0];
         }
-        $.each($('ul[id^="taxa_taxon_list_attribute_termlist_term_ids\\:"]'), function () {
-          var groupIdx = this.id.replace(/^taxa_taxon_list_attribute_termlist_term_ids:/, '').replace(/:sublist$/, '');
-          var groupTerms = {};
-          $.each($(this).find('li'), function() {
-            ttlAttrTermIds.push($(this).find('input[name$="\\[\\]"]').val());
-            groupTerms[$(this).find('input[name$="\\[\\]"]').val()] = $(this).text().trim();
+        if (typeof indiciaData.taxaTaxonListAttributeIds !== "undefined") {
+          $.each($('ul[id^="taxa_taxon_list_attribute_termlist_term_ids\\:"]'), function () {
+            var groupIdx = this.id.replace(/^taxa_taxon_list_attribute_termlist_term_ids:/, '').replace(/:sublist$/, '');
+            var groupTerms = {};
+            $.each($(this).find('li'), function() {
+              ttlAttrTermIds.push($(this).find('input[name$="\\[\\]"]').val());
+              groupTerms[$(this).find('input[name$="\\[\\]"]').val()] = $(this).text().trim();
+            });
+            if ($(this).find('li').length > 0) {
+              ttlAttrTermDescriptions[indiciaData.taxaTaxonListAttributeLabels[groupIdx]] = groupTerms;
+            }
           });
-          if ($(this).find('li').length > 0) {
-            ttlAttrTermDescriptions[indiciaData.taxaTaxonListAttributeLabels[groupIdx]] = groupTerms;
-          }
-        });
-        indiciaData.filter.def.taxa_taxon_list_attribute_ids = indiciaData.taxaTaxonListAttributeIds;
-        indiciaData.filter.def.taxa_taxon_list_attribute_termlist_term_ids = ttlAttrTermIds.join(',');
-        indiciaData.filter.def.taxa_taxon_list_attribute_term_descriptions = ttlAttrTermDescriptions;
+          indiciaData.filter.def.taxa_taxon_list_attribute_ids = indiciaData.taxaTaxonListAttributeIds.join(',');
+          indiciaData.filter.def.taxa_taxon_list_attribute_termlist_term_ids = ttlAttrTermIds.join(',');
+          indiciaData.filter.def.taxa_taxon_list_attribute_term_descriptions = ttlAttrTermDescriptions;
+        }
       },
       loadForm: function (context) {
         var firstTab = 'species-group-tab';
@@ -701,7 +703,7 @@ jQuery(document).ready(function ($) {
         var r = [];
         var op;
         if (indiciaData.filter.def.quality !== 'all') {
-          r.push($('#quality-filter option[value=' + indiciaData.filter.def.quality.replace('!', '\\!') + ']').html());
+          r.push($('#quality-filter option[value=' + indiciaData.filter.def.quality.toString().replace('!', '\\!') + ']').html());
         }
         if (indiciaData.filter.def.autochecks === 'F') {
           r.push(indiciaData.lang.reportFilters.AutochecksFailed);

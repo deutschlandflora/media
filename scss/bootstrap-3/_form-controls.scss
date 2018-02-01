@@ -16,3 +16,14 @@
     font-size: 150%;
   }
 }
+
+/*
+Although we don't want to allow control-width classes to override Bootstrap
+behaviour, the Edit tab of Indicia pages doesn't load using Bootstrap so we
+do need to do something.
+*/
+#form-params {
+  input[type="text"], textarea {
+    width: 100%;
+  }
+}
