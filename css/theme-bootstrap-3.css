@@ -42,6 +42,13 @@ do need to do something.
 #form-params input[type="text"], #form-params textarea {
   width: 100%; }
 
+/*
+The ui-widget-content class conflicts with some of the Bootstrap styling so
+rectify any problems.
+*/
+.ui-widget-content .btn-primary {
+  color: #fff; }
+
 .report-grid .pager {
   margin: 0; }
 
