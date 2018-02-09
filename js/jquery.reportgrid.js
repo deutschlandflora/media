@@ -104,7 +104,7 @@
           }
         });
       }
-      $.extend(request, getQueryParam(div));
+      $.extend(request, getQueryParam(div), div.settings.immutableParams);
       return request;
     }
 
@@ -1381,5 +1381,6 @@ jQuery.fn.reportgrid.defaults = {
   sendOutputToMap: false, // does the current page of report data get shown on a map?
   linkFilterToMap: false, // requires a rowId - filtering the grid also filters the map
   msgRowLinkedToMapHint: 'Click the row to highlight the record on the map. Double click to zoom in.',
-  actionButtonTemplate: '<a{class}{href}{onclick}>{content}</a>'
+  actionButtonTemplate: '<a{class}{href}{onclick}>{content}</a>',
+  immutableParams: {}
 };
