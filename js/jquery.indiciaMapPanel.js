@@ -384,7 +384,7 @@ var destroyAllFeatures;
       var spatialRefWhenFieldFocussed;
 
       $('#' + opts.srefId).focus(function () {
-        spatialRefWhenFieldFocussed=$(this).val();
+        spatialRefWhenFieldFocussed = $(this).val();
       });
 
       // If the spatial ref input control exists, bind it to the map, so entering a ref updates the map
