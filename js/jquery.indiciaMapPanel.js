@@ -3040,7 +3040,7 @@ jQuery.fn.indiciaMapPanel.openLayersDefaults = {
     units: "m",
     numZoomLevels: 18,
     maxResolution: 156543.0339,
-    maxExtent: new OpenLayers.Bounds(-20037508, -20037508, 20037508, 20037508.34),
+    maxExtent: new OpenLayers.Bounds(-20037508, -20037508, 20037508, 20037508.34)
 };
 
 
