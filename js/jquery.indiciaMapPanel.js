@@ -381,11 +381,21 @@ var destroyAllFeatures;
      */
     function _bindControls(div) {
       var currentZoom;
+      var spatialRefWhenFieldFocussed;
+
+      $('#' + opts.srefId).focus(function () {
+        spatialRefWhenFieldFocussed = $(this).val();
+      });
 
       // If the spatial ref input control exists, bind it to the map, so entering a ref updates the map
-      $('#' + opts.srefId).change(function () {
-        _handleEnteredSref($(this).val(), div);
-        _hideOtherGraticules(div);
+      // Note .change event wasn't working in IE
+      // Changed to a .blur that then checks to make sure it is different to previous value before proceeding
+      $('#' + opts.srefId).blur(function () {
+        //We know value has been changed if it is different when the user moves off the field
+        if ($(this).val()!==spatialRefWhenFieldFocussed) {
+          _handleEnteredSref($(this).val(), div);
+          _hideOtherGraticules(div);
+        }
       });
       // If the spatial ref latitude or longitude input control exists, bind it to the map, so entering a ref updates the map
       $('#' + opts.srefLatId).change(function () {
@@ -892,7 +902,57 @@ var destroyAllFeatures;
     * Some pre-configured layers that can be added to the map.
     */
     function _getPresetLayers(settings) {
-      var r={
+      var os_options = {
+        url: "https://api2.ordnancesurvey.co.uk/mapping_api/v1/service/wmts?key=" + settings.os_api_key,
+        version: "1.0.0",
+        style: true,
+        format: "image/png",
+        tileMatrixSet: "EPSG:3857",
+        matrixSet: "EPSG:3857",
+        tileOrigin: new OpenLayers.LonLat(-20037508, 20037508),
+        tileSize: new OpenLayers.Size(256, 256),
+        resolutions: [
+                1222.9924523925783,
+                611.4962261962892,
+                305.7481130981446,
+                152.8740565490723,
+                76.43702827453615,
+                38.21851413726807,
+                19.109257068634037,
+                9.554628534317018,
+                4.777314267158509,
+                2.3886571335792546,
+                1.1943285667896273,
+                0.5971642833948136,
+                0.2985821416974068,
+                0.1492910708487034],
+        // 49.52834N 10.76418W ; 61.33122N 1.7801E
+        maxExtent: [-1198264, 6364988, 198162, 8702278],
+        matrixIds: [
+          {identifier:"EPSG:3857:0",scaleDenominator:559082263.9508929},
+          {identifier:"EPSG:3857:1",scaleDenominator:279541131.97544646},
+          {identifier:"EPSG:3857:2",scaleDenominator:139770565.98772323},
+          {identifier:"EPSG:3857:3",scaleDenominator:69885282.99386162},
+          {identifier:"EPSG:3857:4",scaleDenominator:34942641.49693081},
+          {identifier:"EPSG:3857:5",scaleDenominator:17471320.748465404},
+          {identifier:"EPSG:3857:6",scaleDenominator:8735660.374232702},
+          {identifier:"EPSG:3857:7",scaleDenominator:4367830.187116351},
+          {identifier:"EPSG:3857:8",scaleDenominator:2183915.0935581755},
+          {identifier:"EPSG:3857:9",scaleDenominator:1091957.5467790877},
+          {identifier:"EPSG:3857:10",scaleDenominator:545978.7733895439},
+          {identifier:"EPSG:3857:11",scaleDenominator:272989.38669477194},
+          {identifier:"EPSG:3857:12",scaleDenominator:136494.69334738597},
+          {identifier:"EPSG:3857:13",scaleDenominator:68247.34667369298},
+          {identifier:"EPSG:3857:14",scaleDenominator:34123.67333684649},
+          {identifier:"EPSG:3857:15",scaleDenominator:17061.836668423246},
+          {identifier:"EPSG:3857:16",scaleDenominator:8530.918334211623},
+          {identifier:"EPSG:3857:17",scaleDenominator:4265.4591671058115},
+          {identifier:"EPSG:3857:18",scaleDenominator:2132.7295835529058},
+          {identifier:"EPSG:3857:19",scaleDenominator:1066.3647917764529},
+          {identifier:"EPSG:3857:20",scaleDenominator:533.1823958882264}
+      ]};
+
+      var r = {
         // legacy support only
         virtual_earth: function() {return new OpenLayers.Layer.Bing({name: 'Bing Aerial', 'type': 'Aerial', 'key': settings.bing_api_key, 'sphericalMercator': true});},
         bing_aerial : function() {return new OpenLayers.Layer.Bing({name: 'Bing Aerial', 'type': 'Aerial', 'key': settings.bing_api_key, 'sphericalMercator': true});},
@@ -902,12 +962,94 @@ var destroyAllFeatures;
         multimap_default : function() {return new OpenLayers.Layer.OSM();},
         multimap_landranger : function() {return new OpenLayers.Layer.OSM();},
         osm : function() {
-          // OpenStreetMap standard tile layer
+        // OpenStreetMap standard tile layer
           return new OpenLayers.Layer.OSM("OpenStreetMap", [
             "https://a.tile.openstreetmap.org/${z}/${x}/${y}.png",
             "https://b.tile.openstreetmap.org/${z}/${x}/${y}.png",
             "https://c.tile.openstreetmap.org/${z}/${x}/${y}.png"]);
-          }
+          },
+        os_outdoor: function() {
+          return new OpenLayers.Layer.WMTS($.extend({
+            name: "Ordnance Survey Outdoor",
+            layer: "Outdoor 3857"
+          }, os_options));
+        },
+        os_road: function() {
+          return new OpenLayers.Layer.WMTS($.extend({
+            name: "Ordnance Survey Road",
+            layer: "Road 3857"
+          }, os_options));
+        },
+        os_light: function() {
+          return new OpenLayers.Layer.WMTS($.extend({
+            name: "Ordnance Survey Light",
+            layer: "Light 3857"
+          }, os_options));
+        },
+        os_night: function() {
+          return new OpenLayers.Layer.WMTS($.extend({
+            name: "Ordnance Survey Night",
+            layer: "Night 3857"
+          }, os_options));
+        },
+        os_leisure: function() {
+          return new OpenLayers.Layer.WMTS({
+            name: "Ordnance Survey Leisure",
+            layer: "Leisure 27700",
+            url: "https://api2.ordnancesurvey.co.uk/mapping_api/v1/service/wmts?key=" + settings.os_api_key,
+            version: "1.0.0",
+            style: true,
+            format: "image/png",
+            projection: "EPSG:27700",
+            tileMatrixSet: "EPSG:27700",
+            matrixSet: "EPSG:27700",
+            tileOrigin: new OpenLayers.LonLat(-238375, 1376256),
+            tileSize: new OpenLayers.Size(256, 256),
+            /*  serverResolutions have to have the values set by the provider in order to position the layer correctly.
+             *  resolutions different to serverResolutions cause the tiles to be resized and allows approximate matching
+             *  of the scales between this and the standard Web Mercator layers.
+             *
+             *  The resolution of Web Mercator varies with the cosine of the latitude. Britain is roughly centred on
+             *  54 degrees north. Our target resolutions are therefore res = wm_res * cos(54). E.g, for the lowest zoom
+             *  level
+             *      r = 1222.9924523925783 * cos(54) = 718.8569
+             *
+             *  Providing more resolutions than serverResolutions allows us to magnify/reduce the final/first tile layer
+             *  and add extra zoom levels.
+             *
+             *  When switching to a Web Mercator base layer, the new zoom is set based upon closest matching resolution.
+             *  This means that from zoom 0 (res 718) we will end up with zoom 1 (res 611). Likewise, when switching
+             *  back we will end up zoomed out a level. This is compensated for in matchMapProjectionToLayer()
+             */
+            serverResolutions: [896, 448, 224, 112, 56, 28, 14, 7, 3.5, 1.75],
+            resolutions: [
+              1437.713854,
+              718.8569272,
+              359.4284636,
+              179.7142318,
+              89.8571159,
+              44.92855795,
+              22.46427897,
+              11.23213949,
+              5.616069744,
+              2.808034872,
+              1.404017436,
+              0.702008718,
+              0.351004359],
+            maxExtent: [0, 0, 700000, 1300000],
+            matrixIds: [
+              {identifier:"EPSG:27700:0",scaleDenominator:3200000.0000000005},
+              {identifier:"EPSG:27700:1",scaleDenominator:1600000.0000000002},
+              {identifier:"EPSG:27700:2",scaleDenominator:800000.0000000001},
+              {identifier:"EPSG:27700:3",scaleDenominator:400000.00000000006},
+              {identifier:"EPSG:27700:4",scaleDenominator:200000.00000000003},
+              {identifier:"EPSG:27700:5",scaleDenominator:100000.00000000001},
+              {identifier:"EPSG:27700:6",scaleDenominator:50000.00000000001},
+              {identifier:"EPSG:27700:7",scaleDenominator:25000.000000000004},
+              {identifier:"EPSG:27700:8",scaleDenominator:12500.000000000002},
+              {identifier:"EPSG:27700:9",scaleDenominator:6250.000000000001}]
+          });
+        }
       };
       // To protect ourselves against exceptions because the Google script would not link up, we
       // only enable these layers if the Google constants are available. We separately check for google V2 and V3 layers
@@ -1662,7 +1804,8 @@ var destroyAllFeatures;
         var system = chooseBestSystem(div, point, _getSystem());
         $('select#'+opts.srefSystemId).val(system);
         pointToSref(div, point, system, function(data){
-          handleSelectedPositionOnMap(lonlat,div,data);
+          handleSelectedPositionOnMap(lonlat, div, data);
+          chooseBestLayer(div, point);
         });
       }
     }
@@ -1675,53 +1818,62 @@ var destroyAllFeatures;
      * @param system The system code which is currently selected
      */
     function chooseBestSystem(div, point, system) {
-      var proj, testpoint, sys;
+      var proj, wmProj, wmPoint, testpoint, sys;
       // If no sref selector available, then just return the original system
-      if ($('select#'+opts.srefSystemId).length===0) {
+      if ($('select#' + opts.srefSystemId).length === 0) {
         return system;
       }
       // don't switch if system does not support autoswitching
       if (system.toUpperCase()!=='OSGB' && system.toUpperCase()!=='OSIE' && system.toUpperCase()!=='LUGR') {
         return system;
       }
+
       sys = false;
+      wmProj = new OpenLayers.Projection('EPSG:3857');
+      wmPoint = point.clone();
       // Use the web mercator projection to do a rough test for each possible system.
+      // With the advent of the Ordnance Survey Leisure Layer the point is not necessarily in web mercator though.
+      if (div.map.projection.projCode != 'EPSG:3857') {
+        // Convert to web mercator for rough tests.
+        wmPoint.transform(div.map.projection, wmProj)
+      }
+
       // First, OSIE
-      if ($('#'+opts.srefSystemId+' option[value="OSIE"]').length
-          && point.x >= -1196000 && point.x <= -599200 && point.y >= 6687800 && point.y <= 7442470) {
-        // Got a rough match, now transform to the correct system so we can do exact match. Note that we are not testing against
-        // a pure rectangle now.
-        proj=new OpenLayers.Projection('EPSG:29901');
-        testpoint = point.clone().transform(div.map.projection, proj);
+     if ($('#'+opts.srefSystemId+' option[value="OSIE"]').length
+         && wmPoint.x >= -1196000 && wmPoint.x <= -599200 && wmPoint.y >= 6687800 && wmPoint.y <= 7442470) {
+       // Got a rough match, now transform to the correct system so we can do exact match. Note that we are not testing against
+       // a pure rectangle now.
+        proj = new OpenLayers.Projection('EPSG:29901');
+        testpoint = wmPoint.clone().transform(wmProj, proj);
         if (testpoint.x >= 10000 && testpoint.x <= 367300 && testpoint.y >= 10000 && testpoint.y <= 468100
             && (testpoint.x < 332000 || testpoint.y < 445900)) {
           sys = 'OSIE';
         }
-      }
+     }
       // Next, OSGB
-      if (!sys && $('#'+opts.srefSystemId+' option[value="OSGB"]').length
-          && point.x >= -1081873 && point.x <= 422934 && point.y >= 6405988 && point.y <= 8944480) {
-        // Got a rough match, now transform to the correct system so we can do exact match. This time we can do a pure
-        // rectangle, as the IE grid refs have already been taken out
-        proj=new OpenLayers.Projection('EPSG:27700');
-        testpoint = point.clone().transform(div.map.projection, proj);
+     if (!sys && $('#'+opts.srefSystemId+' option[value="OSGB"]').length
+         && wmPoint.x >= -1081873 && wmPoint.x <= 422934 && wmPoint.y >= 6405988 && wmPoint.y <= 8944480) {
+       // Got a rough match, now transform to the correct system so we can do exact match. This time we can do a pure
+       // rectangle, as the IE grid refs have already been taken out
+        proj = new OpenLayers.Projection('EPSG:27700');
+        testpoint = wmPoint.clone().transform(wmProj, proj);
         if (testpoint.x >= 0 && testpoint.x <= 700000 && testpoint.y >= 0 && testpoint.y <= 1400000) {
           sys = 'OSGB';
         }
-      }
-      if (!sys && $('#'+opts.srefSystemId+' option[value="LUGR"]').length
-          && point.x >= 634030 && point.x <= 729730 && point.y >= 6348260 && point.y <= 6484930) {
-        proj=new OpenLayers.Projection('EPSG:2169');
-        testpoint = point.clone().transform(div.map.projection, proj);
+     }
+     if (!sys && $('#'+opts.srefSystemId+' option[value="LUGR"]').length
+         && wmPoint.x >= 634030 && wmPoint.x <= 729730 && wmPoint.y >= 6348260 && wmPoint.y <= 6484930) {
+        proj = new OpenLayers.Projection('EPSG:2169');
+        testpoint = wmPoint.clone().transform(wmProj, proj);
         if (testpoint.x >= 46000 && testpoint.x <= 108000 && testpoint.y >= 55000 && testpoint.y <= 141000) {
           sys = 'LUGR';
         }
-      }
+     }
       if (!sys) {
         var has4326 = $('#'+opts.srefSystemId+' option[value="' + "4326" + '"]');
         //If we still haven't found a system, then fall back on the original system
         //unless we can find 4326 in which case switch to that instead
-        sys=system;
+        sys = system;
         if (has4326.length !== 0) {
           sys = '4326';
         }
@@ -1729,6 +1881,71 @@ var destroyAllFeatures;
       return sys;
 
     }
+
+    /**
+     * Given a point, checks whether the current baselayer is appropriate to show it.
+     * For example, Ordnance Survey layers are not appropriate for points outside Great Britain.
+     * If unsuitable, switches to the first suitable layer.
+     * NOTE This may result in a change in projection meaning that point is no longer valid.
+     * @param div The map div
+     * @param point A point object with x, y coordinates, in the current map projection
+     */
+    function chooseBestLayer(div, point) {
+
+      let proj, wmProj, wmPoint, testpoint, sys;
+      let currentLayer = div.map.baseLayer.name;
+      if (currentLayer.startsWith('Ordnance Survey')) {
+        // Check that the point is within Britain
+
+        sys = false;
+        wmProj = new OpenLayers.Projection('EPSG:3857');
+        wmPoint = point.clone();
+        // Use the web mercator projection to do a rough test for each possible system.
+        // With the advent of the Ordnance Survey Leisure Layer the point is not necessarily in web mercator though.
+        if (div.map.projection.projCode != 'EPSG:3857') {
+          // Convert to web mercator for rough tests.
+          wmPoint.transform(div.map.projection, wmProj)
+        }
+
+        // First check out OSIE which overlaps OSGB
+       if (wmPoint.x >= -1196000 && wmPoint.x <= -599200 && wmPoint.y >= 6687800 && wmPoint.y <= 7442470) {
+         // Got a rough match, now transform to the correct system so we can do exact match. Note that we are not testing against
+         // a pure rectangle now.
+          proj = new OpenLayers.Projection('EPSG:29901');
+          testpoint = wmPoint.clone().transform(wmProj, proj);
+          if (testpoint.x >= 10000 && testpoint.x <= 367300 && testpoint.y >= 10000 && testpoint.y <= 468100
+              && (testpoint.x < 332000 || testpoint.y < 445900)) {
+            sys = 'OSIE';
+          }
+        }
+        // Next, OSGB
+        if (!sys
+           && wmPoint.x >= -1081873 && wmPoint.x <= 422934 && wmPoint.y >= 6405988 && wmPoint.y <= 8944480) {
+         // Got a rough match, now transform to the correct system so we can do exact match. This time we can do a pure
+         // rectangle, as the IE grid refs have already been taken out
+          proj = new OpenLayers.Projection('EPSG:27700');
+          testpoint = wmPoint.clone().transform(wmProj, proj);
+          if (testpoint.x >= 0 && testpoint.x <= 700000 && testpoint.y >= 0 && testpoint.y <= 1400000) {
+            sys = 'OSGB';
+          }
+        }
+
+        if (sys !== 'OSGB') {
+          // Try to switch to a layer with coverage of the point that was clicked.
+          let name = '';
+          for (let layer of div.map.layers) {
+            if (layer.isBaseLayer) {
+              name = layer.name;
+              if (name.startsWith('Google') || name.startsWith('Bing') || name.startsWith('OpenStreetMap')) {
+                div.map.setBaseLayer(layer);
+                break;
+              }
+            }
+          }
+        }
+      }
+    }
+
 
     function showGridRefHints(div) {
       if (overMap && div.settings.gridRefHint && typeof indiciaData.srefHandlers!=='undefined' &&
@@ -1823,7 +2040,91 @@ var destroyAllFeatures;
           typeof indiciaData.reportlayer.needsRedraw !== 'undefined') {
         indiciaData.mapdiv.map.events.triggerEvent('moveend');
       }
+
+      // Save the hidden layer so we know what it was when changebaselayer triggers matchMapProjectionToLayer.
+      if (event.property === 'visibility' && event.layer.visibility === false) {
+        event.layer.map.lastLayer = event.layer;
+      }
     }
+
+    /**
+     *  OpenLayers 2 is not designed to handle switching between base layers with different projections. However,
+     *  Ordnance Survey Leisure Maps are only available in EPSG:27700 so to be able to have them as an option alongside
+     *  maps in the usual Web Mercator projection we trigger this function on changebaselayer.
+     *  Ref:
+     *  https://gis.stackexchange.com/questions/24572/how-do-i-use-base-layer-of-two-different-projection-spherical-mercator-and-wgs84
+     */
+    function matchMapProjectionToLayer(map) {
+      var layer = map.baseLayer
+      var newProjection = layer.projection;
+      var currentProjection = map.projection;
+      if (!(currentProjection instanceof OpenLayers.Projection)) {
+        // If a projection code, convert to object.
+        currentProjection = new OpenLayers.Projection(map.projection);
+      }
+
+      if (!newProjection.equals(currentProjection)) {
+        // Update map properties to match properties of baseLayer.
+        map.maxExtent = layer.maxExtent;
+        map.resolutions = layer.resolutions;
+        map.projection = newProjection;
+
+        // Redraw map based on new projection.
+        var centre = map.getCenter();
+        var zoom = map.getZoom();
+        // Compensate for incorrect choice of zoom level when switching from Web Mercator layer to OS Leisure.
+        if (map.lastLayer.name === 'Ordnance Survey Leisure') {
+          zoom -= (zoom === 0) ? 0 : 1;
+        }
+        if (map.baseLayer.name === 'Ordnance Survey Leisure') {
+          zoom += 1;
+        }
+        if (centre !== null) {
+          centre = centre.transform(currentProjection, newProjection);
+          map.setCenter(centre, zoom, false, true);
+        }
+      }
+
+      // Update edit layer properties to match properties of baseLayer.
+      if (typeof map.editLayer !== 'undefined') {
+        var editLayer = map.editLayer;
+        editLayer.maxExtent = layer.maxExtent;
+        editLayer.resolutions = layer.resolutions;
+        if (!newProjection.equals(currentProjection)) {
+          editLayer.projection = newProjection;
+          // Reproject edit layer
+            $.each(map.editLayer.features, function(idx, feature) {
+              feature.geometry.transform(currentProjection, newProjection);
+            });
+          map.editLayer.redraw();
+        }
+      }
+    }
+
+    /**
+     * Callback on inital load of a Google layer. If it is not the current
+     * base layer then ensure it is hidden.
+     */
+    function hideGMapCallback() {
+      var map = indiciaData.mapdiv.map;
+      var gLayer = this;
+      var olLayer;
+      // Find the OpenLayers layer containing the mapObject which is the Google layer.
+      $.each(map.layers, function(idx, layer){
+        if(layer.mapObject == gLayer) {
+          olLayer = layer;
+          return false;
+        }
+      });
+      // Hide the Google layer if it is not the current base layer.
+      if(map.baseLayer != olLayer) {
+        olLayer.display(false);
+      }
+    }
+
+
+
+
 
     // Extend our default options with those provided, basing this on an empty object
     // so the defaults don't get changed.
@@ -2026,14 +2327,22 @@ var destroyAllFeatures;
 
       // Iterate over the preset layers, adding them to the map
       var presetLayers = _getPresetLayers(this.settings);
+      var layer;
       $.each(this.settings.presetLayers, function(i, item) {
         // Check whether this is a defined layer
         if (presetLayers.hasOwnProperty(item))
         {
-          var layer = presetLayers[item]();
+          layer = presetLayers[item]();
           div.map.addLayer(layer);
           if (typeof layer.mapObject !== 'undefined') {
             layer.mapObject.setTilt(0);
+          }
+          if (item.startsWith('google')) {
+            // Workaround.
+            // If there is a Google layer loaded but the initial layer is smaller (e.g. OS Leisure)
+            // then both may appear. This occurs because the Google layer cannot be
+            // hidden until it has been loaded. Therefore, set up a callback to handle this.
+            google.maps.event.addListenerOnce(layer.mapObject, 'tilesloaded', hideGMapCallback);
           }
         } else {
           alert('Requested preset layer ' + item + ' is not recognised.');
@@ -2061,8 +2370,22 @@ var destroyAllFeatures;
         center.lat = $.cookie('maplat');
         baseLayerName = $.cookie('mapbase');
       }
-
       // Missing cookies result in null or undefined variables
+
+      // Set the base layer using cookie if remembering.
+      // Do this before centring to ensure lat/long are in correct projection.
+      if (typeof baseLayerName !== 'undefined' && baseLayerName !== null) {
+        $.each(div.map.layers, function (idx, layer) {
+          if (layer.isBaseLayer && layer.name === baseLayerName && div.map.baseLayer !== layer) {
+            div.map.setBaseLayer(layer);
+          }
+        });
+      }
+      // OpenLayers takes the first added base layer as map.baseLayer if not
+      // overriden by cookie. Now find the projection for that layer.
+      matchMapProjectionToLayer(div.map);
+
+      // Set zoom and centre from cookie, if present, else from initial settings.
       if (typeof zoom === 'undefined' || zoom === null) {
         zoom = this.settings.initial_zoom;
       }
@@ -2076,15 +2399,6 @@ var destroyAllFeatures;
         center = new OpenLayers.LonLat(center.lon, center.lat);
       }
       div.map.setCenter(center, zoom);
-
-      // Set the base layer using cookie if remembering
-      if (baseLayerName !== null) {
-        $.each(div.map.layers, function (idx, layer) {
-          if (layer.isBaseLayer && layer.name === baseLayerName && div.map.baseLayer !== layer) {
-            div.map.setBaseLayer(layer);
-          }
-        });
-      }
 
       /**
        * Public function to change selection of features on a layer.
@@ -2102,6 +2416,9 @@ var destroyAllFeatures;
 
       // This hack fixes an IE8 bug where it won't display Google layers when switching using the Layer Switcher.
       div.map.events.register('changebaselayer', null, function() {
+        // New layer may have different projection.
+        matchMapProjectionToLayer(div.map);
+
         // keep a local reference to the map div, so we can access it from the timeout
         var tmp = div;
         // trigger layer redraw by changing the map size
@@ -2558,6 +2875,7 @@ jQuery.fn.indiciaMapPanel.defaults = {
     scroll_wheel_zoom: true,
     click_zoom: false, // zoom in and recentre on grid square after clicking map
     bing_api_key: '',
+    os_api_key: '',
     proxy: '',
     presetLayers: [],
     tilecacheLayers: [],
