@@ -53,37 +53,37 @@ var Georeferencer;
           // an array to store the responses in the required country, because Google search will not limit to a country
           var places = [];
           var converted = {};
-          jQuery.each(data.results, function handlePlaceInResponse(i, place) {
+          jQuery.each(data.results, function handlePlaceInResponse() {
             converted = {
-              name: place.formatted_address,
-              display: place.formatted_address,
+              name: this.name,
+              display: this.name + ', ' + this.formatted_address,
               centroid: {
-                x: place.geometry.location.lng,
-                y: place.geometry.location.lat
+                x: this.geometry.location.lng,
+                y: this.geometry.location.lat
               },
-              obj: place
+              obj: this
             };
             // create a nominal bounding box
-            if (typeof place.geometry.viewport !== 'undefined') {
+            if (typeof this.geometry.viewport !== 'undefined') {
               converted.boundingBox = {
                 southWest: {
-                  x: place.geometry.viewport.southwest.lng,
-                  y: place.geometry.viewport.southwest.lat
+                  x: this.geometry.viewport.southwest.lng,
+                  y: this.geometry.viewport.southwest.lat
                 },
                 northEast: {
-                  x: place.geometry.viewport.northeast.lng,
-                  y: place.geometry.viewport.northeast.lat
+                  x: this.geometry.viewport.northeast.lng,
+                  y: this.geometry.viewport.northeast.lat
                 }
               };
             } else {
               converted.boundingBox = {
                 southWest: {
-                  x: place.geometry.location.lng - 0.01,
-                  y: place.geometry.location.lat - 0.01
+                  x: this.geometry.location.lng - 0.01,
+                  y: this.geometry.location.lat - 0.01
                 },
                 northEast: {
-                  x: place.geometry.location.lng + 0.01,
-                  y: place.geometry.location.lat + 0.01
+                  x: this.geometry.location.lng + 0.01,
+                  y: this.geometry.location.lat + 0.01
                 }
               };
             }
