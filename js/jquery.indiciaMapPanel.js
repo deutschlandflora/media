@@ -749,7 +749,7 @@ var destroyAllFeatures;
      * Convert a georeferenced place into a display place name.
      */
     function _getPlacename(place) {
-      var placename=(place.display===undefined ? place.name : place.display);
+      var placename=typeof place.display === 'undefined' ? place.name : place.display;
       if (place.placeTypeName!==undefined) {
         placename = placename+' (' + place.placeTypeName + ')';
       }
