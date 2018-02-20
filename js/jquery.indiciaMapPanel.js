@@ -1891,22 +1891,24 @@ var destroyAllFeatures;
      * @param point A point object with x, y coordinates, in the current map projection
      */
     function chooseBestLayer(div, point) {
-
-      let proj, wmProj, wmPoint, testpoint, sys;
-      let currentLayer = div.map.baseLayer.name;
-      if (currentLayer.startsWith('Ordnance Survey')) {
+      var proj;
+      var wmProj;
+      var wmPoint;
+      var testpoint
+      var sys;
+      var currentLayer = div.map.baseLayer.name;
+      var name;
+      if (currentLayer.match(/^Ordnance Survey/)) {
         // Check that the point is within Britain
-
         sys = false;
         wmProj = new OpenLayers.Projection('EPSG:3857');
         wmPoint = point.clone();
         // Use the web mercator projection to do a rough test for each possible system.
         // With the advent of the Ordnance Survey Leisure Layer the point is not necessarily in web mercator though.
-        if (div.map.projection.projCode != 'EPSG:3857') {
+        if (div.map.projection.projCode !== 'EPSG:3857') {
           // Convert to web mercator for rough tests.
           wmPoint.transform(div.map.projection, wmProj)
         }
-
         // First check out OSIE which overlaps OSGB
        if (wmPoint.x >= -1196000 && wmPoint.x <= -599200 && wmPoint.y >= 6687800 && wmPoint.y <= 7442470) {
          // Got a rough match, now transform to the correct system so we can do exact match. Note that we are not testing against
@@ -1932,16 +1934,16 @@ var destroyAllFeatures;
 
         if (sys !== 'OSGB') {
           // Try to switch to a layer with coverage of the point that was clicked.
-          let name = '';
-          for (let layer of div.map.layers) {
-            if (layer.isBaseLayer) {
-              name = layer.name;
-              if (name.startsWith('Google') || name.startsWith('Bing') || name.startsWith('OpenStreetMap')) {
-                div.map.setBaseLayer(layer);
-                break;
+          name = '';
+          $.each(div.map.layers, function() {
+            if (this.isBaseLayer) {
+              name = this.name;
+              if (name.match(/^Google/) || name.match(/^Bing/) || name.match(/^OpenStreetMap/)) {
+                div.map.setBaseLayer(this);
+                return false;
               }
             }
-          }
+          });
         }
       }
     }
@@ -2110,21 +2112,17 @@ var destroyAllFeatures;
       var gLayer = this;
       var olLayer;
       // Find the OpenLayers layer containing the mapObject which is the Google layer.
-      $.each(map.layers, function(idx, layer){
-        if(layer.mapObject == gLayer) {
+      $.each(map.layers, function (idx, layer) {
+        if (layer.mapObject === gLayer) {
           olLayer = layer;
           return false;
         }
       });
       // Hide the Google layer if it is not the current base layer.
-      if(map.baseLayer != olLayer) {
+      if (map.baseLayer !== olLayer) {
         olLayer.display(false);
       }
     }
-
-
-
-
 
     // Extend our default options with those provided, basing this on an empty object
     // so the defaults don't get changed.
@@ -2337,7 +2335,7 @@ var destroyAllFeatures;
           if (typeof layer.mapObject !== 'undefined') {
             layer.mapObject.setTilt(0);
           }
-          if (item.startsWith('google')) {
+          if (item.match(/^google/)) {
             // Workaround.
             // If there is a Google layer loaded but the initial layer is smaller (e.g. OS Leisure)
             // then both may appear. This occurs because the Google layer cannot be
