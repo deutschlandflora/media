@@ -14,70 +14,76 @@
  */
 
 /**
- * A driver class to allow the georeference_lookup control to interface with the 
- * Google Places API text search. 
+ * A driver class to allow the georeference_lookup control to interface with
+ * the Google Places API text search.
  */
 
 var Georeferencer;
 
 (function ($) {
-  Georeferencer = function(mapdiv, callback) {
+  Georeferencer = function georefObj(mapdiv, callback) {
     var settings = mapdiv.georefOpts;
-    if (settings.google_api_key.length===0) {
+    var tokens = [];
+    var near;
+    if (settings.google_api_key.length === 0) {
       alert('Incorrect configuration - Google API Key not specified.');
-      throw('Incorrect configuration - Google API Key not specified.');
+      throw new Error('Incorrect configuration - Google API Key not specified.');
     }
     this.mapdiv = mapdiv;
     // make the place search near the chosen location
-    var tokens = [], near;
-    if (this.mapdiv.georefOpts.georefPreferredArea!=='') {
+    if (this.mapdiv.georefOpts.georefPreferredArea !== '') {
       tokens.push(this.mapdiv.georefOpts.georefPreferredArea);
     }
-    if (this.mapdiv.georefOpts.georefCountry!=='') {
+    if (this.mapdiv.georefOpts.georefCountry !== '') {
       tokens.push(this.mapdiv.georefOpts.georefCountry);
     }
-    near=tokens.join(', ');   
-    
-    this.georeference = function(searchtext) {
+    near = tokens.join(', ');
+
+    this.georeference = function doGeoref(searchtext) {
       $.ajax({
-        dataType: "json",
+        dataType: 'json',
         url: $.fn.indiciaMapPanel.georeferenceLookupSettings.proxy,
-        data: {"url":"https://maps.googleapis.com/maps/api/place/textsearch/json","key":settings.google_api_key,"query":searchtext + ', ' + near, "sensor":"false"},
-        success: function(data) {
+        data: {
+          url: 'https://maps.googleapis.com/maps/api/place/textsearch/json',
+          key: settings.google_api_key,
+          query: searchtext + ', ' + near,
+          sensor: 'false'
+        },
+        success: function handleResponse(data) {
           // an array to store the responses in the required country, because Google search will not limit to a country
-          var places = [], converted={};
-          jQuery.each(data.results, function(i,place) {
+          var places = [];
+          var converted = {};
+          jQuery.each(data.results, function handlePlaceInResponse() {
             converted = {
-              name : place.formatted_address,
-              display : place.formatted_address,
+              name: this.name,
+              display: this.name + ', ' + this.formatted_address,
               centroid: {
-                x: place.geometry.location.lng,
-                y: place.geometry.location.lat
+                x: this.geometry.location.lng,
+                y: this.geometry.location.lat
               },
-              obj: place
+              obj: this
             };
             // create a nominal bounding box
-            if (typeof place.geometry.viewport!=="undefined") {
+            if (typeof this.geometry.viewport !== 'undefined') {
               converted.boundingBox = {
                 southWest: {
-                  x: place.geometry.viewport.southwest.lng, 
-                  y: place.geometry.viewport.southwest.lat
+                  x: this.geometry.viewport.southwest.lng,
+                  y: this.geometry.viewport.southwest.lat
                 },
                 northEast: {
-                  x: place.geometry.viewport.northeast.lng, 
-                  y: place.geometry.viewport.northeast.lat
+                  x: this.geometry.viewport.northeast.lng,
+                  y: this.geometry.viewport.northeast.lat
                 }
               };
-            }
-            else {
+            } else {
               converted.boundingBox = {
                 southWest: {
-                  x: place.geometry.location.lng-0.01,
-                  y: place.geometry.location.lat-0.01
+                  x: this.geometry.location.lng - 0.01,
+                  y: this.geometry.location.lat - 0.01
                 },
                 northEast: {
-                  x: place.geometry.location.lng+0.01,
-                  y: place.geometry.location.lat+0.01
+                  x: this.geometry.location.lng + 0.01,
+                  y: this.geometry.location.lat + 0.01
                 }
               };
             }
@@ -94,7 +100,7 @@ var Georeferencer;
  * Default this.mapdiv.georefOpts for this driver
  */
 jQuery.fn.indiciaMapPanel.georeferenceDriverSettings = {
-  georefPreferredArea : '',
-  georefCountry : 'UK',
-  google_api_key : '',
+  georefPreferredArea: '',
+  georefCountry: 'UK',
+  google_api_key: ''
 };

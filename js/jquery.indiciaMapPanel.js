@@ -381,10 +381,10 @@ var destroyAllFeatures;
      */
     function _bindControls(div) {
       var currentZoom;
-      var spatialRefWhenFieldFocussed
+      var spatialRefWhenFieldFocussed;
 
       $('#' + opts.srefId).focus(function () {
-        spatialRefWhenFieldFocussed=$(this).val();    
+        spatialRefWhenFieldFocussed = $(this).val();
       });
 
       // If the spatial ref input control exists, bind it to the map, so entering a ref updates the map
@@ -749,7 +749,7 @@ var destroyAllFeatures;
      * Convert a georeferenced place into a display place name.
      */
     function _getPlacename(place) {
-      var placename=(place.display===undefined ? place.name : place.display);
+      var placename=typeof place.display === 'undefined' ? place.name : place.display;
       if (place.placeTypeName!==undefined) {
         placename = placename+' (' + place.placeTypeName + ')';
       }
@@ -925,7 +925,7 @@ var destroyAllFeatures;
                 1.1943285667896273,
                 0.5971642833948136,
                 0.2985821416974068,
-                0.1492910708487034], 
+                0.1492910708487034],
         // 49.52834N 10.76418W ; 61.33122N 1.7801E
         maxExtent: [-1198264, 6364988, 198162, 8702278],
         matrixIds: [
@@ -1007,20 +1007,20 @@ var destroyAllFeatures;
             tileSize: new OpenLayers.Size(256, 256),
             /*  serverResolutions have to have the values set by the provider in order to position the layer correctly.
              *  resolutions different to serverResolutions cause the tiles to be resized and allows approximate matching
-             *  of the scales between this and the standard Web Mercator layers. 
-             *  
-             *  The resolution of Web Mercator varies with the cosine of the latitude. Britain is roughly centred on 
-             *  54 degrees north. Our target resolutions are therefore res = wm_res * cos(54). E.g, for the lowest zoom 
-             *  level 
+             *  of the scales between this and the standard Web Mercator layers.
+             *
+             *  The resolution of Web Mercator varies with the cosine of the latitude. Britain is roughly centred on
+             *  54 degrees north. Our target resolutions are therefore res = wm_res * cos(54). E.g, for the lowest zoom
+             *  level
              *      r = 1222.9924523925783 * cos(54) = 718.8569
              *
              *  Providing more resolutions than serverResolutions allows us to magnify/reduce the final/first tile layer
              *  and add extra zoom levels.
-             *  
+             *
              *  When switching to a Web Mercator base layer, the new zoom is set based upon closest matching resolution.
-             *  This means that from zoom 0 (res 718) we will end up with zoom 1 (res 611). Likewise, when switching 
+             *  This means that from zoom 0 (res 718) we will end up with zoom 1 (res 611). Likewise, when switching
              *  back we will end up zoomed out a level. This is compensated for in matchMapProjectionToLayer()
-             */ 
+             */
             serverResolutions: [896, 448, 224, 112, 56, 28, 14, 7, 3.5, 1.75],
             resolutions: [
               1437.713854,
@@ -1827,7 +1827,7 @@ var destroyAllFeatures;
       if (system.toUpperCase()!=='OSGB' && system.toUpperCase()!=='OSIE' && system.toUpperCase()!=='LUGR') {
         return system;
       }
-      
+
       sys = false;
       wmProj = new OpenLayers.Projection('EPSG:3857');
       wmPoint = point.clone();
@@ -1883,30 +1883,32 @@ var destroyAllFeatures;
     }
 
     /**
-     * Given a point, checks whether the current baselayer is appropriate to show it. 
-     * For example, Ordnance Survey layers are not appropriate for points outside Great Britain. 
+     * Given a point, checks whether the current baselayer is appropriate to show it.
+     * For example, Ordnance Survey layers are not appropriate for points outside Great Britain.
      * If unsuitable, switches to the first suitable layer.
      * NOTE This may result in a change in projection meaning that point is no longer valid.
      * @param div The map div
      * @param point A point object with x, y coordinates, in the current map projection
      */
     function chooseBestLayer(div, point) {
-
-      let proj, wmProj, wmPoint, testpoint, sys;
-      let currentLayer = div.map.baseLayer.name;
-      if (currentLayer.startsWith('Ordnance Survey')) {
+      var proj;
+      var wmProj;
+      var wmPoint;
+      var testpoint
+      var sys;
+      var currentLayer = div.map.baseLayer.name;
+      var name;
+      if (currentLayer.match(/^Ordnance Survey/)) {
         // Check that the point is within Britain
-
         sys = false;
         wmProj = new OpenLayers.Projection('EPSG:3857');
         wmPoint = point.clone();
         // Use the web mercator projection to do a rough test for each possible system.
         // With the advent of the Ordnance Survey Leisure Layer the point is not necessarily in web mercator though.
-        if (div.map.projection.projCode != 'EPSG:3857') {
+        if (div.map.projection.projCode !== 'EPSG:3857') {
           // Convert to web mercator for rough tests.
           wmPoint.transform(div.map.projection, wmProj)
         }
-  
         // First check out OSIE which overlaps OSGB
        if (wmPoint.x >= -1196000 && wmPoint.x <= -599200 && wmPoint.y >= 6687800 && wmPoint.y <= 7442470) {
          // Got a rough match, now transform to the correct system so we can do exact match. Note that we are not testing against
@@ -1919,7 +1921,7 @@ var destroyAllFeatures;
           }
         }
         // Next, OSGB
-        if (!sys 
+        if (!sys
            && wmPoint.x >= -1081873 && wmPoint.x <= 422934 && wmPoint.y >= 6405988 && wmPoint.y <= 8944480) {
          // Got a rough match, now transform to the correct system so we can do exact match. This time we can do a pure
          // rectangle, as the IE grid refs have already been taken out
@@ -1932,20 +1934,20 @@ var destroyAllFeatures;
 
         if (sys !== 'OSGB') {
           // Try to switch to a layer with coverage of the point that was clicked.
-          let name = '';
-          for (let layer of div.map.layers) {
-            if (layer.isBaseLayer) {
-              name = layer.name;
-              if (name.startsWith('Google') || name.startsWith('Bing') || name.startsWith('OpenStreetMap')) {
-                div.map.setBaseLayer(layer);
-                break;
+          name = '';
+          $.each(div.map.layers, function() {
+            if (this.isBaseLayer) {
+              name = this.name;
+              if (name.match(/^Google/) || name.match(/^Bing/) || name.match(/^OpenStreetMap/)) {
+                div.map.setBaseLayer(this);
+                return false;
               }
             }
-          }
+          });
         }
       }
     }
-  
+
 
     function showGridRefHints(div) {
       if (overMap && div.settings.gridRefHint && typeof indiciaData.srefHandlers!=='undefined' &&
@@ -2039,8 +2041,8 @@ var destroyAllFeatures;
           event.layer === indiciaData.reportlayer &&
           typeof indiciaData.reportlayer.needsRedraw !== 'undefined') {
         indiciaData.mapdiv.map.events.triggerEvent('moveend');
-      }    
-      
+      }
+
       // Save the hidden layer so we know what it was when changebaselayer triggers matchMapProjectionToLayer.
       if (event.property === 'visibility' && event.layer.visibility === false) {
         event.layer.map.lastLayer = event.layer;
@@ -2048,7 +2050,7 @@ var destroyAllFeatures;
     }
 
     /**
-     *  OpenLayers 2 is not designed to handle switching between base layers with different projections. However, 
+     *  OpenLayers 2 is not designed to handle switching between base layers with different projections. However,
      *  Ordnance Survey Leisure Maps are only available in EPSG:27700 so to be able to have them as an option alongside
      *  maps in the usual Web Mercator projection we trigger this function on changebaselayer.
      *  Ref:
@@ -2062,16 +2064,16 @@ var destroyAllFeatures;
         // If a projection code, convert to object.
         currentProjection = new OpenLayers.Projection(map.projection);
       }
-      
+
       if (!newProjection.equals(currentProjection)) {
         // Update map properties to match properties of baseLayer.
         map.maxExtent = layer.maxExtent;
         map.resolutions = layer.resolutions;
         map.projection = newProjection;
-        
+
         // Redraw map based on new projection.
         var centre = map.getCenter();
-        var zoom = map.getZoom();        
+        var zoom = map.getZoom();
         // Compensate for incorrect choice of zoom level when switching from Web Mercator layer to OS Leisure.
         if (map.lastLayer.name === 'Ordnance Survey Leisure') {
           zoom -= (zoom === 0) ? 0 : 1;
@@ -2079,15 +2081,15 @@ var destroyAllFeatures;
         if (map.baseLayer.name === 'Ordnance Survey Leisure') {
           zoom += 1;
         }
-        if (centre !== null) {        
+        if (centre !== null) {
           centre = centre.transform(currentProjection, newProjection);
           map.setCenter(centre, zoom, false, true);
         }
       }
-      
+
       // Update edit layer properties to match properties of baseLayer.
       if (typeof map.editLayer !== 'undefined') {
-        var editLayer = map.editLayer;        
+        var editLayer = map.editLayer;
         editLayer.maxExtent = layer.maxExtent;
         editLayer.resolutions = layer.resolutions;
         if (!newProjection.equals(currentProjection)) {
@@ -2110,21 +2112,17 @@ var destroyAllFeatures;
       var gLayer = this;
       var olLayer;
       // Find the OpenLayers layer containing the mapObject which is the Google layer.
-      $.each(map.layers, function(idx, layer){
-        if(layer.mapObject == gLayer) {
+      $.each(map.layers, function (idx, layer) {
+        if (layer.mapObject === gLayer) {
           olLayer = layer;
           return false;
         }
       });
       // Hide the Google layer if it is not the current base layer.
-      if(map.baseLayer != olLayer) {
+      if (map.baseLayer !== olLayer) {
         olLayer.display(false);
       }
     }
-
-
-
-
 
     // Extend our default options with those provided, basing this on an empty object
     // so the defaults don't get changed.
@@ -2337,7 +2335,7 @@ var destroyAllFeatures;
           if (typeof layer.mapObject !== 'undefined') {
             layer.mapObject.setTilt(0);
           }
-          if (item.startsWith('google')) {
+          if (item.match(/^google/)) {
             // Workaround.
             // If there is a Google layer loaded but the initial layer is smaller (e.g. OS Leisure)
             // then both may appear. This occurs because the Google layer cannot be
@@ -3040,7 +3038,7 @@ jQuery.fn.indiciaMapPanel.openLayersDefaults = {
     units: "m",
     numZoomLevels: 18,
     maxResolution: 156543.0339,
-    maxExtent: new OpenLayers.Bounds(-20037508, -20037508, 20037508, 20037508.34),
+    maxExtent: new OpenLayers.Bounds(-20037508, -20037508, 20037508, 20037508.34)
 };
 
 
