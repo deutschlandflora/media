@@ -2075,7 +2075,7 @@ var destroyAllFeatures;
         var centre = map.getCenter();
         var zoom = map.getZoom();
         // Compensate for incorrect choice of zoom level when switching from Web Mercator layer to OS Leisure.
-        if (map.lastLayer.name === 'Ordnance Survey Leisure') {
+        if (map.lastLayer && map.lastLayer.name === 'Ordnance Survey Leisure') {
           zoom -= (zoom === 0) ? 0 : 1;
         }
         if (map.baseLayer.name === 'Ordnance Survey Leisure') {
