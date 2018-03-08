@@ -454,10 +454,10 @@
           var map;
           var valueData;
           // if we get a count back then the structure is slightly different
-          if (typeof response.count !== 'undefined') {
-            rows = response.records;
-          } else {
+          if (typeof response.count === 'undefined') {
             rows = response;
+          } else {
+            rows = response.records;
           }
           // Get the rows on the grid as they first appear on the page, before any filtering is applied.
           if (!indiciaData.initialReportGridRecords) {
@@ -652,6 +652,7 @@
     function load(div, recount) {
       var request;
       if (recount) {
+        delete div.settings.recordCount;
         delete div.settings.extraParams.knownCount;
       }
       request = getFullRequestPathWithoutPaging(div, true, true);
