@@ -616,7 +616,7 @@
             window[div.settings.callback](div);
           }
           if (typeof callback !== 'undefined') {
-            callback();
+            callback(response);
           }
 
         },
@@ -647,6 +647,23 @@
     }
 
     /**
+     * When a response received from a report service call, update count and
+     * pager info.
+     */
+    function updateCountFromResponse(div, response) {
+      var count;
+      if (typeof response.count !== 'undefined') {
+        count = parseInt(response.count, 10);
+        if (indiciaData.includePopupFilter) {
+          count -= indiciaData.popupFilterRemovedRowsCount;
+        }
+        div.settings.recordCount = count;
+        div.settings.extraParams.knownCount = count;
+        updatePager(div, false);
+      }
+    }
+
+    /**
      * Function to make a service call to load the grid data.
      */
     function load(div, recount) {
@@ -669,22 +686,26 @@
         request += '&limit=' + (div.settings.itemsPerPage === 0 ? 0 : div.settings.itemsPerPage + 1);
       }
       if (recount) {
-        loadGridFrom(div, request, true, function doRecount () {
-          request = getFullRequestPathWithoutPaging(div, true, true);
-          request += '&wantCount=1&wantRecords=0';
-          $.ajax({
-            dataType: 'json',
-            url: request,
-            data: null,
-            success: function(response) {
-              if (indiciaData.includePopupFilter) {
-                response.count = response.count - indiciaData.popupFilterRemovedRowsCount;
+        // Call the report API with a callback that will update count info.
+        loadGridFrom(div, request, true, function doRecount(recordsResponse) {
+          // The report API will return count data if requested OR it worked it
+          // out anyway during optimisations, so make use of it when available.
+          // Therefore set up a 2nd lazy call to count the records only if
+          // necessary.
+          if (typeof recordsResponse.count === 'undefined') {
+            request = getFullRequestPathWithoutPaging(div, true, true);
+            request += '&wantCount=1&wantRecords=0';
+            $.ajax({
+              dataType: 'json',
+              url: request,
+              data: null,
+              success: function countSuccess(countResponse) {
+                updateCountFromResponse(div, countResponse);
               }
-              div.settings.recordCount = parseInt(response.count, 10);
-              div.settings.extraParams.knownCount = div.settings.recordCount;
-              updatePager(div, false);
-            }
-          });
+            });
+          } else {
+            updateCountFromResponse(div, recordsResponse);
+          }
         });
       } else {
         loadGridFrom(div, request, true);
