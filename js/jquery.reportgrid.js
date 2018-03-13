@@ -109,30 +109,26 @@
     }
 
     function mergeParamsIntoTemplate (div, params, template) {
-      var regex, regexEsc, regexEscDbl, regexHtmlEsc, regexHtmlEscDbl, r;
-      $.each(params, function(param) {
-        regex = new RegExp('\\{' + param + '\\}','g');
-        regexEsc = new RegExp('\\{' + param + '-escape-quote\\}','g');
-        regexEscDbl = new RegExp('\\{' + param + '-escape-dblquote\\}','g');
-        regexHtmlEsc = new RegExp('\\{' + param + '-escape-htmlquote\\}','g');
-        regexHtmlEscDbl = new RegExp('\\{' + param + '-escape-htmldblquote\\}','g');
-        r = params[param] || '';
-        template = template.replace(regex, r);
-        template = template.replace(regexEsc, r.replace("'","\\'"));
-        template = template.replace(regexEscDbl, r.replace('"','\\"'));
-        template = template.replace(regexHtmlEsc, r.replace("'","&#39;"));
-        template = template.replace(regexHtmlEscDbl, r.replace('"','&quot;'));
+      var r = template;
+      $.each(params, function (param) {
+        var paramStr = params[param] || '';
+        var regex = new RegExp('\\{' + param + '\\}', 'g');
+        var regexEsc = new RegExp('\\{' + param + '-escape-quote\\}', 'g');
+        var regexEscDbl = new RegExp('\\{' + param + '-escape-dblquote\\}', 'g');
+        var regexHtmlEsc = new RegExp('\\{' + param + '-escape-htmlquote\\}', 'g');
+        var regexHtmlEscDbl = new RegExp('\\{' + param + '-escape-htmldblquote\\}', 'g');
+        r = r.replace(regex, paramStr);
+        r = r.replace(regexEsc, paramStr.replace(/'/g, "\\'"));
+        r = r.replace(regexEscDbl, paramStr.replace(/"/g, '\\"'));
+        r = r.replace(regexHtmlEsc, paramStr.replace(/'/g, '&#39;'));
+        r = r.replace(regexHtmlEscDbl, paramStr.replace(/"/g, '&quot;'));
       });
       // Also do some standard params from the settings, for various paths/urls
-      regex = new RegExp('\\{rootFolder\\}','g');
-      template = template.replace(regex, div.settings.rootFolder);
-      regex = new RegExp('\\{sep\\}','g');
-      template = template.replace(regex, div.settings.rootFolder.indexOf('?') === -1 ? '?' : '&');
-      regex = new RegExp('\\{imageFolder\\}','g');
-      template = template.replace(regex, div.settings.imageFolder);
-      regex = new RegExp('\\{currentUrl\\}','g');
-      template = template.replace(regex, div.settings.currentUrl);
-      return template;
+      r = r.replace(/\{rootFolder\}/g, div.settings.rootFolder);
+      r = r.replace(/\{sep\}/g, div.settings.rootFolder.indexOf('?') === -1 ? '?' : '&');
+      r = r.replace(/\{imageFolder\}/g, div.settings.imageFolder);
+      r = r.replace(/\{currentUrl\}/g, div.settings.currentUrl);
+      return r;
     }
 
     function getActions (div, row, actions, queryParams) {
@@ -145,18 +141,11 @@
       var classes;
       var link;
       var linkParams;
-      var rowCopy;
       var thisrow = $.extend(queryParams, row);
       $.each(actions, function (idx, action) {
         if (typeof action.visibility_field === 'undefined' || thisrow[action.visibility_field] !== 'f') {
           if (typeof action.javascript !== 'undefined') {
-            rowCopy = thisrow;
-            $.each(rowCopy, function replaceInField(field) {
-              if (typeof rowCopy[field] === 'string') {
-                rowCopy[field] = rowCopy[field].replace(/'/g, "\\'");
-              }
-            });
-            onclick = ' onclick="' + mergeParamsIntoTemplate(div, rowCopy, action.javascript) + '"';
+            onclick = ' onclick="' + mergeParamsIntoTemplate(div, thisrow, action.javascript) + '"';
           } else {
             onclick = '';
           }
@@ -465,10 +454,10 @@
           var map;
           var valueData;
           // if we get a count back then the structure is slightly different
-          if (typeof response.count !== 'undefined') {
-            rows = response.records;
-          } else {
+          if (typeof response.count === 'undefined') {
             rows = response;
+          } else {
+            rows = response.records;
           }
           // Get the rows on the grid as they first appear on the page, before any filtering is applied.
           if (!indiciaData.initialReportGridRecords) {
@@ -663,6 +652,7 @@
     function load(div, recount) {
       var request;
       if (recount) {
+        delete div.settings.recordCount;
         delete div.settings.extraParams.knownCount;
       }
       request = getFullRequestPathWithoutPaging(div, true, true);
