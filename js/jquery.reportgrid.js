@@ -104,35 +104,31 @@
           }
         });
       }
-      $.extend(request, getQueryParam(div));
+      $.extend(request, getQueryParam(div), div.settings.immutableParams);
       return request;
     }
 
     function mergeParamsIntoTemplate (div, params, template) {
-      var regex, regexEsc, regexEscDbl, regexHtmlEsc, regexHtmlEscDbl, r;
-      $.each(params, function(param) {
-        regex = new RegExp('\\{' + param + '\\}','g');
-        regexEsc = new RegExp('\\{' + param + '-escape-quote\\}','g');
-        regexEscDbl = new RegExp('\\{' + param + '-escape-dblquote\\}','g');
-        regexHtmlEsc = new RegExp('\\{' + param + '-escape-htmlquote\\}','g');
-        regexHtmlEscDbl = new RegExp('\\{' + param + '-escape-htmldblquote\\}','g');
-        r = params[param] || '';
-        template = template.replace(regex, r);
-        template = template.replace(regexEsc, r.replace("'","\\'"));
-        template = template.replace(regexEscDbl, r.replace('"','\\"'));
-        template = template.replace(regexHtmlEsc, r.replace("'","&#39;"));
-        template = template.replace(regexHtmlEscDbl, r.replace('"','&quot;'));
+      var r = template;
+      $.each(params, function (param) {
+        var paramStr = params[param] || '';
+        var regex = new RegExp('\\{' + param + '\\}', 'g');
+        var regexEsc = new RegExp('\\{' + param + '-escape-quote\\}', 'g');
+        var regexEscDbl = new RegExp('\\{' + param + '-escape-dblquote\\}', 'g');
+        var regexHtmlEsc = new RegExp('\\{' + param + '-escape-htmlquote\\}', 'g');
+        var regexHtmlEscDbl = new RegExp('\\{' + param + '-escape-htmldblquote\\}', 'g');
+        r = r.replace(regex, paramStr);
+        r = r.replace(regexEsc, paramStr.replace(/'/g, "\\'"));
+        r = r.replace(regexEscDbl, paramStr.replace(/"/g, '\\"'));
+        r = r.replace(regexHtmlEsc, paramStr.replace(/'/g, '&#39;'));
+        r = r.replace(regexHtmlEscDbl, paramStr.replace(/"/g, '&quot;'));
       });
       // Also do some standard params from the settings, for various paths/urls
-      regex = new RegExp('\\{rootFolder\\}','g');
-      template = template.replace(regex, div.settings.rootFolder);
-      regex = new RegExp('\\{sep\\}','g');
-      template = template.replace(regex, div.settings.rootFolder.indexOf('?') === -1 ? '?' : '&');
-      regex = new RegExp('\\{imageFolder\\}','g');
-      template = template.replace(regex, div.settings.imageFolder);
-      regex = new RegExp('\\{currentUrl\\}','g');
-      template = template.replace(regex, div.settings.currentUrl);
-      return template;
+      r = r.replace(/\{rootFolder\}/g, div.settings.rootFolder);
+      r = r.replace(/\{sep\}/g, div.settings.rootFolder.indexOf('?') === -1 ? '?' : '&');
+      r = r.replace(/\{imageFolder\}/g, div.settings.imageFolder);
+      r = r.replace(/\{currentUrl\}/g, div.settings.currentUrl);
+      return r;
     }
 
     function getActions (div, row, actions, queryParams) {
@@ -145,18 +141,11 @@
       var classes;
       var link;
       var linkParams;
-      var rowCopy;
       var thisrow = $.extend(queryParams, row);
       $.each(actions, function (idx, action) {
         if (typeof action.visibility_field === 'undefined' || thisrow[action.visibility_field] !== 'f') {
           if (typeof action.javascript !== 'undefined') {
-            rowCopy = thisrow;
-            $.each(rowCopy, function replaceInField(field) {
-              if (typeof rowCopy[field] === 'string') {
-                rowCopy[field] = rowCopy[field].replace(/'/g, "\\'");
-              }
-            });
-            onclick = ' onclick="' + mergeParamsIntoTemplate(div, rowCopy, action.javascript) + '"';
+            onclick = ' onclick="' + mergeParamsIntoTemplate(div, thisrow, action.javascript) + '"';
           } else {
             onclick = '';
           }
@@ -465,10 +454,10 @@
           var map;
           var valueData;
           // if we get a count back then the structure is slightly different
-          if (typeof response.count !== 'undefined') {
-            rows = response.records;
-          } else {
+          if (typeof response.count === 'undefined') {
             rows = response;
+          } else {
+            rows = response.records;
           }
           // Get the rows on the grid as they first appear on the page, before any filtering is applied.
           if (!indiciaData.initialReportGridRecords) {
@@ -627,7 +616,7 @@
             window[div.settings.callback](div);
           }
           if (typeof callback !== 'undefined') {
-            callback();
+            callback(response);
           }
 
         },
@@ -658,11 +647,29 @@
     }
 
     /**
+     * When a response received from a report service call, update count and
+     * pager info.
+     */
+    function updateCountFromResponse(div, response) {
+      var count;
+      if (typeof response.count !== 'undefined') {
+        count = parseInt(response.count, 10);
+        if (indiciaData.includePopupFilter) {
+          count -= indiciaData.popupFilterRemovedRowsCount;
+        }
+        div.settings.recordCount = count;
+        div.settings.extraParams.knownCount = count;
+        updatePager(div, false);
+      }
+    }
+
+    /**
      * Function to make a service call to load the grid data.
      */
     function load(div, recount) {
       var request;
       if (recount) {
+        delete div.settings.recordCount;
         delete div.settings.extraParams.knownCount;
       }
       request = getFullRequestPathWithoutPaging(div, true, true);
@@ -679,22 +686,26 @@
         request += '&limit=' + (div.settings.itemsPerPage === 0 ? 0 : div.settings.itemsPerPage + 1);
       }
       if (recount) {
-        loadGridFrom(div, request, true, function doRecount () {
-          request = getFullRequestPathWithoutPaging(div, true, true);
-          request += '&wantCount=1&wantRecords=0';
-          $.ajax({
-            dataType: 'json',
-            url: request,
-            data: null,
-            success: function(response) {
-              if (indiciaData.includePopupFilter) {
-                response.count = response.count - indiciaData.popupFilterRemovedRowsCount;
+        // Call the report API with a callback that will update count info.
+        loadGridFrom(div, request, true, function doRecount(recordsResponse) {
+          // The report API will return count data if requested OR it worked it
+          // out anyway during optimisations, so make use of it when available.
+          // Therefore set up a 2nd lazy call to count the records only if
+          // necessary.
+          if (typeof recordsResponse.count === 'undefined') {
+            request = getFullRequestPathWithoutPaging(div, true, true);
+            request += '&wantCount=1&wantRecords=0';
+            $.ajax({
+              dataType: 'json',
+              url: request,
+              data: null,
+              success: function countSuccess(countResponse) {
+                updateCountFromResponse(div, countResponse);
               }
-              div.settings.recordCount = parseInt(response.count, 10);
-              div.settings.extraParams.knownCount = div.settings.recordCount;
-              updatePager(div, false);
-            }
-          });
+            });
+          } else {
+            updateCountFromResponse(div, recordsResponse);
+          }
         });
       } else {
         loadGridFrom(div, request, true);
@@ -1381,5 +1392,6 @@ jQuery.fn.reportgrid.defaults = {
   sendOutputToMap: false, // does the current page of report data get shown on a map?
   linkFilterToMap: false, // requires a rowId - filtering the grid also filters the map
   msgRowLinkedToMapHint: 'Click the row to highlight the record on the map. Double click to zoom in.',
-  actionButtonTemplate: '<a{class}{href}{onclick}>{content}</a>'
+  actionButtonTemplate: '<a{class}{href}{onclick}>{content}</a>',
+  immutableParams: {}
 };

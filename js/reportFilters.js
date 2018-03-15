@@ -702,8 +702,10 @@ jQuery(document).ready(function ($) {
       getDescription: function () {
         var r = [];
         var op;
-        if (indiciaData.filter.def.quality !== 'all') {
-          r.push($('#quality-filter option[value=' + indiciaData.filter.def.quality.replace('!', '\\!') + ']').html());
+        var quality = typeof indiciaData.filter.def.quality === 'string'
+          ? indiciaData.filter.def.quality : indiciaData.filter.def.quality.toString();
+        if (quality !== 'all') {
+          r.push($('#quality-filter option[value=' + quality.replace('!', '\\!') + ']').html());
         }
         if (indiciaData.filter.def.autochecks === 'F') {
           r.push(indiciaData.lang.reportFilters.AutochecksFailed);
