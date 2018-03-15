@@ -2600,7 +2600,7 @@ var destroyAllFeatures;
               {'displayClass': align + 'olControlModifyFeature', 'title':div.settings.hintModifyFeature});
           toolbarControls.push(ctrlObj);
         } else if (ctrl=='graticule') {
-          $.each($('#' + div.settings.srefSystemId + ' option'), function() {
+          $.each($('select#' + div.settings.srefSystemId + ' option,input#' + div.settings.srefSystemId), function() {
             var graticuleDef;
             if (typeof div.settings.graticules[$(this).val()] !== 'undefined') {
               graticuleDef = div.settings.graticules[$(this).val()];
@@ -2609,7 +2609,7 @@ var destroyAllFeatures;
                 bounds: graticuleDef.bounds,
                 intervals: graticuleDef.intervals,
                 intervalColours: div.settings.graticuleIntervalColours,
-                layerName: 'Map grid for ' + $(this).html()
+                layerName: 'Map grid for ' + ($(this).html() !== '' ? $(this).html() : $(this).val())
               });
               div.map.addControl(ctrlObj);
               if ($.inArray(ctrl, div.settings.activatedStandardControls)===-1) {
@@ -2864,6 +2864,11 @@ jQuery.fn.indiciaMapPanel.defaults = {
         projection: 23030,
         bounds: [500000, 5400000, 600000, 5550000],
         intervals: [100000, 10000, 1000, 100]
+      },
+      'mtbqqq': {
+        projection: 4314,
+        bounds: [35/6, 47.1+(1/6), 83/6, 55.1],
+        intervals: [[ 10/60, 5/60, 150/3600, 75/3600 ],[ 6/60, 3/60, 90/3600, 45/3600 ]]
       }
     },
     /* Intention is to also implement hoveredSrefPrecisionMin and Max for a square size shown when you hover, and also a
