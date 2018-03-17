@@ -968,6 +968,13 @@ var destroyAllFeatures;
             "https://b.tile.openstreetmap.org/${z}/${x}/${y}.png",
             "https://c.tile.openstreetmap.org/${z}/${x}/${y}.png"]);
           },
+        otm : function() {
+          // OpenTopoMap standard tile layer
+          return new OpenLayers.Layer.OSM("OpenTopoMap", [
+            "https://a.tile.opentopomap.org/${z}/${x}/${y}.png",
+            "https://b.tile.opentopomap.org/${z}/${x}/${y}.png",
+            "https://c.tile.opentopomap.org/${z}/${x}/${y}.png"]);
+        },
         os_outdoor: function() {
           return new OpenLayers.Layer.WMTS($.extend({
             name: "Ordnance Survey Outdoor",
