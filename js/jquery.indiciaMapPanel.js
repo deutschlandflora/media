@@ -2983,7 +2983,7 @@ jQuery.fn.indiciaMapPanel.defaults = {
       },
       'mtbqqq': {
         projection: 4314,
-        bounds: [35/6, 47.1+(1/6), 83/6, 55.1],
+        bounds: [35/6, 46, 134/6, 55.9],
         intervals: [[ 10/60, 5/60, 150/3600, 75/3600 ],[ 6/60, 3/60, 90/3600, 45/3600 ]]
       }
     },
