@@ -21,10 +21,10 @@
  * Class: OpenLayers.Control.ClearLayer
  * The clear layer control provides a button linked to a vector layer such as the edit
  * layer which clears the content of the layer.
- * 
+ *
  * Inherits from:
  *  - <OpenLayers.Control>
- *  
+ *
  */
 (function($) {
   OpenLayers.Control.ClearLayer = OpenLayers.Class(OpenLayers.Control, {
@@ -35,7 +35,7 @@
      * or the layer if the control was configured with a single layer
      */
     layers: null,
-    
+
     /**
      * Property: clearReport
      * If true then a report map is cleared when the button is clicked.
@@ -45,7 +45,7 @@
     /**
      * Constructor: OpenLayers.Control.ClearLayer
      * A control to delete the contents of a vector layer.
-     * 
+     *
      * Parameters:
      * options - {Object} An optional object whose properties will be used
      *     to extend the control.
@@ -59,18 +59,18 @@
      * APIMethod: destroy
      */
     destroy: function() {
-        this.deactivate();        
+        this.deactivate();
         OpenLayers.Control.prototype.destroy.apply(this, arguments);
     },
 
-    activate: function() {
+    activate: function () {
       // layers could be an array or a single layer
       if (this.layers.constructor.toString().indexOf("Array") == -1) {
         this.layers.removeAllFeatures();
       } else {
-        $.each(this.layers, function(idx, layer) {
+        $.each(this.layers, function (idx, layer) {
           layer.removeAllFeatures();
-          if (layer.map.editLayer===layer) {
+          if (layer.map.editLayer === layer) {
             // if clearing the edit layer, clear the imp-geom field
             $('#imp-geom').val('');
           }
@@ -79,25 +79,20 @@
       if (this.clearReport) {
         $('#hidden-wkt').val('');
         $('#orig-wkt').val('');
-        if (typeof indiciaData.reportlayer!=="undefined") {
-          $.each(indiciaData.reports, function(i, reportGroup) {
-            $.each(reportGroup, function(j, grid) {
-              grid[0].settings.extraParams.idlist='';              
-              grid[0].settings.offset=0;
-              if (grid[0].settings.extraParams.searchArea) {
-                // remap only if we are removing a search polygon
-                grid[0].settings.extraParams.searchArea='';
-                indiciaData.reportlayer.removeAllFeatures();
-                grid.mapRecords(grid[0].settings.mapDataSource, grid[0].settings.mapDataSourceLoRes);
-              }
-              grid.reload(true);
-            });
-          });
+        if (typeof indiciaData.reportlayer !== 'undefined' && typeof indiciaData.mapReportControllerGrid !== 'undefined') {
+          indiciaData.mapReportControllerGrid[0].settings.extraParams.idlist = '';
+          indiciaData.mapReportControllerGrid[0].settings.offset = 0;
+          if (indiciaData.mapReportControllerGrid[0].settings.extraParams.searchArea) {
+            // remap only if we are removing a search polygon
+            indiciaData.mapReportControllerGrid[0].settings.extraParams.searchArea = '';
+            indiciaData.reportlayer.removeAllFeatures();
+            indiciaData.mapReportControllerGrid.mapRecords();
+          }
+          indiciaData.mapReportControllerGrid.reload(true);
         }
       }
     },
-   
-    
-    CLASS_NAME: "OpenLayers.Control.ClearLayer"
+
+    CLASS_NAME: 'OpenLayers.Control.ClearLayer'
   });
 })(jQuery);
