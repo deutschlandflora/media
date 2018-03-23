@@ -1135,7 +1135,7 @@ jQuery(document).ready(function ($) {
           }
         });
       });
-      if (typeof indiciaData.mapdiv !== 'undefined') {
+      if (typeof indiciaData.mapdiv !== 'undefined' && typeof indiciaData.mapReportControllerGrid !== 'undefined') {
         indiciaData.mapReportControllerGrid.mapRecords();
       }
     }
