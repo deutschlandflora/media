@@ -1648,7 +1648,6 @@ jQuery(document).ready(function ($) {
   $('#context-filter').change(resetFilter);
 
   filterChange();
-  applyDefaults();
   $('#imp-sref').change(function () {
     window.setTimeout(function () { clearSites(); }, 500);
   });
