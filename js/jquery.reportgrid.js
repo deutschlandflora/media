@@ -848,7 +848,11 @@
             });
             indiciaData.reportlayer.addFeatures(features);
             if (indiciaData.mapdiv.settings.zoomMapToOutput) {
+              indiciaData.disableMapDataLoading = true;
               indiciaData.mapdiv.map.zoomToExtent(indiciaData.reportlayer.getDataExtent());
+              // zoomMapToOutput is one off.
+              indiciaData.mapdiv.settings.zoomMapToOutput = false;
+              indiciaData.disableMapDataLoading = false;
             }
             if (typeof recordCount === 'undefined' || offset + BATCH_SIZE >= recordCount) {
               $('#map-loading').hide();
@@ -876,22 +880,22 @@
         return false;
       }
       delete indiciaData.reportlayer.needsRedraw;
-      if (div.settings.mapDataSource !== '') {
-        if (map.resolution>30 && div.settings.mapDataSourceLoRes) {
-          div.settings.dataSource=div.settings.mapDataSourceLoRes;
+      if (indiciaData.mapDataSource.fullRes !== '') {
+        if (map.resolution > 30 && indiciaData.mapDataSource.loRes) {
+          div.settings.dataSource = indiciaData.mapDataSource.loRes;
         } else {
-          div.settings.dataSource=div.settings.mapDataSource;
+          div.settings.dataSource = indiciaData.mapDataSource.fullRes;
         }
       }
       try {
-        request=getFullRequestPathWithoutPaging(div, false, false) + '&limit=' + BATCH_SIZE;
-        if (map.resolution > 600 && div.settings.mapDataSourceLoRes) {
+        request = getFullRequestPathWithoutPaging(div, false, false) + '&limit=' + BATCH_SIZE;
+        if (map.resolution > 600 && indiciaData.mapDataSource.loRes) {
           request += '&sq_size=10000';
           layerInfo.zoomLayerIdx = 0;
-        } else if (map.resolution>120 && div.settings.mapDataSourceLoRes) {
+        } else if (map.resolution>120 && indiciaData.mapDataSource.loRes) {
           request += '&sq_size=2000';
           layerInfo.zoomLayerIdx = 1;
-        } else if (map.resolution>30 && div.settings.mapDataSourceLoRes) {
+        } else if (map.resolution>30 && indiciaData.mapDataSource.loRes) {
           request += '&sq_size=1000';
           layerInfo.zoomLayerIdx = 2;
         } else {
@@ -902,7 +906,7 @@
           request += '&' + div.settings.rowId + '=' + id;
         } else {
           // if zoomed in below a 10k map, use the map bounding box to limit the loaded features. Having an indexed site filter changes the threshold as it is less necessary.
-          if (map.zoom <= 600 && div.settings.mapDataSourceLoRes &&
+          if (map.zoom <= 600 && indiciaData.mapDataSource.loRes &&
               (map.zoom <= 30 || typeof div.settings.extraParams.indexed_location_id === 'undefined' || div.settings.extraParams.indexed_location_id === '')) {
             // get the current map bounds. If zoomed in close, get a larger bounds so that the map can be panned a bit without reload.
             layerInfo.bounds = map.calculateBounds(map.getCenter(), Math.max(39, map.getResolution()));
@@ -932,15 +936,11 @@
       }
     }
 
-    this.mapRecords = function (report, reportLoRes, zooming) {
+    this.mapRecords = function (zooming) {
       if (typeof zooming === 'undefined') {
         zooming = false;
       }
       $.each($(this), function (idx, div) {
-        div.settings.mapDataSource = report;
-        if (reportLoRes) {
-          div.settings.mapDataSourceLoRes = reportLoRes;
-        }
         mapRecords(div, zooming);
       });
     };
@@ -1364,8 +1364,7 @@ jQuery.fn.reportgrid.defaults = {
   auth_token : '',
   nonce : '',
   dataSource : '',
-  mapDataSource: '',
-  mapDataSourceLoRes: '',
+  mapDataSource: {fullRes: '', loRes: ''},
   view: 'list',
   columns : null,
   orderby : null,
