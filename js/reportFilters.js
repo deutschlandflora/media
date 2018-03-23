@@ -726,11 +726,6 @@ jQuery(document).ready(function ($) {
         }
         return r.join('<br/>');
       },
-      getDefaults: function () {
-        return {
-          quality: '!R'
-        };
-      },
       loadForm: function (context) {
         if (context && context.quality && context.quality !== 'all') {
           $('#quality-filter').attr('disabled', true);
@@ -1141,17 +1136,8 @@ jQuery(document).ready(function ($) {
     }
   };
 
-  function applyDefaults() {
-    $.each(paneObjList, function (name, obj) {
-      if (typeof obj.getDefaults !== 'undefined') {
-        $.extend(indiciaData.filter.def, obj.getDefaults());
-      }
-    });
-  }
-
   function resetFilter() {
     indiciaData.filter.def = {};
-    applyDefaults();
     if (typeof indiciaData.filter.resetParams !== 'undefined') {
       indiciaData.filter.def = $.extend(indiciaData.filter.def, indiciaData.filter.resetParams);
     }
