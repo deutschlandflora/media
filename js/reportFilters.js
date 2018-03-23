@@ -702,8 +702,13 @@ jQuery(document).ready(function ($) {
       getDescription: function () {
         var r = [];
         var op;
-        var quality = typeof indiciaData.filter.def.quality === 'string'
-          ? indiciaData.filter.def.quality : indiciaData.filter.def.quality.toString();
+        var quality;
+        if (typeof indiciaData.filter.def.quality === 'undefined') {
+          quality = 'all';
+        } else {
+          quality = typeof indiciaData.filter.def.quality === 'string'
+            ? indiciaData.filter.def.quality : indiciaData.filter.def.quality.toString();
+        }
         if (quality !== 'all') {
           r.push($('#quality-filter option[value=' + quality.replace('!', '\\!') + ']').html());
         }
