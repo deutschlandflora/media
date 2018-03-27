@@ -151,23 +151,31 @@ jQuery UI widgets - override existing UI plugons.
      * speciesIncludeAuthorities is enabled.
      */
     _doneEntry: function(item) {
-      var display;
+      var taxon;
+      var checkUnique;
       if (this.options.mode === 'species') {
-        // Work out a unique key for this taxon concept/name.
-        display = item.taxon_meaning_id + ':' + item.taxon;
+        if (typeof indiciaData.hiddenTaxonNames !== 'undefined'
+            && jQuery.inArray(item.taxon, indiciaData.hiddenTaxonNames) > -1) {
+          // Skip name.
+          return true;
+        }
+        // Note we track the distinct meaning id and display term, so we don't output duplicates
+        // display field does not seem to be available, though there may be some form somewhere which uses it.
+        taxon = typeof indiciaFns.uniqueTaxonSimplify === 'undefined' ?
+          item.taxon.replace(/\W+/g, '').toLowerCase() : indiciaFns.uniqueTaxonSimplify(item.taxon);
+        checkUnique = item.taxon_meaning_id + ':' + taxon;
         // Only include the authority if the user can see it.
         if (this.options.speciesIncludeAuthorities) {
-          display += ':' + item.authority;
+          checkUnique += ':' + item.authority;
         }
         // If this name is unique or the first instance, show it.
-        if ($.inArray(display, this.menuEntries) === -1) {
-          this.menuEntries.push(display);
+        if ($.inArray(checkUnique, this.menuEntries) === -1) {
+          this.menuEntries.push(checkUnique);
         } else {
           return true;
         }
-      } else {
-        return false;
       }
+      return false;
     },
 
     /**
