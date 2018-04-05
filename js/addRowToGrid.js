@@ -966,7 +966,7 @@ function getAutocompleteSettings(extraParams, gridId) {
       var taxon;
       jQuery.each(data, function taxonParse(i, item) {
         if (typeof indiciaData.hiddenTaxonNames !== 'undefined'
-            && jQuery.inArray(item.taxon, indiciaData.hiddenTaxonNames) > -1) {
+            && jQuery.inArray(item.taxon.toLowerCase(), indiciaData.hiddenTaxonNames) > -1) {
           // Skip name.
           return true;
         }
