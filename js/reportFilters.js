@@ -702,8 +702,13 @@ jQuery(document).ready(function ($) {
       getDescription: function () {
         var r = [];
         var op;
-        var quality = typeof indiciaData.filter.def.quality === 'string'
-          ? indiciaData.filter.def.quality : indiciaData.filter.def.quality.toString();
+        var quality;
+        if (typeof indiciaData.filter.def.quality === 'undefined') {
+          quality = 'all';
+        } else {
+          quality = typeof indiciaData.filter.def.quality === 'string'
+            ? indiciaData.filter.def.quality : indiciaData.filter.def.quality.toString();
+        }
         if (quality !== 'all') {
           r.push($('#quality-filter option[value=' + quality.replace('!', '\\!') + ']').html());
         }
@@ -725,11 +730,6 @@ jQuery(document).ready(function ($) {
           r.push(indiciaData.lang.reportFilters.HasNoPhotos);
         }
         return r.join('<br/>');
-      },
-      getDefaults: function () {
-        return {
-          quality: '!R'
-        };
       },
       loadForm: function (context) {
         if (context && context.quality && context.quality !== 'all') {
@@ -1132,26 +1132,17 @@ jQuery(document).ready(function ($) {
           if (reload) {
             // reload the report grid
             this.ajaxload();
-            if (grid.settings.linkFilterToMap && typeof indiciaData.mapdiv !== 'undefined') {
-              this.mapRecords(grid.settings.mapDataSource, grid.settings.mapDataSourceLoRes);
-            }
           }
         });
       });
+      if (typeof indiciaData.mapdiv !== 'undefined' && typeof indiciaData.mapReportControllerGrid !== 'undefined') {
+        indiciaData.mapReportControllerGrid.mapRecords();
+      }
     }
   };
 
-  function applyDefaults() {
-    $.each(paneObjList, function (name, obj) {
-      if (typeof obj.getDefaults !== 'undefined') {
-        $.extend(indiciaData.filter.def, obj.getDefaults());
-      }
-    });
-  }
-
   function resetFilter() {
     indiciaData.filter.def = {};
-    applyDefaults();
     if (typeof indiciaData.filter.resetParams !== 'undefined') {
       indiciaData.filter.def = $.extend(indiciaData.filter.def, indiciaData.filter.resetParams);
     }
@@ -1662,7 +1653,6 @@ jQuery(document).ready(function ($) {
   $('#context-filter').change(resetFilter);
 
   filterChange();
-  applyDefaults();
   $('#imp-sref').change(function () {
     window.setTimeout(function () { clearSites(); }, 500);
   });

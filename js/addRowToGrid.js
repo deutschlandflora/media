@@ -963,7 +963,35 @@ function getAutocompleteSettings(extraParams, gridId) {
     continueOnBlur: true,
     max: indiciaData.speciesGrid[gridId].numValues,
     selectMode: indiciaData.speciesGrid[gridId].selectMode,
-    matchContains: indiciaData.speciesGrid[gridId].matchContains
+    matchContains: indiciaData.speciesGrid[gridId].matchContains,
+    parse: function resultsParse(data) {
+      var results = [];
+      var done = {};
+      var checkUnique;
+      var taxon;
+      jQuery.each(data, function taxonParse(i, item) {
+        if (typeof indiciaData.hiddenTaxonNames !== 'undefined'
+            && jQuery.inArray(item.taxon.toLowerCase(), indiciaData.hiddenTaxonNames) > -1) {
+          // Skip name.
+          return true;
+        }
+        // note we track the distinct meaning id and display term, so we don't output duplicates
+        // display field does not seem to be available, though there may be some form somewhere which uses it.
+        taxon = typeof indiciaFns.uniqueTaxonSimplify === 'undefined' ?
+          item.taxon.replace(/\W+/g, '').toLowerCase() : indiciaFns.uniqueTaxonSimplify(item.taxon);
+        checkUnique = item.taxon_meaning_id + '_' + taxon;
+        if (!done.hasOwnProperty(checkUnique)) {
+          results[results.length] = {
+            data: item,
+            result: item.searchterm,
+            value: item.taxa_taxon_list_id
+          };
+          done[checkUnique] = true;
+        }
+      });
+      return results;
+    },
+    formatItem: formatter
   };
   return autocompleterSettingsToReturn;
 }
