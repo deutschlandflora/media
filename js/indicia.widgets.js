@@ -36,6 +36,7 @@ jQuery UI widgets - override existing UI plugons.
       this.valueInput = $('<input>')
         .attr('type', 'hidden')
         .attr('id', this.options.id)
+        .attr('name', this.options.fieldname)
         .val(this.options.default);
       $(this.element).after(this.valueInput);
       this._on(this.element, {
