@@ -6,10 +6,18 @@ jQuery UI widgets - override existing UI plugons.
   $.widget('indicia.indiciaAutocomplete', $.ui.autocomplete, {
     menuEntries: [],
 
+    selectingItem: false,
+
+    limit: 5,
+
     options: {
       source: function (term, callback) {
         var params = {};
-        $.extend(params, this.options.extraParams, { q: term.term, limit: 100, synonyms: true });
+        $.extend(params, this.options.extraParams, {
+          q: term.term,
+          limit: this.limit,
+          qfield: this.options.captionField
+        });
         $.getJSON(this.options.baseUrl, params, callback);
       },
       extraParams: {},
@@ -40,17 +48,52 @@ jQuery UI widgets - override existing UI plugons.
         .val(this.options.default);
       $(this.element).after(this.valueInput);
       this._on(this.element, {
+        indiciaautocompletechange: this._onChange,
         indiciaautocompleteselect: this._onSelect,
         indiciaautocompleteresponse: this._onResponse
       });
+      // Override initial limit if specified in options.
+      if (typeof this.options.extraParams.limit !== 'undefined') {
+        this.limit = this.options.extraParams.limit;
+      }
+    },
+
+    /**
+     * If user changes text in the input, clear the stored value.
+     */
+    _onChange: function() {
+      this.valueInput.val('');
     },
 
     /**
      * On select of an item, fill in the value and caption.
      */
     _onSelect: function (event, ui) {
+      var displayName;
+      if (typeof ui.item.moreSelector !== 'undefined') {
+        return false;
+      }
+      // Flag so we know this is a deliberate selection in any change event.
+      this.selectingItem = true;
       this.valueInput.val(ui.item[this.options.valueField]);
-      $(this.element).val(ui.item[this.options.captionField]);
+      if (this.options.mode === 'species') {
+        displayName = ui.item.taxon;
+        if (this.options.formatOptions.speciesIncludeAuthorities && ui.item.authority !== null) {
+          displayName += ' ' + ui.item.authority;
+        }
+        $(this.element).val(displayName);
+      }
+      else {
+        $(this.element).val(ui.item[this.options.captionField]);
+      }
+      if (typeof ui.item.icon !== 'undefined') {
+        $(this.element).after(ui.item.icon).next().hover(indiciaFns.hoverIdDiffIcon);
+      }
+      // Trigger a change event.
+      this.valueInput.trigger('change', ui.item);
+      // Reset selectingItem flag.
+      this.selectingItem = false;
+
       // Prevent the default behaviuor overwriting the displayed value.
       return false;
     },
@@ -61,7 +104,9 @@ jQuery UI widgets - override existing UI plugons.
      * On AJAX response, clear the current value in the hidden input.
      */
     _onResponse: function () {
-      this.valueInput.val('');
+      if (!this.selectingItem) {
+        this.valueInput.val('');
+      }
     },
 
     /**
@@ -185,8 +230,6 @@ jQuery UI widgets - override existing UI plugons.
     _renderMenu: function(ul, items) {
       var that = this;
       this._startRendering();
-
-
       $.each(items, function(index, item) {
         if (!that._doneEntry(item)) {
           that._renderItemData(ul, item);
@@ -194,6 +237,23 @@ jQuery UI widgets - override existing UI plugons.
       });
       // Alternate entry styling.
       $(ul).find('li:odd').addClass('odd');
+      // More items link
+
+      if (items.length >= this.limit) {
+        // Add a fake more results item.
+        $( "<li>" ).val('')
+          .append( $('<a>').addClass('more-results').text( 'More results available...' ) )
+          .appendTo(ul)
+          .data( "ui-autocomplete-item", {moreSelector: true})
+          .click(function() {
+            that.limit += 1000;
+            // Trigger the search again with the new limit. Needs to be after the select event
+            // has completed.
+            setTimeout(function() {
+              $(that.element).indiciaAutocomplete('search');
+            }, 100);
+          });
+      }
     },
 
     /**
