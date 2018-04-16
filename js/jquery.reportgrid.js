@@ -631,14 +631,16 @@
     /**
      * Build the URL required for a report request, excluding the pagination (limit + offset) parameters. Option to exclude the sort info and idlist param.
      */
-    function getFullRequestPathWithoutPaging(div, sort, idlist) {
+    function getFullRequestPathWithoutPaging(div, sort, idlist, knownCount) {
       var request = getRequest(div), params = getUrlParamsForAllRecords(div);
       $.each(params, function (key, val) {
-        if (!idlist && key === 'idlist') {
-          // skip the idlist param value as we want the whole map
-          val = '';
+        if (typeof knownCount === 'undefined' || knownCount === true || key !== 'knownCount') {
+          if (!idlist && key === 'idlist') {
+            // skip the idlist param value as we want the whole map
+            val = '';
+          }
+          request += '&' + key + '=' + encodeURIComponent(val);
         }
-        request += '&' + key + '=' + encodeURIComponent(val);
       });
       if (sort && div.settings.orderby !== null) {
         request += '&orderby=' + div.settings.orderby + '&sortdir=' + div.settings.sortdir;
@@ -870,9 +872,9 @@
      * The request is handled in chunks of 1000 records. Optionally supply an id to map just 1 record.
      */
     function mapRecords(div, zooming, id, callback) {
-      var layerInfo = {bounds: null}, map=indiciaData.mapdiv.map, currentBounds=null;
+      var layerInfo = { bounds: null }, map = indiciaData.mapdiv.map, currentBounds = null;
       // we need to reload the map layer using the mapping report, so temporarily switch the report
-      var origReport=div.settings.dataSource, request;
+      var origReport = div.settings.dataSource, request;
       if (typeof indiciaData.mapdiv === 'undefined'
           || typeof indiciaData.reportlayer === 'undefined'
           || indiciaData.reportlayer.visibility === false) {
@@ -888,14 +890,14 @@
         }
       }
       try {
-        request = getFullRequestPathWithoutPaging(div, false, false) + '&limit=' + BATCH_SIZE;
+        request = getFullRequestPathWithoutPaging(div, false, false, false) + '&limit=' + BATCH_SIZE;
         if (map.resolution > 600 && indiciaData.mapDataSource.loRes) {
           request += '&sq_size=10000';
           layerInfo.zoomLayerIdx = 0;
-        } else if (map.resolution>120 && indiciaData.mapDataSource.loRes) {
+        } else if (map.resolution > 120 && indiciaData.mapDataSource.loRes) {
           request += '&sq_size=2000';
           layerInfo.zoomLayerIdx = 1;
-        } else if (map.resolution>30 && indiciaData.mapDataSource.loRes) {
+        } else if (map.resolution > 30 && indiciaData.mapDataSource.loRes) {
           request += '&sq_size=1000';
           layerInfo.zoomLayerIdx = 2;
         } else {
@@ -905,7 +907,8 @@
         if (typeof id !== 'undefined') {
           request += '&' + div.settings.rowId + '=' + id;
         } else {
-          // if zoomed in below a 10k map, use the map bounding box to limit the loaded features. Having an indexed site filter changes the threshold as it is less necessary.
+          // If zoomed in below a 10k map, use the map bounding box to limit the loaded features. Having an indexed site
+          // filter changes the threshold as it is less necessary.
           if (map.zoom <= 600 && indiciaData.mapDataSource.loRes &&
               (map.zoom <= 30 || typeof div.settings.extraParams.indexed_location_id === 'undefined' || div.settings.extraParams.indexed_location_id === '')) {
             // get the current map bounds. If zoomed in close, get a larger bounds so that the map can be panned a bit without reload.
