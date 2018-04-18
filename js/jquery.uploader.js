@@ -15,7 +15,7 @@
 
 /**
  * Add functions to mediaUploadAddedHooks to recieve a notification when a file is added.
- */ 
+ */
 var mediaUploadAddedHooks = [];
 
  /**
@@ -30,7 +30,7 @@ var checkSubmitInProgress = function () {
   return true;
 };
 
- 
+
 /**
 * Class: uploader
 * A jQuery plugin that provides an upload box for multiple images.
@@ -38,8 +38,8 @@ var checkSubmitInProgress = function () {
 
 
 (function($) {
-  // When adding a link to a remote resource, the oembed protocol is used to 
-  // fetch the HTML to display for the external resource. Use the noembed 
+  // When adding a link to a remote resource, the oembed protocol is used to
+  // fetch the HTML to display for the external resource. Use the noembed
   // service to guarantee jsonp support and a consistent response.
   var noembed = function(div, id, url, requestId, typename, isNew, caption) {
     var duplicate = false;
@@ -57,8 +57,8 @@ var checkSubmitInProgress = function () {
       return;
     }
     $.ajax({
-      url: indiciaData.protocol + "://noembed.com/embed?format=json&callback=?&url="+encodeURIComponent(url),
-      dataType: 'json',
+      url: 'https://noembed.com/embed?url=' + encodeURIComponent(url),
+      dataType: 'jsonp',
       success: function(data) {
         if (data.error) {
           alert(data.error);
@@ -72,8 +72,8 @@ var checkSubmitInProgress = function () {
 
           $('#link-embed-'+requestId).html(tmpl
               .replace(/\{embed\}/g, data.html)
-              .replace(/\{idField\}/g, div.settings.table + ':id:' + uniqueId) 
-              .replace(/\{idValue\}/g, id) 
+              .replace(/\{idField\}/g, div.settings.table + ':id:' + uniqueId)
+              .replace(/\{idValue\}/g, id)
               .replace(/\{pathField\}/g, div.settings.table + ':path:' + uniqueId)
               .replace(/\{pathValue\}/g, url)
               .replace(/\{captionField\}/g, div.settings.table + ':caption:' + uniqueId)
@@ -85,16 +85,16 @@ var checkSubmitInProgress = function () {
               .replace(/\{deletedField\}/g, div.settings.table + ':deleted:' + uniqueId)
               .replace(/\{deletedValue\}/g, 'f')
               .replace(/\{isNewField\}/g, 'isNew-' + uniqueId)
-              .replace(/\{isNewValue\}/g, isNew ? 't' : 'f')        
+              .replace(/\{isNewValue\}/g, isNew ? 't' : 'f')
           );
         }
       },
-      error: function() { 
-        alert(indiciaData.msgNoembedResponseError); 
+      error: function(data) {
+        alert(div.settings.msgNoembedResponseError);
       }
     });
   };
-  
+
   indiciaData.mediaTypes = {
     "Audio:SoundCloud" : {
       "regex":/^http(s)?:\/\/(www.)?soundcloud.com\//
@@ -121,9 +121,9 @@ var checkSubmitInProgress = function () {
       "regex":/^http:\/\/vimeo.com\//
     }
   };
-  
+
   var currentDiv;
-  
+
   $(document).ready(function() {
     $("#add-link-form").keypress(function(e) {
       if (e.keyCode == $.ui.keyCode.ENTER) {
@@ -133,7 +133,7 @@ var checkSubmitInProgress = function () {
     $("#add-link-form input").change(function(e) {
       $("#add-link-form .error").hide();
     });
-        
+
     $("#add-link-form").dialog({
       autoOpen: false,
       width: 750,
@@ -168,29 +168,29 @@ var checkSubmitInProgress = function () {
       }
     });
   });
-  
+
   $.fn.uploader = function(options) {
     // Extend our default options with those provided, basing this on an empty object
     // so the defaults don't get changed.
     var opts = $.extend({}, $.fn.uploader.defaults, options), html5OK=true;
-    
+
     if (/Firefox[\/\s](\d+\.\d+)/.test(navigator.userAgent)){ //test for Firefox/x.x or Firefox x.x (ignoring remaining digits);
       var ffversion=new Number(RegExp.$1); // capture x.x portion and store as a number
       if (ffversion<3.5) {
-        // Browser is FF3.5+, so Html5 is a good runtime as HTML5 resize only works on FF3.5+. 
+        // Browser is FF3.5+, so Html5 is a good runtime as HTML5 resize only works on FF3.5+.
         html5OK = false;
       }
-    } 
+    }
     if (!html5OK) {
-      // browser not FF3.5+. This replacement does not remove html5 if already the last runtime. 
+      // browser not FF3.5+. This replacement does not remove html5 if already the last runtime.
       opts.runtimes = opts.runtimes.replace('html5,','');
     }
-    
+
     if (typeof opts.jsPath == "undefined") {
       alert('The file_box control requires a jsPath setting to operate correctly. It should point to the URL '+
           'path of the media/js folder.');
     }
-    
+
     return this.each(function() {
       var uploadSelectBtn='', linkSelectBtn='', id=Math.floor((Math.random())*0x10000), tokens,
           hasLocalFiles = false, hasLinks = false, div=this, fileTypes=[], caption=opts.msgPhoto, linkTypes=[];
@@ -228,14 +228,14 @@ var checkSubmitInProgress = function () {
             .replace('{class}', '')
             .replace('{title}', this.settings.msgUseAddLinkBtn.replace('{1}', linkTypes.join(',').replace(/,/g, ', ')));
       }
-      
+
       $(this).append(this.settings.file_boxTemplate
           .replace('{caption}', this.settings.caption)
           .replace('{captionClass}', this.settings.captionClass)
           .replace('{uploadSelectBtn}', uploadSelectBtn)
           .replace('{linkSelectBtn}', linkSelectBtn)
           .replace('{helpText}', this.settings.helpText)
-          .replace('{helpTextClass}', this.settings.helpTextClass)  
+          .replace('{helpTextClass}', this.settings.helpTextClass)
       );
       if (hasLinks) {
         $('#link-select-btn-' + id).click(function() {
@@ -263,14 +263,14 @@ var checkSubmitInProgress = function () {
         // limit the max file size to the Indicia limit, unless it is first resized.
         max_file_size : resize ? '10mb' : plupload.formatSize(this.settings.maxUploadSize)
       });
-      
+
       this.uploader.bind('QueueChanged', function(up) {
         up.start();
       });
-      
+
       // make the main object accessible
       var div = this;
-      
+
       // load the existing data if there are any
       var existing, uniqueId, requestId, thumbnailfilepath, origfilepath, tmpl, ext;
       indiciaData.linkRequestCount=div.settings.existingFiles.length;
@@ -285,7 +285,7 @@ var checkSubmitInProgress = function () {
           ext = file.path.split('.').pop().toLowerCase();
           existing = div.settings.file_box_initial_file_infoTemplate.replace(/\{id\}/g, uniqueId)
               .replace(/\{filename\}/g, file.media_type.match(/^(Audio|Pdf):/) ? div.settings.msgFile : div.settings.msgPhoto)
-              .replace(/\{imagewidth\}/g, div.settings.imageWidth);       
+              .replace(/\{imagewidth\}/g, div.settings.imageWidth);
           $('#' + div.id.replace(/:/g,'\\:') + ' .filelist').append(existing);
           $('#' + uniqueId + ' .progress').remove();
           if (file.id==='') {
@@ -304,7 +304,7 @@ var checkSubmitInProgress = function () {
             tmpl = div.settings.file_box_uploaded_imageTemplate+div.settings.file_box_uploaded_extra_fieldsTemplate;
           } else if ($.inArray(ext, div.settings.fileTypes.audio) === -1 && $.inArray(ext, div.settings.fileTypes.image) === -1) {
             tmpl = div.settings.file_box_uploaded_pdfTemplate + div.settings.file_box_uploaded_extra_fieldsTemplate;
-          } else {    
+          } else {
             tmpl = div.settings.file_box_uploaded_audioTemplate+div.settings.file_box_uploaded_extra_fieldsTemplate;
           }
           file.caption = file.caption===null ? '' : file.caption;
@@ -325,7 +325,7 @@ var checkSubmitInProgress = function () {
                 .replace(/\{deletedValue\}/g, 'f')
                 .replace(/\{isNewField\}/g, 'isNew-' + uniqueId)
                 .replace(/\{isNewValue\}/g, 'f')
-                .replace(/\{idField\}/g, div.settings.table + ':id:' + uniqueId) 
+                .replace(/\{idField\}/g, div.settings.table + ':id:' + uniqueId)
                 .replace(/\{idValue\}/g, file.id) // If ID is set, the picture is uploaded to the server
           );
         } else {
@@ -336,7 +336,7 @@ var checkSubmitInProgress = function () {
           noembed(div, file.id, file.path, requestId, file.media_type, false, file.caption.replace(/\"/g, '&quot;'));
         }
       });
-      
+
       // Add a box to indicate a file that is added to the list to upload, but not yet uploaded.
       this.uploader.bind('FilesAdded', function(up, files) {
         $(div).parents('form').bind('submit', checkSubmitInProgress);
@@ -367,15 +367,15 @@ var checkSubmitInProgress = function () {
           $('#' + file.id + ' .progress-gif').html('<img style="display: inline; margin: 4px;" src="'+ mediaPath +'images/ajax-loader2.gif" width="32" height="32" alt="In progress"/>');
           $('#' + file.id + ' .progress-percent').html('<span>'+msg+'</span>');
         });
-        
+
       });
-      
+
       // As a file uploads, update the progress bar and percentage indicator
       this.uploader.bind('UploadProgress', function(up, file) {
         $('#' + file.id + ' .progress-bar').progressbar ('option', 'value', file.percent);
         $('#' + file.id + ' .progress-percent').html('<span>' + file.percent + '% Uploaded...</span>');
       });
-      
+
       this.uploader.bind('Error', function(up, error) {
         if (error.code==-600) {
           alert(div.settings.msgFileTooBig);
@@ -384,7 +384,7 @@ var checkSubmitInProgress = function () {
         }
         $('#' + error.file.id).remove();
       });
-      
+
       // On upload completion, check for errors, and show the uploaded file if OK.
       this.uploader.bind('FileUploaded', function(uploader, file, response) {
         $('#' + file.id + ' .progress').remove();
@@ -415,7 +415,7 @@ var checkSubmitInProgress = function () {
           //If indiciaData.subTypes is supplied then the user is intending to use more than one photo control,
           //each control will have their own media sub-type.
           if (indiciaData.subTypes) {
-            for (var i=0; i<indiciaData.subTypes.length; i++) { 
+            for (var i=0; i<indiciaData.subTypes.length; i++) {
               //Each item of the array consists of a control id and the sub type.
               //So all we need to do here is cycle through the options until we find a control
               //id for the control we are currenty uploading too, and then select that sub-type
@@ -425,7 +425,7 @@ var checkSubmitInProgress = function () {
             }
           }
           if ("mediaTypeTermIdLookup" in indiciaData) {
-            // Backwards compatibility test. Property only exists if 
+            // Backwards compatibility test. Property only exists if
             // data_entry_helper::add_link_popup has set it.
             if (!indiciaData.subTypes)
               mediaTypeId = indiciaData.mediaTypeTermIdLookup[fileType + ':Local'];
@@ -438,7 +438,7 @@ var checkSubmitInProgress = function () {
             // If no value is supplied, warehouse defaults to Image:Local
             mediaTypeId = '';
           }
-          
+
           // Show the uploaded file, and also set the mini-form values to contain the file details.
           $('#' + file.id + ' .media-wrapper').html(tmpl
                 .replace(/\{id\}/g, file.id)
@@ -457,7 +457,7 @@ var checkSubmitInProgress = function () {
                 .replace(/\{deletedValue\}/g, 'f')
                 .replace(/\{isNewField\}/g, 'isNew-' + file.id)
                 .replace(/\{isNewValue\}/g, 't')
-                .replace(/\{idField\}/g, div.settings.table + ':id:' + uniqueId) 
+                .replace(/\{idField\}/g, div.settings.table + ':id:' + uniqueId)
                 .replace(/\{idValue\}/g, '') // Set ID to blank, as this is a new record.
           );
           // Copy the path into the hidden path input. Watch colon escaping for jQuery selectors.
@@ -471,15 +471,15 @@ var checkSubmitInProgress = function () {
           $("form").unbind('submit', checkSubmitInProgress);
         }
       });
-      
+
       this.uploader.init();
-      
+
       if (this.settings.useFancybox) {
-        // Hack to get fancybox working as a jQuery live, because some of our images load from AJAX calls. 
+        // Hack to get fancybox working as a jQuery live, because some of our images load from AJAX calls.
         // So we temporarily create a dummy link to our image and click it.
         indiciaFns.on('click', 'a.fancybox', null, function() {
           jQuery("body").after('<a id="link_fancybox" style="display: hidden;" href="'+jQuery(this).attr('href')+'"></a>');
-          jQuery('#link_fancybox').fancybox(); 
+          jQuery('#link_fancybox').fancybox();
           jQuery('#link_fancybox').click();
           jQuery('#link_fancybox').remove();
           return false;
@@ -487,7 +487,7 @@ var checkSubmitInProgress = function () {
       }
 
       indiciaFns.on('click', '.delete-file', null, function(evt) {
-        // if this is a newly uploaded file or still uploading, we can simply delete the div since all that has been done is an upload to the 
+        // if this is a newly uploaded file or still uploading, we can simply delete the div since all that has been done is an upload to the
         // temp upload folder, which will get purged anyway. isNewField is a hidden input that marks up new and existing files.
         var id=evt.target.id.substr(4);
         if ($('#isNew-'+id).length===0 || $('#isNew-'+id).val()==='t')
@@ -498,12 +498,12 @@ var checkSubmitInProgress = function () {
           $(evt.target).parents('#'+id+' .progress').remove();
         }
       });
-      
+
       if (this.settings.autopick && !hasLinks) {
         var browseButton = $('#'+this.settings.browse_button.replace(/:/g,'\\:'));
         // Auto-display a file picker
         browseButton.trigger('click');
-        
+
       }
     });
   };
