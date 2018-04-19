@@ -899,6 +899,7 @@ jQuery(document).ready(function ($) {
     $('input#location_list\\:search\\:name').val('');
     if (typeof all === 'undefined' || all === false) {
       indiciaData.mapdiv.removeAllFeatures(map.editLayer, 'boundary');
+      indiciaData.mapdiv.removeAllFeatures(map.editLayer, 'queryPolygon');
     } else {
       map.editLayer.removeAllFeatures();
     }
