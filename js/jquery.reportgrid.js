@@ -546,13 +546,18 @@
                       imgclass=imgs.length>1 ? 'multi' : 'single',
                       group=imgs.length>1 && div.settings.rowId !== '' ? ' rel="group-' + row[div.settings.rowId] + '"' : '';
                     $.each(imgs, function(idx, img) {
-                      match = img.match(/^http(s)?:\/\/(www\.)?([a-z]+)/);
+                      match = img.match(/^http(s)?:\/\/(www\.)?([a-z(\.kr)]+)/);
                       if (match !== null) {
-                        value += '<a href="' + img + '" class="social-icon ' + match[3] + '"></a>';
-                      } else if ($.inArray(img.split('.').pop(), ['mp3','wav']) >-1 ) {
+                        if (img.match(/^https:\/\/static\.inaturalist\.org/)) {
+                          value += '<a href="' + img.replace('/square.', '/large.') + '" class="inaturalist fancybox ' +
+                            imgclass + '"' + group + '><img src="' + img + '" /></a>';
+                        } else {
+                          value += '<a href="' + img + '" class="social-icon ' + match[3].replace('.', '') + '"></a>';
+                        }
+                      } else if ($.inArray(img.split('.').pop(), ['mp3', 'wav']) > -1) {
                         value += '<audio controls src="' + div.settings.imageFolder + img + '" type="audio/mpeg"/>';
                       } else {
-                        value += '<a href="'+div.settings.imageFolder + img + '" class="fancybox ' + imgclass + '"' + group + '><img src="'+
+                        value += '<a href="' + div.settings.imageFolder + img + '" class="fancybox ' + imgclass + '"' + group + '><img src="'+
                             div.settings.imageFolder + div.settings.imageThumbPreset + '-' + img + '" /></a>';
                       }
                     });
@@ -1340,8 +1345,8 @@
     var href=$(e.target).attr('href');
     if (href) {
       $.ajax({
-        url: indiciaData.protocol + '://noembed.com/embed?format=json&callback=?&url=' + encodeURIComponent(href),
-        dataType: 'json',
+        url: 'https://noembed.com/embed?url=' + encodeURIComponent(href),
+        dataType: 'jsonp',
         success: function(data) {
           if (data.error) {
             alert(data.error);

@@ -2948,11 +2948,11 @@ jQuery.fn.indiciaMapPanel.defaults = {
     drawObjectType: 'boundary',
 
     //options for OpenLayers. Feature. Vector. style
-    fillColor: '#ee9900',
-    fillOpacity: 0.4,
-    strokeColor: '#ee9900',
+    fillColor: '#773333',
+    fillOpacity: 0.3,
+    strokeColor: '#660000',
     strokeOpacity: 1,
-    strokeWidth: 1,
+    strokeWidth: 1.5,
     strokeLinecap: 'round',
     strokeDashstyle: 'solid',
     hoverFillColor: 'white',
