@@ -1,5 +1,17 @@
-#banner
-{
+/* Allow for wide screens to make good use of available space. */
+body {
+  max-width: 1600px;
+  margin: auto;
+}
+
+@media (min-width: 1600px) {
+  .container {
+    width: 1570px;
+  }
+}
+
+/* Banner style. */
+#banner {
   background: #000000 url(../images/warehouse-banner.jpg) no-repeat top right;
   color: #FEFEFE;
   height: 126px;
@@ -9,6 +21,7 @@
   }
 }
 
+/* Footer style. */
 #footer {
   padding: $block-padding 0;
 }
