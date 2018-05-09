@@ -8,6 +8,8 @@ jQuery UI widgets - override existing UI plugons.
 
     selectingItem: false,
 
+    selectionText: '',
+
     limit: 5,
 
     options: {
@@ -62,7 +64,9 @@ jQuery UI widgets - override existing UI plugons.
      * If user changes text in the input, clear the stored value.
      */
     _onChange: function() {
-      this.valueInput.val('');
+      if ($(this.element).val() !== this.selectionText) {
+        this.valueInput.val('');
+      }
     },
 
     /**
@@ -93,6 +97,8 @@ jQuery UI widgets - override existing UI plugons.
       this.valueInput.trigger('change', ui.item);
       // Reset selectingItem flag.
       this.selectingItem = false;
+      // Remember the chosen text so we can be sure if it's changed.
+      this.selectionText = $(this.element).val();
 
       // Prevent the default behaviuor overwriting the displayed value.
       return false;
