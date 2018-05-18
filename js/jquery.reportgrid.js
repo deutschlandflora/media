@@ -548,7 +548,12 @@
                     $.each(imgs, function(idx, img) {
                       match = img.match(/^http(s)?:\/\/(www\.)?([a-z(\.kr)]+)/);
                       if (match !== null) {
-                        value += '<a href="' + img + '" class="social-icon ' + match[3].replace('.', '') + '"></a>';
+                        if (img.match(/^https:\/\/static\.inaturalist\.org/)) {
+                          value += '<a href="' + img.replace('/square.', '/large.') + '" class="inaturalist fancybox ' +
+                            imgclass + '"' + group + '><img src="' + img + '" /></a>';
+                        } else {
+                          value += '<a href="' + img + '" class="social-icon ' + match[3].replace('.', '') + '"></a>';
+                        }
                       } else if ($.inArray(img.split('.').pop(), ['mp3', 'wav']) > -1) {
                         value += '<audio controls src="' + div.settings.imageFolder + img + '" type="audio/mpeg"/>';
                       } else {

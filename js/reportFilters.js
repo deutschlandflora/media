@@ -899,6 +899,7 @@ jQuery(document).ready(function ($) {
     $('input#location_list\\:search\\:name').val('');
     if (typeof all === 'undefined' || all === false) {
       indiciaData.mapdiv.removeAllFeatures(map.editLayer, 'boundary');
+      indiciaData.mapdiv.removeAllFeatures(map.editLayer, 'queryPolygon');
     } else {
       map.editLayer.removeAllFeatures();
     }
@@ -1325,6 +1326,7 @@ jQuery(document).ready(function ($) {
           attrName = indiciaData.filter.def.date_type + '_' + attrName;
         }
         if ($(ctrl).is('select')) {
+          $(ctrl).find('option:selected').removeAttr('selected');
           value = typeof indiciaData.filter.def[attrName] === 'undefined' ? '' : indiciaData.filter.def[attrName];
           option = $(ctrl).find('option[value="' + value + '"]');
           if (option) {
