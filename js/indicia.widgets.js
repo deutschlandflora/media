@@ -58,6 +58,8 @@ jQuery UI widgets - override existing UI plugons.
       if (typeof this.options.extraParams.limit !== 'undefined') {
         this.limit = this.options.extraParams.limit;
       }
+      // Disable browser autocomplete.
+      $(this).attr('autocomplete', 'off');
     },
 
     /**
@@ -86,8 +88,7 @@ jQuery UI widgets - override existing UI plugons.
           displayName += ' ' + ui.item.authority;
         }
         $(this.element).val(displayName);
-      }
-      else {
+      } else {
         $(this.element).val(ui.item[this.options.captionField]);
       }
       if (typeof ui.item.icon !== 'undefined') {
@@ -238,13 +239,14 @@ jQuery UI widgets - override existing UI plugons.
       this._startRendering();
       $.each(items, function(index, item) {
         if (!that._doneEntry(item)) {
+          // Ensure jQuery UI understands the item's caption.
+          item.value = item[that.options.captionField];
           that._renderItemData(ul, item);
         }
       });
       // Alternate entry styling.
       $(ul).find('li:odd').addClass('odd');
       // More items link
-
       if (items.length >= this.limit) {
         // Add a fake more results item.
         $( "<li>" ).val('')
