@@ -91,7 +91,7 @@
       // Extract any parameters from the attached form as long as they are report parameters
       $('form#' + div.settings.reportGroup + '-params input, form#' + div.settings.reportGroup + '-params select').each(function (idx, input) {
         if (input.type !== 'submit' && $(input).attr('name').indexOf(div.settings.reportGroup + '-') === 0
-            && (input.type !== 'checkbox' || $(input).attr('checked'))) {
+            && (input.type !== 'checkbox' || $(input).is(':checked'))) {
           paramName = $(input).attr('name').replace(div.settings.reportGroup + '-', '');
           request[paramName] = $(input).attr('value');
         }

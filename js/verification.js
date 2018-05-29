@@ -34,7 +34,7 @@ $(document).ready(function() {
         if (indiciaData['rowInclusionCheck-species-grid-'+gridId]==='hasData') {
           $.each($(grid).find('tbody tr'), function(y, row) {
             $.each($(row).find('.scOccAttrCell, .scCommentCell, .scConfidentialCell').find('input, select'), function(x, input) {
-              if ($(input).val()!=='' && $(input).val()!=='0' && input.type!=="checkbox" || $(input).attr('checked')) {
+              if ($(input).val()!=='' && $(input).val()!=='0' && input.type!=="checkbox" || $(input).is(':checked')) {
                 occurrences.push('{"occurrence:taxa_taxon_list_id":'+$(input).val()+'}');
                 return false; // goes to the next row
               }
@@ -46,9 +46,9 @@ $(document).ready(function() {
             occurrences.push('{"occurrence:taxa_taxon_list_id":'+$(chkbox).val()+'}');
           });
         }
-          
-      });     
-      
+
+      });
+
     }
     if (occurrences.length===0) {
       alert(indiciaData.verifyMessages.nothingToCheck)
@@ -63,7 +63,7 @@ $(document).ready(function() {
         '"sample:entered_sref_system":"'+$('#imp-sref-system').val()+'"}',
       'occurrences':'['+occurrences.join(',')+']'
     };
-    $.post(indiciaData.read.url + "index.php/services/data_cleaner/verify", 
+    $.post(indiciaData.read.url + "index.php/services/data_cleaner/verify",
       info,
       function(data) {
         // For some reason the datatype json does not work for jquery post, so we handle this ourselves
@@ -81,7 +81,7 @@ $(document).ready(function() {
                 if (indiciaData['rowInclusionCheck-species-grid-'+gridId]==='hasData') {
                   $.each($(grid).find('tbody tr'), function(y, row) {
                     $.each($(row).find('.scOccAttrCell, .scCommentCell, .scConfidentialCell').find('input, select'), function(x, input) {
-                      if ($(input).val()!=='' && $(input).val()!=='0' && input.type!=="checkbox" || $(input).attr('checked')) {
+                      if ($(input).val()!=='' && $(input).val()!=='0' && input.type!=="checkbox" || $(input).is(':checked')) {
                         if ($(input).val()===msg.taxa_taxon_list_id) {
                           species = $(input).parents('tr:first').find('td.scTaxonCell')[0].innerHTML;
                           return false; // breaks from the for each as we've found our species

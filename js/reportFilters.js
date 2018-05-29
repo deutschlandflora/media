@@ -1525,7 +1525,7 @@ jQuery(document).ready(function ($) {
     // persist each control value into the stored settings
     $.each($(e.currentTarget).find(':input[name]'), function (idx, ctrl) {
       if (!$(ctrl).hasClass('olButton')) { // skip open layers switcher
-        if ($(ctrl).attr('type') !== 'checkbox' || $(ctrl).attr('checked')) {
+        if ($(ctrl).attr('type') !== 'checkbox' || $(ctrl).is(':checked')) {
           // array control?
           if ($(ctrl).attr('name').match(/\[\]$/)) {
             // store array control data to handle later
