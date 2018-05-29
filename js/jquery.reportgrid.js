@@ -67,6 +67,8 @@
     var opts = $.extend({}, $.fn.reportgrid.defaults, options);
     // flag to prevent double clicks
     var loading = false;
+    // prevent duplicate error messages
+    var errorShownOnFilter = false;
 
     function getRequest(div) {
       var serviceCall;
@@ -476,7 +478,10 @@
           if (typeof rows.error !== 'undefined') {
             div.loading = false;
             $(div).find('.loading-overlay').hide();
-            alert('The report did not load correctly.');
+            if (!errorShownOnFilter) {
+              alert('The data did not load successfully. The reason given was: \n' + rows.error);
+              errorShownOnFilter = true;
+            }
             return;
           }
           if (div.settings.sendOutputToMap && typeof indiciaData.reportlayer !== 'undefined') {
@@ -546,18 +551,31 @@
                       imgclass=imgs.length>1 ? 'multi' : 'single',
                       group=imgs.length>1 && div.settings.rowId !== '' ? ' rel="group-' + row[div.settings.rowId] + '"' : '';
                     $.each(imgs, function(idx, img) {
+                      var media='';
+                      if (div.settings.rowId === 'occurrence_id') {
+                        media = {
+                          table: 'occurrence_medium',
+                          filter: {
+                            occurrence_id: row[div.settings.rowId],
+                            path: img
+                          }
+                        };
+                      }
                       match = img.match(/^http(s)?:\/\/(www\.)?([a-z(\.kr)]+)/);
                       if (match !== null) {
                         if (img.match(/^https:\/\/static\.inaturalist\.org/)) {
-                          value += '<a href="' + img.replace('/square.', '/large.') + '" class="inaturalist fancybox ' +
-                            imgclass + '"' + group + '><img src="' + img + '" /></a>';
+                          media.largePath = media.filter.path.replace('/square.', '/large.');
+                          value += '<a data-media="' + JSON.stringify(media).replace(/"/g, '&quot;') + '" ' +
+                            'href="' + img.replace('/square.', '/large.') + '" ' +
+                            'class="inaturalist fancybox ' + imgclass + '"' + group + '><img src="' + img + '" /></a>';
                         } else {
-                          value += '<a href="' + img + '" class="social-icon ' + match[3].replace('.', '') + '"></a>';
+                          value += '<a data-media="' + JSON.stringify(media).replace(/"/g, '&quot;') + '" ' +
+                            'href="' + img + '" class="social-icon ' + match[3].replace('.', '') + '"></a>';
                         }
                       } else if ($.inArray(img.split('.').pop(), ['mp3', 'wav']) > -1) {
                         value += '<audio controls src="' + div.settings.imageFolder + img + '" type="audio/mpeg"/>';
                       } else {
-                        value += '<a href="' + div.settings.imageFolder + img + '" class="fancybox ' + imgclass + '"' + group + '><img src="'+
+                        value += '<a data-media="' + JSON.stringify(media).replace(/"/g, '&quot;') + '" href="' + div.settings.imageFolder + img + '" class="fancybox ' + imgclass + '"' + group + '><img src="' +
                             div.settings.imageFolder + div.settings.imageThumbPreset + '-' + img + '" /></a>';
                       }
                     });
@@ -599,9 +617,55 @@
             rowOutput += '</tr>';
             tbody.append(rowOutput);
           }
-          tbody.find('a.fancybox').fancybox();
+          tbody.find('a.fancybox').fancybox({
+            afterLoad: function(upcoming, previous) {
+              var media;
+              var requestData;
+              if (typeof $(upcoming.element).attr('data-media') !== 'undefined') {
+                media = JSON.parse($(upcoming.element).attr('data-media'));
+                requestData = $.extend({
+                  mode: 'json',
+                  nonce: div.settings.nonce,
+                  auth_token: div.settings.auth_token,
+                }, media.filter);
+                if (typeof media.largePath === 'undefined') {
+                  // Set a default. Some image types (e.g. iNat) have a different way of
+                  // supplying the full size image path so this would be handled elswewhere
+                  media.largePath = media.filter.path;
+                }
+                if (typeof div.settings.extraParams.sharing !== 'undefined') {
+                  requestData.sharing = div.settings.extraParams.sharing;
+                }
+                $.ajax({
+                  dataType: 'jsonp',
+                  url: div.settings.url + 'index.php/services/data/' + media.table,
+                  data: requestData,
+                  success: function addMediaMetadata(response) {
+                    var fancybox;
+                    var metadata = '';
+                    if (response.length > 0) {
+                      if (response[0].caption !== null) {
+                        metadata += '<div class="image-caption">' + response[0].caption + '<div>';
+                      }
+                      if (response[0].licence_title !== null) {
+                        metadata += '<div class="licence licence-' + response[0].licence_code.toLowerCase() + '">' +
+                          response[0].licence_title +
+                          '<div>';
+                      }
+                      fancybox = $('img[src$="' + media.largePath + '"]').closest('.fancybox-outer');
+                      if (fancybox) {
+                        $(fancybox).after('<div style="position: absolute; left: -18px; width: auto; top: -18px; background: white; padding: 8px; border: solid silver 1px; border-radius: 4px;">' + metadata + '</div>');
+                        $.fancybox.update();
+                        $.fancybox.reposition();
+                      }
+                    }
+                  }
+                });
+              }
+            }
+          });
           loadColPickerSettingsFromCookie(div);
-          if (features.length>0) {
+          if (features.length > 0) {
             indiciaData.reportlayer.addFeatures(features);
             map.zoomToExtent(indiciaData.reportlayer.getDataExtent());
           }
@@ -820,6 +884,14 @@
         dataType: "json",
         url: request + '&offset=' + offset + (typeof recordCount === 'undefined' ? '&wantCount=1' : ''),
         success: function(response) {
+          if (typeof response.error !== 'undefined') {
+            if (!errorShownOnFilter) {
+              alert('The data did not load successfully. The reason given was: \n' + response.error);
+              errorShownOnFilter = true;
+            }
+            $('#map-loading').hide();
+            return;
+          }
           if (typeof recordCount === 'undefined' && typeof response.count !== 'undefined' && !isNaN(response.count)) {
             recordCount = response.count;
             response = response.records;
@@ -1064,8 +1136,10 @@
       });
 
       var doFilter = function(e) {
+        var fieldname;
         if (e.target.hasChanged) {
-          var fieldname = e.target.id.match(new RegExp('^col-filter-(.*)-' + div.id + '$'))[1];
+          errorShownOnFilter = false;
+          fieldname = e.target.id.match(new RegExp('^col-filter-(.*)-' + div.id + '$'))[1];
           if ($.trim($(e.target).val()) === '') {
             delete div.settings.extraParams[fieldname];
           } else {
