@@ -59,7 +59,10 @@ jQuery UI widgets - override existing UI plugons.
         this.limit = this.options.extraParams.limit;
       }
       // Disable browser autocomplete.
-      $(this).attr('autocomplete', 'off');
+      $(this)
+        .attr('autocomplete', 'off')
+        .attr('autocorrect', 'off')
+        .attr('spellcheck', 'false');
     },
 
     /**
