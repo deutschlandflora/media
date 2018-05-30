@@ -42,11 +42,12 @@ table.report-grid {
     width: 16px;
     height: 16px;
     position: absolute;
-    right: -6px;
+    right: 0;
     top: 0;
     font-size: 12px;
     color: #777777;
-    cursor: pointer; }
+    cursor: pointer;
+    text-align: center; }
 
 /* Need to account for Fancybox navigation button z-index */
 .fancybox-outer .media-info {
