@@ -6,6 +6,7 @@
     zoom:1;
     *display:inline;
     list-style-type: none;
+    vertical-align: top;
   }
 }
 /* Allow info panels to use absolute positioning */
@@ -46,6 +47,11 @@
     cursor: pointer;
     text-align: center;
   }
+}
+.image-caption.small {
+  width: 100px;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 10px;
 }
 /* Need to account for Fancybox navigation button z-index */
 .fancybox-outer .media-info {
