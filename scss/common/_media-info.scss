@@ -1,0 +1,38 @@
+/* Allow info panels to use absolute positioning */
+.gallery-item {
+  position: relative;
+}
+
+/* Media/image information overlays */
+.media-info {
+  position: relative;
+  width: auto;
+  background: white;
+  padding: 8px 16px 8px 8px;
+  border: solid silver 1px;
+  border-radius: 4px;
+  /* Media info can overlay image (not other file types) */
+  &.image-info {
+    position: absolute;
+    left: 18px;
+    bottom: 18px;
+    opacity: 0.7;
+  }
+  /* Media info close button style */
+  .media-info-close {
+    width: 16px;
+    height: 16px;
+    position: absolute;
+    right: -6px;
+    top: 0;
+    font-size: 12px;
+    color: #777777;
+    cursor: pointer;
+  }
+}
+
+/* Need to account for Fancybox navigation button z-index */
+.fancybox-outer .media-info {
+  z-index: 9999;
+}
+

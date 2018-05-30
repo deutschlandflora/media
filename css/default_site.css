@@ -1050,6 +1050,7 @@ div.note-fail, p.note-fail {
   background: url(../images/licences-sprite.png) no-repeat center left;
   padding-left: 100px;
   box-sizing: border-box;
+  background-position: 0 0;
 }
 .licence-cc-by {
   background-position: 0 -18px;

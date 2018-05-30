@@ -418,6 +418,15 @@ if (typeof window.indiciaData === 'undefined') {
       });
     }
   };
+
+  indiciaFns.afterFancyboxLoad = function(upcoming, previous) {
+    var info = $(upcoming.element).parent().find('.image-info');
+    var fancybox = $('.fancybox-outer');
+    if (info.length && fancybox) {
+      $(info).clone().show().appendTo(fancybox);
+    }
+  };
+
 }(jQuery));
 
 jQuery(document).ready(function ($) {
@@ -448,4 +457,9 @@ jQuery(document).ready(function ($) {
       window.onbeforeunload = null;
     });
   }
+  // Close handler for x button on image information panels.
+  indiciaFns.on('click', '.media-info-close', {}, function(e) {
+    $(e.currentTarget).parent('.media-info').hide();
+    return false;
+  });
 });

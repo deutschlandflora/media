@@ -19,6 +19,51 @@ table.report-grid {
     width: 50px;
     margin: 1px; }
 
+/* Allow info panels to use absolute positioning */
+.gallery-item {
+  position: relative; }
+
+/* Media/image information overlays */
+.media-info {
+  position: relative;
+  width: auto;
+  background: white;
+  padding: 8px 16px 8px 8px;
+  border: solid silver 1px;
+  border-radius: 4px;
+  /* Media info can overlay image (not other file types) */
+  /* Media info close button style */ }
+  .media-info.image-info {
+    position: absolute;
+    left: 18px;
+    bottom: 18px;
+    opacity: 0.7; }
+  .media-info .media-info-close {
+    width: 16px;
+    height: 16px;
+    position: absolute;
+    right: -6px;
+    top: 0;
+    font-size: 12px;
+    color: #777777;
+    cursor: pointer; }
+
+/* Need to account for Fancybox navigation button z-index */
+.fancybox-outer .media-info {
+  z-index: 9999; }
+
+ul.ui-menu li {
+  list-style: none; }
+  ul.ui-menu li .ui-menu-item-wrapper {
+    padding: 4px;
+    border: solid transparent 1px; }
+    ul.ui-menu li .ui-menu-item-wrapper:hover {
+      border: solid silver 1px; }
+    ul.ui-menu li .ui-menu-item-wrapper .searched-name {
+      font-size: 120%; }
+    ul.ui-menu li .ui-menu-item-wrapper .taxon-group {
+      font-weight: bold; }
+
 label, form label {
   width: 160px;
   display: -moz-inline-stack;
@@ -104,17 +149,5 @@ input.findme {
 .control-width-6 {
   width: 500px !important;
   box-sizing: border-box; }
-
-ul.ui-menu li {
-  list-style: none; }
-  ul.ui-menu li .ui-menu-item-wrapper {
-    padding: 4px;
-    border: solid transparent 1px; }
-    ul.ui-menu li .ui-menu-item-wrapper:hover {
-      border: solid silver 1px; }
-    ul.ui-menu li .ui-menu-item-wrapper .searched-name {
-      font-size: 120%; }
-    ul.ui-menu li .ui-menu-item-wrapper .taxon-group {
-      font-weight: bold; }
 
 /*# sourceMappingURL=theme-generic.css.map */
