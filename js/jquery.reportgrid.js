@@ -564,7 +564,6 @@
                       match = img.match(/^http(s)?:\/\/(www\.)?([a-z(\.kr)]+)/);
                       if (match !== null) {
                         if (img.match(/^https:\/\/static\.inaturalist\.org/)) {
-                          media.largePath = media.filter.path.replace('/square.', '/large.');
                           value += '<a data-media="' + JSON.stringify(media).replace(/"/g, '&quot;') + '" ' +
                             'href="' + img.replace('/square.', '/large.') + '" ' +
                             'class="inaturalist fancybox ' + imgclass + '"' + group + '><img src="' + img + '" /></a>';
@@ -628,11 +627,6 @@
                   nonce: div.settings.nonce,
                   auth_token: div.settings.auth_token,
                 }, media.filter);
-                if (typeof media.largePath === 'undefined') {
-                  // Set a default. Some image types (e.g. iNat) have a different way of
-                  // supplying the full size image path so this would be handled elswewhere
-                  media.largePath = media.filter.path;
-                }
                 if (typeof div.settings.extraParams.sharing !== 'undefined') {
                   requestData.sharing = div.settings.extraParams.sharing;
                 }
@@ -645,16 +639,18 @@
                     var metadata = '';
                     if (response.length > 0) {
                       if (response[0].caption !== null) {
-                        metadata += '<div class="image-caption">' + response[0].caption + '<div>';
+                        metadata += '<div class="image-caption">' + response[0].caption + '</div>';
                       }
                       if (response[0].licence_title !== null) {
                         metadata += '<div class="licence licence-' + response[0].licence_code.toLowerCase() + '">' +
                           response[0].licence_title +
-                          '<div>';
+                          '</div>';
                       }
-                      fancybox = $('img[src$="' + media.largePath + '"]').closest('.fancybox-outer');
+                      fancybox = $('.fancybox-outer');
                       if (fancybox) {
-                        $(fancybox).after('<div style="position: absolute; left: -18px; width: auto; top: -18px; background: white; padding: 8px; border: solid silver 1px; border-radius: 4px;">' + metadata + '</div>');
+                        $(fancybox).after('<div class="media-info image-info">' + metadata +
+                          '<span class="media-info-close" title="' + div.settings.langHideInfo + '">x</span>' +
+                          '</div>');
                         $.fancybox.update();
                         $.fancybox.reposition();
                       }
@@ -1469,6 +1465,7 @@ jQuery.fn.reportgrid.defaults = {
   langNext: 'next',
   langLast: 'last',
   langShowing: 'Showing records {1} to {2} of {3}',
+  langHideInfo: 'Hide info',
   noRecords: 'No records',
   sendOutputToMap: false, // does the current page of report data get shown on a map?
   linkFilterToMap: false, // requires a rowId - filtering the grid also filters the map
