@@ -1,8 +1,24 @@
+.media-gallery ul {
+  padding: 0;
+  li {
+    display:-moz-inline-stack;
+    display:inline-block;
+    zoom:1;
+    *display:inline;
+    list-style-type: none;
+  }
+}
 /* Allow info panels to use absolute positioning */
 .gallery-item {
   position: relative;
+  padding: 0.5em;
+  /* Record status icon overlay on image */
+  .status-icon {
+    position: absolute;
+    right: 0;
+    top: 8px;
+  }
 }
-
 /* Media/image information overlays */
 .media-info {
   position: relative;
@@ -31,7 +47,6 @@
     text-align: center;
   }
 }
-
 /* Need to account for Fancybox navigation button z-index */
 .fancybox-outer .media-info {
   z-index: 9999;

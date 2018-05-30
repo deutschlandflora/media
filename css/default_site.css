@@ -982,18 +982,6 @@ div.note-fail, p.note-fail {
 #filter-form label {
   display: block;
 }
-.detail-gallery ul {
-  padding: 0;
-}
-.detail-gallery li {
-  display:-moz-inline-stack;
-  display:inline-block;
-  zoom:1;
-  *display:inline;
-  list-style-type: none;
-  padding: 0.5em;
-}
-
 .status-icon {
   background: url(../images/statuses-sprite.png) no-repeat center center;
   width: 32px;
@@ -1003,7 +991,6 @@ div.note-fail, p.note-fail {
 .status-icon.status-.substatus-.certainty-,.status-icon.status-C.substatus-.certainty-.query- {
   background: none;
 }
-
 .status-icon.certainty-C {
   background-position: 0px -48px;
 }

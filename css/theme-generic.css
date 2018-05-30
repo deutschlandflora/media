@@ -19,9 +19,24 @@ table.report-grid {
     width: 50px;
     margin: 1px; }
 
+.media-gallery ul {
+  padding: 0; }
+  .media-gallery ul li {
+    display: -moz-inline-stack;
+    display: inline-block;
+    zoom: 1;
+    *display: inline;
+    list-style-type: none; }
+
 /* Allow info panels to use absolute positioning */
 .gallery-item {
-  position: relative; }
+  position: relative;
+  padding: 0.5em;
+  /* Record status icon overlay on image */ }
+  .gallery-item .status-icon {
+    position: absolute;
+    right: 0;
+    top: 8px; }
 
 /* Media/image information overlays */
 .media-info {
