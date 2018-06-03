@@ -979,21 +979,20 @@
         layerInfo.report = div.settings.dataSource;
         if (typeof id !== 'undefined') {
           request += '&' + div.settings.rowId + '=' + id;
-        } else {
+        } else if (map.resolution <= 600 && indiciaData.mapDataSource.loRes &&
+            (map.mapInitialisationHooks <= 30 || typeof div.settings.extraParams.indexed_location_id === 'undefined' || div.settings.extraParams.indexed_location_id === '')) {
           // If zoomed in below a 10k map, use the map bounding box to limit the loaded features. Having an indexed site
           // filter changes the threshold as it is less necessary.
-          if (map.zoom <= 600 && indiciaData.mapDataSource.loRes &&
-              (map.zoom <= 30 || typeof div.settings.extraParams.indexed_location_id === 'undefined' || div.settings.extraParams.indexed_location_id === '')) {
-            // get the current map bounds. If zoomed in close, get a larger bounds so that the map can be panned a bit without reload.
-            layerInfo.bounds = map.calculateBounds(map.getCenter(), Math.max(39, map.getResolution()));
-            // plus the current bounds to test if a reload is necessary
-            currentBounds = map.calculateBounds();
-            if (map.projection.getCode() != indiciaData.mapdiv.indiciaProjection.getCode()) {
-              layerInfo.bounds.transform(map.projection, indiciaData.mapdiv.indiciaProjection);
-              currentBounds.transform(map.projection, indiciaData.mapdiv.indiciaProjection);
-            }
-            request += '&bounds=' + encodeURIComponent(layerInfo.bounds.toGeometry().toString());
+          // Get the current map bounds. If zoomed in close, get a larger bounds so that the map can be panned a bit
+          // without reload.
+          layerInfo.bounds = map.calculateBounds(map.getCenter(), Math.max(39, map.getResolution() * 1.5));
+          // plus the current bounds to test if a reload is necessary
+          currentBounds = map.calculateBounds();
+          if (map.projection.getCode() != indiciaData.mapdiv.indiciaProjection.getCode()) {
+            layerInfo.bounds.transform(map.projection, indiciaData.mapdiv.indiciaProjection);
+            currentBounds.transform(map.projection, indiciaData.mapdiv.indiciaProjection);
           }
+          request += '&bounds=' + encodeURIComponent(layerInfo.bounds.toGeometry().toString());
         }
       }
       finally {
