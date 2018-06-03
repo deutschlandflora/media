@@ -986,7 +986,7 @@
         if (typeof id !== 'undefined') {
           request += '&' + div.settings.rowId + '=' + id;
         } else if (map.resolution <= 600 && indiciaData.mapDataSource.loRes &&
-            (map.mapInitialisationHooks <= 30 || typeof div.settings.extraParams.indexed_location_id === 'undefined' || div.settings.extraParams.indexed_location_id === '')) {
+            (map.resolution <= 30 || typeof div.settings.extraParams.indexed_location_id === 'undefined' || div.settings.extraParams.indexed_location_id === '')) {
           // If zoomed in below a 10k map, use the map bounding box to limit the loaded features. Having an indexed site
           // filter changes the threshold as it is less necessary.
           // Get the current map bounds. If zoomed in close, get a larger bounds so that the map can be panned a bit
