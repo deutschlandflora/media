@@ -945,7 +945,13 @@
      * The request is handled in chunks of 1000 records. Optionally supply an id to map just 1 record.
      */
     function mapRecords(div, zooming, id, callback) {
-      var layerInfo = { bounds: null }, map = indiciaData.mapdiv.map, currentBounds = null;
+      var layerInfo = { bounds: null };
+      var map = indiciaData.mapdiv.map;
+      var currentBounds = null;
+      if (indiciaData.minMapReportZoom && indiciaData.minMapReportZoom > map.zoom) {
+        indiciaData.mapdiv.removeAllFeatures(indiciaData.reportlayer, 'linked', true);
+        return;
+      }
       // we need to reload the map layer using the mapping report, so temporarily switch the report
       var origReport = div.settings.dataSource, request;
       if (typeof indiciaData.mapdiv === 'undefined'
