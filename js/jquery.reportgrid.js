@@ -855,6 +855,10 @@
       }
     };
 
+    this.setupPagerEvents = function() {
+      setupPagerEvents(this[0]);
+    }
+
     var BATCH_SIZE=2000, currentMapRequest;
 
     function hasIntersection(a, b) {
@@ -870,10 +874,6 @@
       }
 
       return false;
-    }
-
-    this.setupPagerEvents = function() {
-      setupPagerEvents(this[0]);
     }
 
     function _internalMapRecords(div, request, offset, callback, recordCount) {
