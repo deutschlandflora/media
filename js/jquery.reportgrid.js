@@ -872,6 +872,10 @@
       return false;
     }
 
+    this.setupPagerEvents = function() {
+      setupPagerEvents(this[0]);
+    }
+
     function _internalMapRecords(div, request, offset, callback, recordCount) {
       $('#map-loading').show();
       var matchString, feature, url;
