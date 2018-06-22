@@ -773,7 +773,7 @@ $.Autocompleter.Select = function (options, input, select, config) {
     for (var i=0; i < max; i++) {
       if (!data[i])
         continue;
-      var formatted = options.formatItem(data[i].data, i+1, max, data[i].value, term);
+      var formatted = options.formatItem(data[i].data, i+1, max, data[i].value, term, input);
       if ( formatted === false )
         continue;
       var li = $("<li/>").html( options.highlight(formatted, term) ).addClass(i%2 == 0 ? "ac_even" : "ac_odd").appendTo(list)[0];
