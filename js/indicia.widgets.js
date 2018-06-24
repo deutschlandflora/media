@@ -275,6 +275,7 @@ jQuery UI widgets - override existing UI plugons.
       if (this.options.mode === 'species') {
         display = this._formatSpeciesItem(item);
       } else {
+        // @todo Implement formatItem option to allow this to be overridden.
         display = item[this.options.captionField];
       }
       return $('<li>')
