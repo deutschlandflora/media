@@ -1138,7 +1138,7 @@ var destroyAllFeatures;
      * Selects the features in the contents of a geom, appying user specified buffer.
      */
     function selectFeaturesInBufferedGeom(geom, layers, div) {
-      var testGeom, tolerantGeom, layer, tolerance, testGeoms={},
+      var tolerantGeom, layer, tolerance, testGeoms={},
           getRadius, getStrokeWidth, radius, strokeWidth, match;
       var minTolerance;
       if (geom instanceof OpenLayers.Geometry) {
@@ -1186,7 +1186,6 @@ var destroyAllFeatures;
           var featuresToSelect = [];
           for(var i=0, len = layer.features.length; i<len; ++i) {
             var feature = layer.features[i];
-            var testGeom;
             // check if the feature is displayed
             if (!feature.onScreen()) {
               continue;
@@ -1207,17 +1206,20 @@ var destroyAllFeatures;
                 strokeWidth = getStrokeWidth(feature);
               }
             }
-            tolerance = div.map.getResolution() * (radius + (strokeWidth/2));
-            tolerance=Math.max(minTolerance, Math.round(tolerance));
-            testGeom = geom.getCentroid();
-            // keep geoms we create so we don't keep rebuilding them
-            if (typeof testGeoms['geom-'+Math.round(tolerance/100)]!=='undefined') {
-              tolerantGeom = testGeoms['geom-'+Math.round(tolerance/100)];
+            if (geom.CLASS_NAME==='OpenLayers.Geometry.Point') {
+              tolerance = div.map.getResolution() * (radius + (strokeWidth/2));
+              tolerance=Math.max(minTolerance, Math.round(tolerance));
+              // keep geoms we create so we don't keep rebuilding them
+              if (typeof testGeoms['geom-'+Math.round(tolerance/100)]!=='undefined') {
+                tolerantGeom = testGeoms['geom-'+Math.round(tolerance/100)];
+              } else {
+                tolerantGeom = OpenLayers.Geometry.Polygon.createRegularPolygon(geom, tolerance, 8, 0);
+                testGeoms['geom-'+Math.round(tolerance/100)] = tolerantGeom;
+              }
             } else {
-              tolerantGeom = OpenLayers.Geometry.Polygon.createRegularPolygon(testGeom, tolerance, 8, 0);
-              testGeoms['geom-'+Math.round(tolerance/100)] = tolerantGeom;
+              tolerantGeom = geom;
             }
-            if ((tolerantGeom.intersects(feature.geometry) || testGeom.intersects(feature.geometry))) {
+            if (tolerantGeom.intersects(feature.geometry)) {
               featuresToSelect.push(feature);
             }
           }
