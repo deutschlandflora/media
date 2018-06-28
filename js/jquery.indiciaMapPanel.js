@@ -1290,19 +1290,30 @@ var destroyAllFeatures;
         //allows a custom function to be run when a user clicks on a map
       } else if (div.settings.clickableLayersOutputMode==='customFunction') {
         // features is already the list of clicked on objects, div.setting's.customClickFn must be a function passed to the map as a param.
-        div.settings.customClickFn(features);
+        div.settings.customClickFn(features, geom);
       } else {
-        for (var i=0; i<div.map.popups.length; i++) {
-          div.map.removePopup(div.map.popups[i]);
+        if (typeof OpenLayers.Popup === 'undefined') {
+          var dialog = $('<div>' + div.settings.clickableLayersOutputFn(features, div) + '</div>').dialog({
+            title: 'Feature information',
+            buttons: {
+              OK: function okClick() {
+                dialog.dialog('close');
+              }
+            }
+          });
+        } else {
+          for (var i=0; i<div.map.popups.length; i++) {
+            div.map.removePopup(div.map.popups[i]);
+          }
+          div.map.addPopup(new OpenLayers.Popup.FramedCloud(
+              "popup",
+              div.map.getLonLatFromPixel(this.lastclick),
+              null,
+              div.settings.clickableLayersOutputFn(features, div),
+              null,
+              true
+          ));
         }
-        div.map.addPopup(new OpenLayers.Popup.FramedCloud(
-            "popup",
-            div.map.getLonLatFromPixel(this.lastclick),
-            null,
-            div.settings.clickableLayersOutputFn(features, div),
-            null,
-            true
-        ));
       }
     }
 

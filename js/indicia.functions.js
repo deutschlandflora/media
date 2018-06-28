@@ -21,7 +21,8 @@ if (typeof window.indiciaData === 'undefined') {
     onloadFns: [],
     idDiffRuleMessages: {},
     documentReady: 'no',
-    windowLoaded: 'no'
+    windowLoaded: 'no',
+    reports: [],
   };
   window.indiciaFns = {};
 }
