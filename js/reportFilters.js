@@ -1326,11 +1326,11 @@ jQuery(document).ready(function ($) {
           attrName = indiciaData.filter.def.date_type + '_' + attrName;
         }
         if ($(ctrl).is('select')) {
-          $(ctrl).find('option:selected').removeAttr('selected');
+          $(ctrl).find('option:selected').prop('selected', false);
           value = typeof indiciaData.filter.def[attrName] === 'undefined' ? '' : indiciaData.filter.def[attrName];
           option = $(ctrl).find('option[value="' + value + '"]');
           if (option) {
-            option.attr('selected', 'selected');
+            option.prop('selected', true);
           }
         } else {
           $(ctrl).val(indiciaData.filter.def[attrName]);
