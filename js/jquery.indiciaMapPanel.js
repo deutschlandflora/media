@@ -58,31 +58,37 @@ var destroyAllFeatures;
     // The ghost grid square drawn when hovering
     var ghost=null;
 
-    var plusKeyDown=false, minusKeyDown=false, overMap=false, currentMousePixel=null;
+    var plusKeyDown = false;
+    var minusKeyDown = false;
+    var overMap = false;
+    var currentMousePixel = null;
 
     /**
      * Adds the distribution point indicated by a record object to a list of features.
      */
     function addPt(features, record, wktCol, opts, id) {
-      if (record[wktCol]===null)
+      var feature;
+      var geom;
+      if (record[wktCol] === null) {
         return;
+      }
       // if an int supplied instead of a geom, this must be an index into the indiciaData.geoms array.
       if (!isNaN(record[wktCol])) {
         record[wktCol] = indiciaData.geoms[record[wktCol]];
       }
-      var feature, geom=OpenLayers.Geometry.fromWKT(record[wktCol]);
-      if (this.map.projection.getCode() != this.indiciaProjection.getCode()) {
+      geom = OpenLayers.Geometry.fromWKT(record[wktCol]);
+      if (this.map.projection.getCode() !== this.indiciaProjection.getCode()) {
         geom.transform(this.indiciaProjection, this.map.projection);
       }
       delete record[wktCol];
-      if (typeof opts.type!=='undefined' && opts.type!=='vector') {
+      if (typeof opts.type !== 'undefined' && opts.type !== 'vector') {
         // render a point for symbols
         geom = geom.getCentroid();
       }
       feature = new OpenLayers.Feature.Vector(geom, record);
-      if (typeof id!=='undefined') {
+      if (typeof id !== 'undefined') {
         // store a supplied identifier against the feature
-        feature.id=id;
+        feature.id = id;
       }
       features.push(feature);
       return feature;
@@ -95,12 +101,14 @@ var destroyAllFeatures;
      */
     function removeAllFeatures(layer, type, inverse) {
       var toRemove = [];
-      if (typeof inverse==='undefined') {
-        inverse=false;
+      if (typeof inverse === 'undefined') {
+        inverse = false;
       }
-      $.each(layer.features, function() {
-        //Annotations is a special seperate mode added after original code was written, so do not interfere with annotations even in inverse mode.
-        if ((!inverse && this.attributes.type===type) || (inverse && this.attributes.type!==type && this.attributes.type!=='annotation')) {
+      $.each(layer.features, function checkFeature() {
+        // Annotations is a special seperate mode added after original code was written, so do not interfere with
+        // annotations even in inverse mode.
+        if ((!inverse && this.attributes.type === type) || (inverse && this.attributes.type !== type
+            && this.attributes.type !== 'annotation')) {
           toRemove.push(this);
         }
       });
@@ -195,6 +203,7 @@ var destroyAllFeatures;
       var ids;
       var featureVal;
       var i;
+      var len;
       for (i = 0, len = layer.features.length; i < len; ++i) {
         if (typeof field !== 'undefined' && typeof layer.features[i].attributes[field + 's'] !== 'undefined') {
           ids = layer.features[i].attributes[field + 's'].split(',');
@@ -469,7 +478,7 @@ var destroyAllFeatures;
       });
 
       $('#' + div.georefOpts.georefCloseBtnId).click(function (e) {
-        $('#' + div.georefOpts.georefDivId).hide('fast', function () {div.map.updateSize();});
+        $('#' + div.georefOpts.georefDivId).hide('fast', function () { div.map.updateSize(); });
         e.preventDefault();
       });
       if ($('#imp-location').length) {
@@ -500,7 +509,9 @@ var destroyAllFeatures;
 
     function switchToSatelliteBaseLayer(map) {
       $.each(map.layers, function() {
-        if (this.isBaseLayer && (this.name.indexOf('Satellite')!==-1 || this.name.indexOf('Hybrid')!==-1) && map.baseLayer!==this) {
+        if (this.isBaseLayer
+            && (this.name.indexOf('Satellite') !== -1 || this.name.indexOf('Hybrid') !== -1)
+            && map.baseLayer !== this) {
           map.setBaseLayer(this);
           return false;
         }
@@ -521,7 +532,7 @@ var destroyAllFeatures;
           helptext.push(div.settings.hlpImproveResolution3.replace('{size}', info.display));
         }
         // switch layer?
-        if (div.settings.helpToPickPrecisionSwitchAt && info.metres<=div.settings.helpToPickPrecisionSwitchAt) {
+        if (div.settings.helpToPickPrecisionSwitchAt && info.metres <= div.settings.helpToPickPrecisionSwitchAt) {
           switchToSatelliteBaseLayer(div.map);
           helptext.push(div.settings.hlpImproveResolutionSwitch);
         }
@@ -544,9 +555,9 @@ var destroyAllFeatures;
             '&mapsystem=' + indiciaFns.projectionToSystem(div.map.projection, false),
           success: function(data) {
             // JSONP can't handle http status code errors. So error check in success response.
-            if(typeof data.error !== 'undefined')
-              if(data.code === 4001) {
-                indiciaData.invalidSrefDetected=true;
+            if (typeof data.error !== 'undefined')
+              if (data.code === 4001) {
+                indiciaData.invalidSrefDetected = true;
                 alert(div.settings.msgSrefNotRecognised);
               } else
                 alert(data.error);
@@ -558,8 +569,8 @@ var destroyAllFeatures;
                 if (div.settings.clickForPlot) {
                   data.sref = value;
                   // Get front of the WKT to find out the spatial reference type the user used, a point would be a lat long, a polygon would be an OSGB square
-                  var typeCheck = data.mapwkt.substr(0,6);
-                  var wktPoints=[];
+                  var typeCheck = data.mapwkt.substr(0, 6);
+                  var wktPoints = [];
                   // The plot is drawn from a lat long position, Just take the first value to draw the plot from for
                   // lat/long. For OSGB, take an average of all the points to get a single point to draw the plot from
                   // as there are multiple points in that instance representing the OSGB square. Note the OSGB value
@@ -569,7 +580,7 @@ var destroyAllFeatures;
                   openlayersLatlong.lon = 0;
                   openlayersLatlong.lat = 0;
                   // Split the points making up the wkt into an array for working on
-                  if (typeCheck == 'POINT(') {
+                  if (typeCheck === 'POINT(') {
                     data.mapwkt = data.mapwkt.slice(6).split(')');
                     wktPoints[0] = data.mapwkt[0];
                   } else {
@@ -2725,8 +2736,10 @@ var destroyAllFeatures;
           toolbarControls.push(new OpenLayers.Control.ClearLayer([div.map.editLayer],
               {'displayClass': align + ' olControlClearLayer', 'title':div.settings.hintClearSelection, 'clearReport':true}));
         } else if (ctrl=='modifyFeature' && div.settings.editLayer) {
-          ctrlObj = new OpenLayers.Control.ModifyFeature(div.map.editLayer,
-              {'displayClass': align + 'olControlModifyFeature', 'title':div.settings.hintModifyFeature});
+          ctrlObj = new OpenLayers.Control.ModifyFeature(
+            div.map.editLayer,
+            { 'displayClass': align + 'olControlModifyFeature', 'title':div.settings.hintModifyFeature }
+          );
           toolbarControls.push(ctrlObj);
         } else if (ctrl=='graticule') {
           $.each($('select#' + div.settings.srefSystemId + ' option,input#' + div.settings.srefSystemId), function() {
