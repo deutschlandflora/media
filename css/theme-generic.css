@@ -1,5 +1,9 @@
 /* Theme extension to the default_site.css file which provides the default Indicia style output */
 /* Accessible colour ranges from colorbrewer */
+/* Set the species checklist entry grid width to 100% */
+table.species-grid {
+  width: 100%; }
+
 table.report-grid {
   /* Sizing of thumbnails in image columns */ }
   table.report-grid tr {
