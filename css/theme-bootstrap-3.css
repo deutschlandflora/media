@@ -1,5 +1,9 @@
 /* Theme extension to the default_site.css file which provides Bootstrap 3 optimised style output */
 /* Accessible colour ranges from colorbrewer */
+/* Set the species checklist entry grid width to 100% */
+table.species-grid {
+  width: 100%; }
+
 table.report-grid {
   /* Sizing of thumbnails in image columns */ }
   table.report-grid tr {
@@ -19,9 +23,25 @@ table.report-grid {
     width: 50px;
     margin: 1px; }
 
+.media-gallery ul {
+  padding: 0; }
+  .media-gallery ul li {
+    display: -moz-inline-stack;
+    display: inline-block;
+    zoom: 1;
+    *display: inline;
+    list-style-type: none;
+    vertical-align: top; }
+
 /* Allow info panels to use absolute positioning */
 .gallery-item {
-  position: relative; }
+  position: relative;
+  padding: 0.5em;
+  /* Record status icon overlay on image */ }
+  .gallery-item .status-icon {
+    position: absolute;
+    right: 0;
+    top: 8px; }
 
 /* Media/image information overlays */
 .media-info {
@@ -42,11 +62,17 @@ table.report-grid {
     width: 16px;
     height: 16px;
     position: absolute;
-    right: -6px;
+    right: 0;
     top: 0;
     font-size: 12px;
     color: #777777;
-    cursor: pointer; }
+    cursor: pointer;
+    text-align: center; }
+
+.image-caption.small {
+  width: 100px;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 10px; }
 
 /* Need to account for Fancybox navigation button z-index */
 .fancybox-outer .media-info {

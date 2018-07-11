@@ -1,7 +1,8 @@
 /* Theme extension to the default_site.css file which provides the default Indicia style output */
 @import "common/variables";
 @import "generic/variables";
+@import "common/form-controls";
 @import "common/report-grid";
-@import "common/media-info";
+@import "common/media";
 @import "common/autocomplete";
 @import "generic/form-controls";

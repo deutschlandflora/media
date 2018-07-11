@@ -209,7 +209,7 @@
         visibleCols = $.cookie(div.id + '-visibleCols');
         if (visibleCols) {
           visibleCols = visibleCols.split(',');
-          $(div).find('thead th,tbody td').hide();
+          $(div).find("th[class^='col-'],th[class*=' col-'],td[class^='col-'],td[class*=' col-']").hide();
           $.each(visibleCols, function () {
             $(div).find('.col-' + this).show();
           });
@@ -855,6 +855,10 @@
       }
     };
 
+    this.setupPagerEvents = function() {
+      setupPagerEvents(this[0]);
+    }
+
     var BATCH_SIZE=2000, currentMapRequest;
 
     function hasIntersection(a, b) {
@@ -945,7 +949,13 @@
      * The request is handled in chunks of 1000 records. Optionally supply an id to map just 1 record.
      */
     function mapRecords(div, zooming, id, callback) {
-      var layerInfo = { bounds: null }, map = indiciaData.mapdiv.map, currentBounds = null;
+      var layerInfo = { bounds: null };
+      var map = indiciaData.mapdiv.map;
+      var currentBounds = null;
+      if (indiciaData.minMapReportZoom && indiciaData.minMapReportZoom > map.zoom) {
+        indiciaData.mapdiv.removeAllFeatures(indiciaData.reportlayer, 'linked', true);
+        return;
+      }
       // we need to reload the map layer using the mapping report, so temporarily switch the report
       var origReport = div.settings.dataSource, request;
       if (typeof indiciaData.mapdiv === 'undefined'
@@ -979,21 +989,20 @@
         layerInfo.report = div.settings.dataSource;
         if (typeof id !== 'undefined') {
           request += '&' + div.settings.rowId + '=' + id;
-        } else {
+        } else if (map.resolution <= 600 && indiciaData.mapDataSource.loRes &&
+            (map.resolution <= 30 || typeof div.settings.extraParams.indexed_location_id === 'undefined' || div.settings.extraParams.indexed_location_id === '')) {
           // If zoomed in below a 10k map, use the map bounding box to limit the loaded features. Having an indexed site
           // filter changes the threshold as it is less necessary.
-          if (map.zoom <= 600 && indiciaData.mapDataSource.loRes &&
-              (map.zoom <= 30 || typeof div.settings.extraParams.indexed_location_id === 'undefined' || div.settings.extraParams.indexed_location_id === '')) {
-            // get the current map bounds. If zoomed in close, get a larger bounds so that the map can be panned a bit without reload.
-            layerInfo.bounds = map.calculateBounds(map.getCenter(), Math.max(39, map.getResolution()));
-            // plus the current bounds to test if a reload is necessary
-            currentBounds = map.calculateBounds();
-            if (map.projection.getCode() != indiciaData.mapdiv.indiciaProjection.getCode()) {
-              layerInfo.bounds.transform(map.projection, indiciaData.mapdiv.indiciaProjection);
-              currentBounds.transform(map.projection, indiciaData.mapdiv.indiciaProjection);
-            }
-            request += '&bounds=' + encodeURIComponent(layerInfo.bounds.toGeometry().toString());
+          // Get the current map bounds. If zoomed in close, get a larger bounds so that the map can be panned a bit
+          // without reload.
+          layerInfo.bounds = map.calculateBounds(map.getCenter(), Math.max(39, map.getResolution() * 1.5));
+          // plus the current bounds to test if a reload is necessary
+          currentBounds = map.calculateBounds();
+          if (map.projection.getCode() != indiciaData.mapdiv.indiciaProjection.getCode()) {
+            layerInfo.bounds.transform(map.projection, indiciaData.mapdiv.indiciaProjection);
+            currentBounds.transform(map.projection, indiciaData.mapdiv.indiciaProjection);
           }
+          request += '&bounds=' + encodeURIComponent(layerInfo.bounds.toGeometry().toString());
         }
       }
       finally {
@@ -1231,22 +1240,36 @@
         $.fancybox(popupFilterHtml);
       });
 
+      /**
+       * Retrieves a unique ID from a col's col- class.
+       */
+      function getColId(col) {
+        var r;
+        $.each(col.classList, function () {
+          if (this.match(/^col-/)) {
+            r = this.replace(/^col-/, '');
+          }
+        });
+        return r;
+      }
+
       // Show a picker for the visible columns
       $(div).find('.col-picker').click(function () {
-        var visibleCols = $(div).find('thead tr:first-child th:visible').length;
-        var hiddenCols = $(div).find('thead tr:first-child th:not(:visible)').length;
+        var pickableCols = $(div).find('thead tr:first-child').find("th[class^='col-'],th[class*=' col-']");
+        var visibleCols = $(pickableCols).filter(':visible').length;
+        var hiddenCols = $(pickableCols).filter(':hidden').length;
         var checked = visibleCols > 0 ? 'checked="checked"' : '';
         var opacity = visibleCols > 0 && hiddenCols > 0 ? ' style="opacity: 0.4"' : '';
         var colPickerHtml = '<div class="col-picker-options-container"><p>Choose which columns to display:</p>';
         colPickerHtml += '<input type="hidden" class="div-id-holder" data-divid="' + div.id + '" />';
         colPickerHtml += '<ul><li id="col-checkbox-all-container" ' + opacity + '><input id="col-checkbox-all" type="checkbox" ' + checked + '/>' +
             '<label for="col-checkbox-all">Check/uncheck all</label></li>';
-        $.each($(div).find('thead tr:first-child th'), function (idx) {
-          if ($(this).ignore('.skip-text').text() !== '') {
-            checked = $(this).is(':visible') ? ' checked="checked"' : '';
-            colPickerHtml += '<li><input id="show-col-' + idx + '" class="col-checkbox" type="checkbox" ' + checked +
-              '/><label for="show-col-' + idx + '">' + $(this).ignore('.skip-text').text() + '</label></li>';
-          }
+        $.each($(div).find('thead tr:first-child').find("th[class^='col-'],th[class*=' col-']"), function (ix) {
+          var label = $(this).ignore('.skip-text').text() === '' ? '-' : $(this).ignore('.skip-text').text();
+          var id = getColId(this);
+          checked = $(this).is(':visible') ? ' checked="checked"' : '';
+          colPickerHtml += '<li><input id="show-col-' + id + '" class="col-checkbox" type="checkbox" ' + checked +
+            '/><label for="show-col-' + id + '">' + label + '</label></li>';
         });
         colPickerHtml += '</ul></div>';
         colPickerHtml += '<input type="button" class="apply-col-picker" value="Apply">';
@@ -1322,12 +1345,8 @@
         // the col picker only saves to cookie if grid id specified, otherwise you get grids overwriting each other's settings
         if (typeof $.cookie !== 'undefined' && !div.id.match(/^report-grid-\d+$/)) {
           visibleCols = [];
-          $.each($(div).find('thead tr:first-child th:visible'), function () {
-            $.each(this.classList, function () {
-              if (this.match(/^col-/)) {
-                visibleCols.push(this.replace(/^col-/, ''));
-              }
-            });
+          $.each($(div).find('thead tr:first-child th:visible').filter("[class^='col-'],[class*=' col-']"), function () {
+            visibleCols.push(getColId(this));
           });
           $.cookie(div.id + '-visibleCols', visibleCols, { expires: 7 });
         }
@@ -1338,12 +1357,12 @@
       // Col picker event handlers
 
       indiciaFns.on('click', '.apply-col-picker', {}, function (e) {
-        var colIdx;
+        var colId;
         var el;
         var table = $('#' + $(e.currentTarget).parent().find('.div-id-holder').attr('data-divid'));
         $.each($('.col-checkbox'), function () {
-          colIdx = parseInt(this.id.replace('show-col-', ''), 10) + 1;
-          el = $(table).find('th:nth-child(' + colIdx + '),td:nth-child(' + colIdx + ')');
+          colId = this.id.replace('show-col-', '');
+          el = $(table).find('th.col-' + colId + ',td.col-' + colId);
           if (this.checked) {
             el.show();
           } else {
@@ -1356,9 +1375,9 @@
       indiciaFns.on('change', '#col-checkbox-all', {}, function () {
         $('#col-checkbox-all-container').css('opacity', 1);
         if (this.checked) {
-          $('.col-checkbox').attr('checked', 'checked');
+          $('.col-checkbox').prop('checked', true);
         } else {
-          $('.col-checkbox').removeAttr('checked');
+          $('.col-checkbox').prop('checked', false);
         }
       });
       indiciaFns.on('change', '.col-checkbox', {}, function () {
@@ -1368,9 +1387,9 @@
         var checked = checkedCols > 0;
         var opacity = checkedCols === 0 || uncheckedCols === 0 ? 1 : 0.4;
         if (checked) {
-          $('#col-checkbox-all').attr('checked', 'checked');
+          $('#col-checkbox-all').prop('checked', true);
         } else {
-          $('#col-checkbox-all').removeAttr('checked');
+          $('#col-checkbox-all').prop('checked', false);
         }
         $('#col-checkbox-all-container').css('opacity', opacity);
       });

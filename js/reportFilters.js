@@ -21,7 +21,6 @@
 var loadFilter;
 var loadFilterUser;
 var refreshFilters;
-var applyFilterToReports;
 
 jQuery(document).ready(function ($) {
   'use strict';
@@ -855,7 +854,7 @@ jQuery(document).ready(function ($) {
       }
     });
     // ensures that if part of a loaded filter description is a boundary, it gets loaded onto the map only when the map is ready
-    updateFilterDescriptions();
+    indiciaFns.updateFilterDescriptions();
   });
 
   // Ensure that pane controls that are exclusive of others are only filled in one at a time
@@ -1090,7 +1089,7 @@ jQuery(document).ready(function ($) {
     }
   }
 
-  applyFilterToReports = function (doReload) {
+  indiciaFns.applyFilterToReports = function (doReload) {
     var filterDef;
     var reload = (typeof doReload === 'undefined') ? true : doReload;
     applyContextLimits();
@@ -1150,14 +1149,14 @@ jQuery(document).ready(function ($) {
     indiciaData.filter.id = null;
     $('#filter\\:title').val('');
     $('#select-filter').val('');
-    applyFilterToReports();
+    indiciaFns.applyFilterToReports();
     // clear map edit layer
     clearSites();
     $('#site-type').val('');
     $('#location_list\\:box').hide();
     // clear any sublists
     $('.ind-sub-list li').remove();
-    updateFilterDescriptions();
+    indiciaFns.updateFilterDescriptions();
     $('#filter-build').html(indiciaData.lang.reportFilters.CreateAFilter);
     $('#filter-reset').addClass('disabled');
     $('#filter-delete').addClass('disabled');
@@ -1167,7 +1166,7 @@ jQuery(document).ready(function ($) {
     $('#standard-params .header span.changed').hide();
   }
 
-  function updateFilterDescriptions() {
+  indiciaFns.updateFilterDescriptions = function() {
     var description;
     var name;
     $.each($('#filter-panes .pane'), function (idx, pane) {
@@ -1194,7 +1193,7 @@ jQuery(document).ready(function ($) {
     delete indiciaData.filter.filters_user_id;
     indiciaData.filter.title = data[0].title;
     $('#filter\\:title').val(data[0].title);
-    applyFilterToReports();
+    indiciaFns.applyFilterToReports();
     $('#filter-reset').removeClass('disabled');
     $('#filter-delete').removeClass('disabled');
     $('#active-filter-label').html('Active filter: ' + data[0].title);
@@ -1204,7 +1203,7 @@ jQuery(document).ready(function ($) {
         paneObjList[name].loadFilter();
       }
     });
-    updateFilterDescriptions();
+    indiciaFns.updateFilterDescriptions();
     $('#filter-build').html(indiciaData.lang.reportFilters.ModifyFilter);
     $('#standard-params .header span.changed').hide();
     // can't delete a filter you didn't create.
@@ -1291,11 +1290,11 @@ jQuery(document).ready(function ($) {
     $('#sharing-type-label').html(codeToSharingTerm(fu.filter_sharing));
     $('#filters_user\\:user_id\\:person_name').val(fu.person_name);
     $('#filters_user\\:user_id').val(fu.user_id);
-    applyFilterToReports();
+    indiciaFns.applyFilterToReports();
     $('#filter-reset').removeClass('disabled');
     $('#filter-delete').removeClass('disabled');
     $('#active-filter-label').html('Active filter: ' + fu.filter_title);
-    updateFilterDescriptions();
+    indiciaFns.updateFilterDescriptions();
     $('#standard-params .header span.changed').hide();
     // can't delete a filter you didn't create.
     if (fu.filter_created_by_id === indiciaData.user_id) {
@@ -1326,11 +1325,11 @@ jQuery(document).ready(function ($) {
           attrName = indiciaData.filter.def.date_type + '_' + attrName;
         }
         if ($(ctrl).is('select')) {
-          $(ctrl).find('option:selected').removeAttr('selected');
+          $(ctrl).find('option:selected').prop('selected', false);
           value = typeof indiciaData.filter.def[attrName] === 'undefined' ? '' : indiciaData.filter.def[attrName];
           option = $(ctrl).find('option[value="' + value + '"]');
           if (option) {
-            option.attr('selected', 'selected');
+            option.prop('selected', true);
           }
         } else {
           $(ctrl).val(indiciaData.filter.def[attrName]);
@@ -1553,8 +1552,8 @@ jQuery(document).ready(function ($) {
     if (typeof paneObjList[pane].applyFormToDefinition !== 'undefined') {
       paneObjList[pane].applyFormToDefinition();
     }
-    applyFilterToReports();
-    updateFilterDescriptions();
+    indiciaFns.applyFilterToReports();
+    indiciaFns.updateFilterDescriptions();
     $.fancybox.close();
   });
 
