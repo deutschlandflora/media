@@ -78,6 +78,80 @@ table.report-grid {
 .fancybox-outer .media-info {
   z-index: 9999; }
 
+/* Define the purpose of the 3 columns in the sprite. */
+/* Define the purpose of the rows in the sprite. */
+.status-icon {
+  background: url(../images/statuses-sprite.png) no-repeat center center;
+  width: 32px;
+  height: 16px;
+  display: inline-block;
+  /* Default state, not reviewed */ }
+  .status-icon.status-.substatus-.certainty-, .status-icon.status-C.substatus-.certainty-.query- {
+    background: none; }
+  .status-icon.certainty-C {
+    /* Not reviewed, recorder was certain */
+    background-position: 0px -48px; }
+    .status-icon.certainty-C.query-Q {
+      background-position: -32px -48px; }
+    .status-icon.certainty-C.query-A {
+      background-position: -64px -48px; }
+  .status-icon.certainty-L {
+    /* Not reviewed, recorder thought likely */
+    background-position: 0px -64px; }
+    .status-icon.certainty-L.query-Q {
+      background-position: -32px -64px; }
+    .status-icon.certainty-L.query-A {
+      background-position: -64px -64px; }
+  .status-icon.certainty-U {
+    /* Not reviewed, recorder was uncertain */
+    background-position: 0px -80px; }
+    .status-icon.certainty-U.query-Q {
+      background-position: -32px -80px; }
+    .status-icon.certainty-U.query-A {
+      background-position: -64px -80px; }
+  .status-icon.status-V {
+    /* Accepted */
+    background-position: 0px -16px; }
+    .status-icon.status-V.query-Q {
+      background-position: -32px -16px; }
+    .status-icon.status-V.query-A {
+      background-position: -64px -16px; }
+    .status-icon.status-V.substatus-1 {
+      /* Accepted as correct */
+      background-position: 0px 0px; }
+      .status-icon.status-V.substatus-1.query-Q {
+        background-position: -32px 0px; }
+      .status-icon.status-V.substatus-1.query-A {
+        background-position: -64px 0px; }
+  .status-icon.status-C {
+    /* Not reviewed, recorder certainty not known */
+    background-position: 0px -128px; }
+    .status-icon.status-C.query-Q {
+      background-position: -32px -128px; }
+    .status-icon.status-C.query-A {
+      background-position: -64px -128px; }
+    .status-icon.status-C.substatus-3 {
+      /* Plausible */
+      background-position: 0px -32px; }
+      .status-icon.status-C.substatus-3.query-Q {
+        background-position: -32px -32px; }
+      .status-icon.status-C.substatus-3.query-A {
+        background-position: -64px -32px; }
+  .status-icon.status-R {
+    /* Not accepted */
+    background-position: 0px -96px; }
+    .status-icon.status-R.query-Q {
+      background-position: -32px -96px; }
+    .status-icon.status-R.query-A {
+      background-position: -64px -96px; }
+    .status-icon.status-R.substatus-5 {
+      /* Not accepted as incorrect */
+      background-position: 0px -112px; }
+      .status-icon.status-R.substatus-5.query-Q {
+        background-position: -32px -112px; }
+      .status-icon.status-R.substatus-5.query-A {
+        background-position: -64px -112px; }
+
 label, form label {
   width: 160px;
   display: -moz-inline-stack;
