@@ -2380,7 +2380,12 @@ var destroyAllFeatures;
 
       // Convert indicia WMS/WFS layers into js objects
       $.each(this.settings.indiciaWMSLayers, function (key, value) {
-        div.settings.layers.push(new OpenLayers.Layer.WMS(key, div.settings.indiciaGeoSvc + 'wms', {layers: value, transparent: true}, {singleTile: true, isBaseLayer: false, sphericalMercator: true}));
+        div.settings.layers.push(new OpenLayers.Layer.WMS(
+          value.replace(/^.*:/, '').replace(/_/g, ' '),
+          div.settings.indiciaGeoSvc + 'wms',
+          {layers: value, transparent: true},
+          {singleTile: true, isBaseLayer: false, sphericalMercator: true}
+        ));
       });
       $.each(this.settings.indiciaWFSLayers, function (key, value) {
         div.settings.layers.push(new OpenLayers.Layer.WFS(key, div.settings.indiciaGeoSvc + 'wms', {typename: value, request: 'GetFeature'}, {sphericalMercator: true}));

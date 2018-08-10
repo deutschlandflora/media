@@ -408,7 +408,7 @@ jQuery(document).ready(function ($) {
         } else if (indiciaData.filter.def[dateFromField]) {
           r.push('Records ' + dateType + ' on or after ' + indiciaData.filter.def[dateFromField]);
         } else if (indiciaData.filter.def[dateToField]) {
-          r.push('Records ' + dateType + ' on or before ' + indiciaData.filter[dateToField]);
+          r.push('Records ' + dateType + ' on or before ' + indiciaData.filter.def[dateToField]);
         }
         if (indiciaData.filter.def[dateAgeField]) {
           r.push('Records ' + dateType + ' in last ' + indiciaData.filter.def[dateAgeField]);
