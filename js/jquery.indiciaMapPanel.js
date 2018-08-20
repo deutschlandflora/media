@@ -2380,8 +2380,10 @@ var destroyAllFeatures;
 
       // Convert indicia WMS/WFS layers into js objects
       $.each(this.settings.indiciaWMSLayers, function (key, value) {
+        // If key is int, title wasn't provided so work it out from the layer name.
+        var layerTitle = (key === parseInt(key, 10)) ? value.replace(/^.*:/, '').replace(/_/g, ' ') : key;
         div.settings.layers.push(new OpenLayers.Layer.WMS(
-          value.replace(/^.*:/, '').replace(/_/g, ' '),
+          layerTitle,
           div.settings.indiciaGeoSvc + 'wms',
           {layers: value, transparent: true},
           {singleTile: true, isBaseLayer: false, sphericalMercator: true}

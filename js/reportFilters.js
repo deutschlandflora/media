@@ -1388,6 +1388,10 @@ jQuery(document).ready(function ($) {
         } else {
           indiciaData.mapdiv.map.updateSize();
         }
+        // Ensure that if FancyBox container scrolls, mouse position remains accurate.
+        $(indiciaData.mapdiv).parents().scroll(function() {
+          indiciaData.mapdiv.map.events.clearMouseCache();
+        });
       }
       // these auto-disable on form submission
       $('#taxon_group_list\\:search\\:q').removeAttr('disabled');
