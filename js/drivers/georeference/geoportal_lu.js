@@ -14,17 +14,17 @@
  */
 
 /**
- * A driver class to allow the georeference_lookup control to interface with the 
- * service at geoportal.lu. 
+ * A driver class to allow the georeference_lookup control to interface with the
+ * service at geoportal.lu.
  */
- 
+
 var Georeferencer;
 
 (function ($) {
   Georeferencer = function(mapdiv, callback) {
-  
+
     this.georeference = function(searchtext) {
-      var request = mapdiv.georefOpts.proxy +  
+      var request = indiciaData.proxyUrl +
           '?url=http://api.geoportal.lu/locationsearch&query=' + searchtext + '&lang=' + mapdiv.georefOpts.georefLang;
       $.getJSON(request, function(data) {
         // an array to store the responses in the required country
@@ -40,11 +40,11 @@ var Georeferencer;
             },
             boundingBox: {
               southWest: {
-                x: place.bbox[0], 
+                x: place.bbox[0],
                 y: place.bbox[1]
               },
               northEast: {
-                x: place.bbox[2], 
+                x: place.bbox[2],
                 y: place.bbox[3]
               }
             },
