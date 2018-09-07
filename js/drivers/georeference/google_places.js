@@ -42,7 +42,7 @@ var Georeferencer;
     this.georeference = function doGeoref(searchtext) {
       $.ajax({
         dataType: 'json',
-        url: $.fn.indiciaMapPanel.georeferenceLookupSettings.proxy,
+        url: indiciaData.proxyUrl,
         data: {
           url: 'https://maps.googleapis.com/maps/api/place/textsearch/json',
           key: settings.google_api_key,

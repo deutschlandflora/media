@@ -296,7 +296,7 @@ if (typeof window.indiciaData === 'undefined') {
         function (data) {
           jQuery.each(data, function (i, item) {
             var selector = 'smpAttr\\:' + item.id;
-            var input = $('[id=' + selector + ']');
+            var input = $('[id=' + selector + '],[name=' + selector + ']');
             if (item.value !== null && item.data_type !== 'Boolean') {
               input.val(item.value);
               if (input.is('select') && input.val() === '') {
