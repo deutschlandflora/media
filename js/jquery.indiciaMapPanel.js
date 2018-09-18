@@ -973,7 +973,8 @@ var destroyAllFeatures;
           return new OpenLayers.Layer.OSM("OpenTopoMap", [
             "https://a.tile.opentopomap.org/${z}/${x}/${y}.png",
             "https://b.tile.opentopomap.org/${z}/${x}/${y}.png",
-            "https://c.tile.opentopomap.org/${z}/${x}/${y}.png"]);
+            "https://c.tile.opentopomap.org/${z}/${x}/${y}.png"],
+            {tileOptions: {crossOriginKeyword: null}});
         },
         os_outdoor: function() {
           return new OpenLayers.Layer.WMTS($.extend({
