@@ -1217,7 +1217,8 @@ jQuery(document).ready(function ($) {
   loadFilter = function (id, getParams) {
     var def;
     filterOverride = getParams;
-    if ($('#standard-params .header span.changed:visible').length===0 || confirm(indiciaData.lang.reportFilters.ConfirmFilterChangedLoad)) {
+    if ($('#standard-params .header span.changed:visible').length === 0
+        || confirm(indiciaData.lang.reportFilters.ConfirmFilterChangedLoad)) {
       def = false;
       switch (id) {
         case 'my-records':
@@ -1261,6 +1262,11 @@ jQuery(document).ready(function ($) {
           def = '{"quality": "R"}';
           break;
       }
+      if (!def && typeof indiciaData.filterCustomDefs !== 'undefined'
+          && typeof indiciaData.filterCustomDefs[id] !== 'undefined') {
+        def = JSON.stringify(indiciaData.filterCustomDefs[id]);
+      }
+      indiciaData.mapdiv.removeAllFeatures(indiciaData.mapdiv.map.editLayer, 'boundary');
       if (def) {
         filterLoaded([{
           id: id,

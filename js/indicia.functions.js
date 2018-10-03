@@ -434,6 +434,12 @@ jQuery(document).ready(function ($) {
   var iform;
   var confirmOnPageExit;
   var detectInput;
+
+  // Hook up fancybox if enabled.
+  if ($.fancybox) {
+    $('a.fancybox').fancybox({ afterLoad: indiciaFns.afterFancyboxLoad });
+  }
+
   if ($('form input[name=website_id]').length > 0) {
     iform = $('form input[name=auth_token]').parents('form');
     confirmOnPageExit = function (e) {
