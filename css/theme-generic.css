@@ -4,6 +4,13 @@
 table.species-grid {
   width: 100%; }
 
+.attrs-container legend {
+  font-size: 150%; }
+.attrs-container .attrs-container {
+  padding-left: 30px; }
+  .attrs-container .attrs-container legend {
+    font-size: 120%; }
+
 table.report-grid {
   /* Sizing of thumbnails in image columns */ }
   table.report-grid tr {
