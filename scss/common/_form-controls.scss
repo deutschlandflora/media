@@ -3,11 +3,14 @@ table.species-grid {
   width: 100%;
 }
 .attrs-container {
+  /* Indent contents */
+  padding-left: 30px;
   legend {
     font-size: 150%;
+    /* Undo indentation for legend */
+    margin-left: -30px;
   }
   .attrs-container {
-    padding-left: 30px;
     legend {
       font-size: 120%;
     }
