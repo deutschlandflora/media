@@ -101,7 +101,7 @@
         if (input.type !== 'submit' && $(input).attr('name').indexOf(div.settings.reportGroup + '-') === 0
             && (input.type !== 'checkbox' || $(input).prop('checked'))) {
           paramName = $(input).attr('name').replace(div.settings.reportGroup + '-', '');
-          request[paramName] = $(input).attr('value');
+          request[paramName] = $(input).val();
         }
       });
       $.extend(request, getQueryParam(div), div.settings.immutableParams);
