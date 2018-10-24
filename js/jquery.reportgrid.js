@@ -88,14 +88,6 @@
     function getUrlParamsForAllRecords(div) {
       var request = {};
       var paramName;
-      // Extract any parameters from the attached form as long as they are report parameters
-      $('form#' + div.settings.reportGroup + '-params input, form#' + div.settings.reportGroup + '-params select').each(function (idx, input) {
-        if (input.type !== 'submit' && $(input).attr('name').indexOf(div.settings.reportGroup + '-') === 0
-            && (input.type !== 'checkbox' || $(input).prop('checked'))) {
-          paramName = $(input).attr('name').replace(div.settings.reportGroup + '-', '');
-          request[paramName] = $(input).attr('value');
-        }
-      });
       if (typeof div.settings.extraParams !== 'undefined') {
         $.each(div.settings.extraParams, function (key, value) {
           // skip sorting params if the grid has its own sort applied by clicking a column title
@@ -104,6 +96,14 @@
           }
         });
       }
+      // Extract any parameters from the attached form as long as they are report parameters
+      $('form#' + div.settings.reportGroup + '-params input, form#' + div.settings.reportGroup + '-params select').each(function (idx, input) {
+        if (input.type !== 'submit' && $(input).attr('name').indexOf(div.settings.reportGroup + '-') === 0
+            && (input.type !== 'checkbox' || $(input).prop('checked'))) {
+          paramName = $(input).attr('name').replace(div.settings.reportGroup + '-', '');
+          request[paramName] = $(input).val();
+        }
+      });
       $.extend(request, getQueryParam(div), div.settings.immutableParams);
       return request;
     }
