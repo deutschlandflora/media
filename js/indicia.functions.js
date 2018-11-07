@@ -22,7 +22,8 @@ if (typeof window.indiciaData === 'undefined') {
     idDiffRuleMessages: {},
     documentReady: 'no',
     windowLoaded: 'no',
-    reports: {}
+    reports: {},
+    lang: []
   };
   window.indiciaFns = {};
 }
