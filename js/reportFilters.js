@@ -128,6 +128,15 @@ jQuery(document).ready(function ($) {
   var paneObjList = {
     what: {
       loadFilter: function () {
+        // Cleanup if still refers to defunct higher_taxa_taxon_list_list.
+        if (typeof indiciaData.filter.def.higher_taxa_taxon_list_list !== 'undefined' && indiciaData.filter.def.higher_taxa_taxon_list_list !== '') {
+          indiciaData.filter.def.taxa_taxon_list_list = indiciaData.filter.def.higher_taxa_taxon_list_list;
+          if (typeof indiciaData.filter.def.higher_taxa_taxon_list_names !== 'undefined' && indiciaData.filter.def.higher_taxa_taxon_list_names !== '') {
+            indiciaData.filter.def.taxa_taxon_list_names = indiciaData.filter.def.higher_taxa_taxon_list_names;
+          }
+        }
+        delete indiciaData.filter.def.higher_taxa_taxon_list_list;
+        delete indiciaData.filter.def.higher_taxa_taxon_list_names;
         // if list of ids defined but not group names, this is a taxon group list loaded from the user profile.
         // Hijack the names from indiciaData.myGroups.
         if (typeof indiciaData.filter.def.taxon_group_list !== 'undefined' && typeof indiciaData.filter.def.taxon_group_names === 'undefined') {
@@ -156,11 +165,6 @@ jQuery(document).ready(function ($) {
         if (filterDef.taxon_group_list && filterDef.taxon_group_names) {
           $.each(filterDef.taxon_group_names, function (idx, group) {
             groups.push(group);
-          });
-        }
-        if (filterDef.higher_taxa_taxon_list_list && filterDef.higher_taxa_taxon_list_names) {
-          $.each(filterDef.higher_taxa_taxon_list_names, function (idx, taxon) {
-            taxa.push(taxon);
           });
         }
         if (filterDef.taxa_taxon_list_list && filterDef.taxa_taxon_list_names) {
@@ -224,8 +228,6 @@ jQuery(document).ready(function ($) {
         // Don't send unnecessary stuff like input values from sub_list controls.
         delete indiciaData.filter.def['taxon_group_list:search'];
         delete indiciaData.filter.def['taxon_group_list:search:q'];
-        delete indiciaData.filter.def['higher_taxa_taxon_list_list:search'];
-        delete indiciaData.filter.def['higher_taxa_taxon_list_list:search:searchterm'];
         delete indiciaData.filter.def['taxa_taxon_list_list:search'];
         delete indiciaData.filter.def['taxa_taxon_list_list:search:searchterm'];
         delete indiciaData.filter.def['taxon_designation_list:search'];
@@ -237,7 +239,6 @@ jQuery(document).ready(function ($) {
 
         // reset the list of group names and species
         indiciaData.filter.def.taxon_group_names = {};
-        indiciaData.filter.def.higher_taxa_taxon_list_names = {};
         indiciaData.filter.def.taxa_taxon_list_names = {};
         indiciaData.filter.def.taxon_designation_list_names = {};
         // if nothing selected, clean up the def
@@ -247,14 +248,6 @@ jQuery(document).ready(function ($) {
           // store the list of names in the def, though not used for the report they save web service hits later
           $.each($('input[name="taxon_group_list\\[\\]"]'), function (idx, ctrl) {
             indiciaData.filter.def.taxon_group_names[$(ctrl).val()] = $.trim($(ctrl).parent().text());
-          });
-        }
-        if ($('input[name="higher_taxa_taxon_list_list\\[\\]"]').length === 0) {
-          indiciaData.filter.def.higher_taxa_taxon_list_list = '';
-        } else {
-          // store the list of names in the def, though not used for the report they save web service hits later
-          $.each($('input[name="higher_taxa_taxon_list_list\\[\\]"]'), function (idx, ctrl) {
-            indiciaData.filter.def.higher_taxa_taxon_list_names[$(ctrl).val()] = $.trim($(ctrl).parent().text());
           });
         }
         if ($('input[name="taxa_taxon_list_list\\[\\]"]').length === 0) {
@@ -297,12 +290,9 @@ jQuery(document).ready(function ($) {
       loadForm: function (context) {
         var firstTab = 'species-group-tab';
         var disabled = [];
-        // got a families or species level context. So may as well disable the less specific tabs as they won't be useful.
-        if (context && context.higher_taxa_taxon_list_list) {
-          firstTab = 'species-tab';
-          disabled = [0];
-          $('#families-tab').find('.context-instruct').show();
-        } else if (context && context.taxa_taxon_list_list) {
+        // Got a taxonomic context. So may as well disable the less specific
+        // tabs as they won't be useful.
+        if (context && context.taxa_taxon_list_list) {
           firstTab = 'designations-tab';
           disabled = [0, 1];
           $('#species-tab').find('.context-instruct').show();
@@ -345,13 +335,6 @@ jQuery(document).ready(function ($) {
           $.each(indiciaData.filter.def.taxon_group_names, function (id, name) {
             $('#taxon_group_list\\:sublist').append('<li class="ui-widget-content ui-corner-all"><span class="ind-delete-icon"> </span>' + name +
               '<input type="hidden" value="' + id + '" name="taxon_group_list[]"/></li>');
-          });
-        }
-        $('#higher_taxa_taxon_list_list\\:sublist').children().remove();
-        if (typeof indiciaData.filter.def.higher_taxa_taxon_list_names !== 'undefined') {
-          $.each(indiciaData.filter.def.higher_taxa_taxon_list_names, function (id, name) {
-            $('#higher_taxa_taxon_list_list\\:sublist').append('<li class="ui-widget-content ui-corner-all"><span class="ind-delete-icon"> </span>' + name +
-              '<input type="hidden" value="' + id + '" name="higher_taxa_taxon_list_list[]"/></li>');
           });
         }
         $('#taxa_taxon_list_list\\:sublist').children().remove();
@@ -1061,6 +1044,13 @@ jQuery(document).ready(function ($) {
     // apply the selected context
     if ($('#context-filter').length) {
       context = indiciaData.filterContextDefs[$('#context-filter').val()];
+      // Map deprecated parameters
+      if (typeof context.higher_taxa_taxon_list_list !== 'undefined' && context.higher_taxa_taxon_list_list !== '') {
+        context.taxa_taxon_list_list = context.higher_taxa_taxon_list_list;
+        if (typeof indiciaData.filter.def.higher_taxa_taxon_list_names !== 'undefined' && context.higher_taxa_taxon_list_names !== '') {
+          context.taxa_taxon_list_names = context.higher_taxa_taxon_list_names;
+        }
+      }
       $.each(context, function (param, value) {
         if (value !== '') {
           indiciaData.filter.def[param + '_context'] = value;
@@ -1097,11 +1087,9 @@ jQuery(document).ready(function ($) {
     filterDef = $.extend({}, indiciaData.filter.def);
     delete filterDef.taxon_group_names;
     delete filterDef.taxa_taxon_list_names;
-    delete filterDef.higher_taxa_taxon_list_names;
     delete filterDef.taxon_designation_list_names;
     delete filterDef.taxon_group_names_context;
     delete filterDef.taxa_taxon_list_names_context;
-    delete filterDef.higher_taxa_taxon_list_names_context;
     delete filterDef.taxon_designation_list_names_context;
     if (indiciaData.reports) {
       // apply the filter to any reports on the page
@@ -1401,7 +1389,6 @@ jQuery(document).ready(function ($) {
       }
       // these auto-disable on form submission
       $('#taxon_group_list\\:search\\:q').removeAttr('disabled');
-      $('#higher_taxa_taxon_list_list\\:search\\:searchterm').removeAttr('disabled');
       $('#taxa_taxon_list_list\\:search\\:searchterm').removeAttr('disabled');
       $('#taxon_designation_list\\:search').removeAttr('disabled');
       $('#location_list\\:search\\:name').removeAttr('disabled');
