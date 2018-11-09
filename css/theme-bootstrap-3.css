@@ -4,6 +4,16 @@
 table.species-grid {
   width: 100%; }
 
+.attrs-container {
+  /* Indent contents */
+  padding-left: 30px; }
+  .attrs-container legend {
+    font-size: 150%;
+    /* Undo indentation for legend */
+    margin-left: -30px; }
+  .attrs-container .attrs-container legend {
+    font-size: 120%; }
+
 table.report-grid {
   /* Sizing of thumbnails in image columns */ }
   table.report-grid tr {
@@ -168,13 +178,13 @@ ul.ui-menu li {
 #controls > div {
   padding-bottom: 15px; }
 
-.form-group {
+div.form-group {
   /* Removes last-child reset to zero in default theme overrides. */ }
-  .form-group p.inline-error {
+  div.form-group p.inline-error {
     margin-left: 0; }
-  .form-group:last-child {
+  div.form-group:last-child {
     margin-bottom: 15px; }
-  .form-group input[type="checkbox"] {
+  div.form-group input[type="checkbox"] {
     margin-left: 8px;
     margin-right: 8px;
     font-size: 150%; }

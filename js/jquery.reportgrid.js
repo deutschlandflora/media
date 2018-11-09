@@ -90,14 +90,6 @@
     function getUrlParamsForAllRecords(div) {
       var request = {};
       var paramName;
-      // Extract any parameters from the attached form as long as they are report parameters
-      $('form#' + div.settings.reportGroup + '-params input, form#' + div.settings.reportGroup + '-params select').each(function (idx, input) {
-        if (input.type !== 'submit' && $(input).attr('name').indexOf(div.settings.reportGroup + '-') === 0
-            && (input.type !== 'checkbox' || $(input).is(':checked'))) {
-          paramName = $(input).attr('name').replace(div.settings.reportGroup + '-', '');
-          request[paramName] = $(input).attr('value');
-        }
-      });
       if (typeof div.settings.extraParams !== 'undefined') {
         $.each(div.settings.extraParams, function (key, value) {
           // skip sorting params if the grid has its own sort applied by clicking a column title
@@ -106,6 +98,14 @@
           }
         });
       }
+      // Extract any parameters from the attached form as long as they are report parameters
+      $('form#' + div.settings.reportGroup + '-params input, form#' + div.settings.reportGroup + '-params select').each(function (idx, input) {
+        if (input.type !== 'submit' && $(input).attr('name').indexOf(div.settings.reportGroup + '-') === 0
+            && (input.type !== 'checkbox' || $(input).prop('checked'))) {
+          paramName = $(input).attr('name').replace(div.settings.reportGroup + '-', '');
+          request[paramName] = $(input).val();
+        }
+      });
       $.extend(request, getQueryParam(div), div.settings.immutableParams);
       return request;
     }
@@ -952,6 +952,9 @@
       var layerInfo = { bounds: null };
       var map = indiciaData.mapdiv.map;
       var currentBounds = null;
+      var p = div.settings.extraParams;
+      var hasLocationIdToLoad = (p.indexed_location_id !== 'undefined' && p.indexed_location_id !== '')
+        || (p.indexed_location_list !== 'undefined' && p.indexed_location_list !== '')
       if (indiciaData.minMapReportZoom && indiciaData.minMapReportZoom > map.zoom) {
         indiciaData.mapdiv.removeAllFeatures(indiciaData.reportlayer, 'linked', true);
         return;
@@ -987,10 +990,11 @@
           layerInfo.zoomLayerIdx = 3;
         }
         layerInfo.report = div.settings.dataSource;
+
         if (typeof id !== 'undefined') {
           request += '&' + div.settings.rowId + '=' + id;
         } else if (map.resolution <= 600 && indiciaData.mapDataSource.loRes &&
-            (map.resolution <= 30 || typeof div.settings.extraParams.indexed_location_id === 'undefined' || div.settings.extraParams.indexed_location_id === '')) {
+            (map.resolution <= 30 || !hasLocationIdToLoad)) {
           // If zoomed in below a 10k map, use the map bounding box to limit the loaded features. Having an indexed site
           // filter changes the threshold as it is less necessary.
           // Get the current map bounds. If zoomed in close, get a larger bounds so that the map can be panned a bit

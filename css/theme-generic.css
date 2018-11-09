@@ -4,6 +4,16 @@
 table.species-grid {
   width: 100%; }
 
+.attrs-container {
+  /* Indent contents */
+  padding-left: 30px; }
+  .attrs-container legend {
+    font-size: 150%;
+    /* Undo indentation for legend */
+    margin-left: -30px; }
+  .attrs-container .attrs-container legend {
+    font-size: 120%; }
+
 table.report-grid {
   /* Sizing of thumbnails in image columns */ }
   table.report-grid tr {

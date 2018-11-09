@@ -878,7 +878,7 @@ div.note-fail, p.note-fail {
   padding: 0 0 4px;
 }
 
-.import-mappings-instructions {
+#import-mappings-instructions {
   float: right;
   width: 30%;
 }
