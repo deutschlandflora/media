@@ -2253,6 +2253,9 @@ var destroyAllFeatures;
         }
       });
 
+      // Mouse scroll to zoom only when Ctrl pressed.
+      OpenLayers.Handler.MouseWheel.prototype.keyMask = OpenLayers.Handler.MOD_CTRL;
+
       // Constructs the map
       div.map = new OpenLayers.Map($(this)[0], olOptions);
 
