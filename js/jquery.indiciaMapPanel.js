@@ -3058,7 +3058,7 @@ jQuery.fn.indiciaMapPanel.defaults = {
     hintScrollWheel: ' Holding Ctrl and using the mouse scroll wheel whilst over the map will zoom in and out.',
     hintClickSpatialRefTool: 'Select this tool to enable clicking on the map to set your location',
     hintQueryDataPointsTool: 'Select this tool then click on or drag a box over data points on the map to view the underlying records.',
-    hintQueryBufferTool: 'Any clicked point or dragged box will be buffered by the amount specified in the Tolerance box shown when this control is active.',
+    hintQueryBufferTool: 'The search area covered by a clicked point or dragged box will be enlarged by the amount specified in the Tolerance box shown when this control is active.',
     hintDrawPolygonHint: 'Select this tool to draw a polygon, clicking on the map to draw the shape and double clicking to finish.',
     hintDrawLineHint: 'Select this tool to draw a line, clicking on the map to draw the shape and double clicking to finish.',
     hintDrawPointHint: 'Select this tool to draw points by clicking on the map.',
