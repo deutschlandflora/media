@@ -165,6 +165,21 @@ table.report-grid {
       .status-icon.status-R.substatus-5.query-A {
         background-position: -64px -112px; }
 
+.licence span.icon {
+  background: url(../images/licences-sprite.png) no-repeat center left;
+  width: 100px;
+  height: 18px;
+  box-sizing: border-box;
+  background-position: 0 0;
+  display: inline-block;
+  vertical-align: middle; }
+  .licence span.icon.licence-cc-by {
+    background-position-y: -18px; }
+  .licence span.icon.licence-cc-by-nc {
+    background-position-y: -36px; }
+  .licence span.icon.licence-cc0 {
+    background-position-y: -54px; }
+
 /* Reintroduce spacing that is removed from the last control in a list */
 #controls > div {
   padding-bottom: 15px; }
