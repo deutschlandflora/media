@@ -444,7 +444,7 @@ var resetSpeciesTextOnEscape;
       var selectorId = gridId + '-' + indiciaData['gridCounter-' + gridId];
       var taxonTextBeforeUserEdit;
       // When moving into edit mode we need to create an autocomplete box for the user to fill in
-      var speciesAutocomplete = '<input type="text" id="' + selectorId + '" class="grid-required ac_input {speciesMustBeFilled:true}" autocomplete="off"/>';
+      var speciesAutocomplete = '<input type="text" id="' + selectorId + '" class="grid-required ac_input {speciesMustBeFilled:true}" />';
       var extraParams;
       var autocompleteSettings;
       var ctrl;

@@ -67,6 +67,8 @@
     var opts = $.extend({}, $.fn.reportgrid.defaults, options);
     // flag to prevent double clicks
     var loading = false;
+    // prevent duplicate error messages
+    var errorShownOnFilter = false;
 
     function getRequest(div) {
       var serviceCall;
@@ -476,7 +478,10 @@
           if (typeof rows.error !== 'undefined') {
             div.loading = false;
             $(div).find('.loading-overlay').hide();
-            alert('The report did not load correctly.');
+            if (!errorShownOnFilter) {
+              alert('The data did not load successfully. The reason given was: \n' + rows.error);
+              errorShownOnFilter = true;
+            }
             return;
           }
           if (div.settings.sendOutputToMap && typeof indiciaData.reportlayer !== 'undefined') {
@@ -546,18 +551,30 @@
                       imgclass=imgs.length>1 ? 'multi' : 'single',
                       group=imgs.length>1 && div.settings.rowId !== '' ? ' rel="group-' + row[div.settings.rowId] + '"' : '';
                     $.each(imgs, function(idx, img) {
+                      var media='';
+                      if (div.settings.rowId === 'occurrence_id') {
+                        media = {
+                          table: 'occurrence_medium',
+                          filter: {
+                            occurrence_id: row[div.settings.rowId],
+                            path: img
+                          }
+                        };
+                      }
                       match = img.match(/^http(s)?:\/\/(www\.)?([a-z(\.kr)]+)/);
                       if (match !== null) {
                         if (img.match(/^https:\/\/static\.inaturalist\.org/)) {
-                          value += '<a href="' + img.replace('/square.', '/large.') + '" class="inaturalist fancybox ' +
-                            imgclass + '"' + group + '><img src="' + img + '" /></a>';
+                          value += '<a data-media="' + JSON.stringify(media).replace(/"/g, '&quot;') + '" ' +
+                            'href="' + img.replace('/square.', '/large.') + '" ' +
+                            'class="inaturalist fancybox ' + imgclass + '"' + group + '><img src="' + img + '" /></a>';
                         } else {
-                          value += '<a href="' + img + '" class="social-icon ' + match[3].replace('.', '') + '"></a>';
+                          value += '<a data-media="' + JSON.stringify(media).replace(/"/g, '&quot;') + '" ' +
+                            'href="' + img + '" class="social-icon ' + match[3].replace('.', '') + '"></a>';
                         }
                       } else if ($.inArray(img.split('.').pop(), ['mp3', 'wav']) > -1) {
                         value += '<audio controls src="' + div.settings.imageFolder + img + '" type="audio/mpeg"/>';
                       } else {
-                        value += '<a href="' + div.settings.imageFolder + img + '" class="fancybox ' + imgclass + '"' + group + '><img src="'+
+                        value += '<a data-media="' + JSON.stringify(media).replace(/"/g, '&quot;') + '" href="' + div.settings.imageFolder + img + '" class="fancybox ' + imgclass + '"' + group + '><img src="' +
                             div.settings.imageFolder + div.settings.imageThumbPreset + '-' + img + '" /></a>';
                       }
                     });
@@ -599,9 +616,52 @@
             rowOutput += '</tr>';
             tbody.append(rowOutput);
           }
-          tbody.find('a.fancybox').fancybox();
+          tbody.find('a.fancybox').fancybox({
+            afterLoad: function(upcoming, previous) {
+              var media;
+              var requestData;
+              if (typeof $(upcoming.element).attr('data-media') !== 'undefined') {
+                media = JSON.parse($(upcoming.element).attr('data-media'));
+                requestData = $.extend({
+                  mode: 'json',
+                  nonce: div.settings.nonce,
+                  auth_token: div.settings.auth_token,
+                }, media.filter);
+                if (typeof div.settings.extraParams.sharing !== 'undefined') {
+                  requestData.sharing = div.settings.extraParams.sharing;
+                }
+                $.ajax({
+                  dataType: 'jsonp',
+                  url: div.settings.url + 'index.php/services/data/' + media.table,
+                  data: requestData,
+                  success: function addMediaMetadata(response) {
+                    var fancybox;
+                    var metadata = '';
+                    if (response.length > 0) {
+                      if (response[0].caption !== null) {
+                        metadata += '<div class="image-caption">' + response[0].caption + '</div>';
+                      }
+                      if (response[0].licence_title !== null) {
+                        metadata += '<div class="licence licence-' + response[0].licence_code.toLowerCase() + '">' +
+                          response[0].licence_title +
+                          '</div>';
+                      }
+                      fancybox = $('.fancybox-outer');
+                      if (fancybox) {
+                        $(fancybox).after('<div class="media-info image-info">' + metadata +
+                          '<span class="media-info-close" title="' + div.settings.langHideInfo + '">x</span>' +
+                          '</div>');
+                        $.fancybox.update();
+                        $.fancybox.reposition();
+                      }
+                    }
+                  }
+                });
+              }
+            }
+          });
           loadColPickerSettingsFromCookie(div);
-          if (features.length>0) {
+          if (features.length > 0) {
             indiciaData.reportlayer.addFeatures(features);
             map.zoomToExtent(indiciaData.reportlayer.getDataExtent());
           }
@@ -795,6 +855,10 @@
       }
     };
 
+    this.setupPagerEvents = function() {
+      setupPagerEvents(this[0]);
+    }
+
     var BATCH_SIZE=2000, currentMapRequest;
 
     function hasIntersection(a, b) {
@@ -820,6 +884,14 @@
         dataType: "json",
         url: request + '&offset=' + offset + (typeof recordCount === 'undefined' ? '&wantCount=1' : ''),
         success: function(response) {
+          if (typeof response.error !== 'undefined') {
+            if (!errorShownOnFilter) {
+              alert('The data did not load successfully. The reason given was: \n' + response.error);
+              errorShownOnFilter = true;
+            }
+            $('#map-loading').hide();
+            return;
+          }
           if (typeof recordCount === 'undefined' && typeof response.count !== 'undefined' && !isNaN(response.count)) {
             recordCount = response.count;
             response = response.records;
@@ -877,7 +949,16 @@
      * The request is handled in chunks of 1000 records. Optionally supply an id to map just 1 record.
      */
     function mapRecords(div, zooming, id, callback) {
-      var layerInfo = { bounds: null }, map = indiciaData.mapdiv.map, currentBounds = null;
+      var layerInfo = { bounds: null };
+      var map = indiciaData.mapdiv.map;
+      var currentBounds = null;
+      var p = div.settings.extraParams;
+      var hasLocationIdToLoad = (p.indexed_location_id !== 'undefined' && p.indexed_location_id !== '')
+        || (p.indexed_location_list !== 'undefined' && p.indexed_location_list !== '')
+      if (indiciaData.minMapReportZoom && indiciaData.minMapReportZoom > map.zoom) {
+        indiciaData.mapdiv.removeAllFeatures(indiciaData.reportlayer, 'linked', true);
+        return;
+      }
       // we need to reload the map layer using the mapping report, so temporarily switch the report
       var origReport = div.settings.dataSource, request;
       if (typeof indiciaData.mapdiv === 'undefined'
@@ -909,23 +990,23 @@
           layerInfo.zoomLayerIdx = 3;
         }
         layerInfo.report = div.settings.dataSource;
+
         if (typeof id !== 'undefined') {
           request += '&' + div.settings.rowId + '=' + id;
-        } else {
+        } else if (map.resolution <= 600 && indiciaData.mapDataSource.loRes &&
+            (map.resolution <= 30 || !hasLocationIdToLoad)) {
           // If zoomed in below a 10k map, use the map bounding box to limit the loaded features. Having an indexed site
           // filter changes the threshold as it is less necessary.
-          if (map.zoom <= 600 && indiciaData.mapDataSource.loRes &&
-              (map.zoom <= 30 || typeof div.settings.extraParams.indexed_location_id === 'undefined' || div.settings.extraParams.indexed_location_id === '')) {
-            // get the current map bounds. If zoomed in close, get a larger bounds so that the map can be panned a bit without reload.
-            layerInfo.bounds = map.calculateBounds(map.getCenter(), Math.max(39, map.getResolution()));
-            // plus the current bounds to test if a reload is necessary
-            currentBounds = map.calculateBounds();
-            if (map.projection.getCode() != indiciaData.mapdiv.indiciaProjection.getCode()) {
-              layerInfo.bounds.transform(map.projection, indiciaData.mapdiv.indiciaProjection);
-              currentBounds.transform(map.projection, indiciaData.mapdiv.indiciaProjection);
-            }
-            request += '&bounds=' + encodeURIComponent(layerInfo.bounds.toGeometry().toString());
+          // Get the current map bounds. If zoomed in close, get a larger bounds so that the map can be panned a bit
+          // without reload.
+          layerInfo.bounds = map.calculateBounds(map.getCenter(), Math.max(39, map.getResolution() * 1.5));
+          // plus the current bounds to test if a reload is necessary
+          currentBounds = map.calculateBounds();
+          if (map.projection.getCode() != indiciaData.mapdiv.indiciaProjection.getCode()) {
+            layerInfo.bounds.transform(map.projection, indiciaData.mapdiv.indiciaProjection);
+            currentBounds.transform(map.projection, indiciaData.mapdiv.indiciaProjection);
           }
+          request += '&bounds=' + encodeURIComponent(layerInfo.bounds.toGeometry().toString());
         }
       }
       finally {
@@ -1064,8 +1145,10 @@
       });
 
       var doFilter = function(e) {
+        var fieldname;
         if (e.target.hasChanged) {
-          var fieldname = e.target.id.match(new RegExp('^col-filter-(.*)-' + div.id + '$'))[1];
+          errorShownOnFilter = false;
+          fieldname = e.target.id.match(new RegExp('^col-filter-(.*)-' + div.id + '$'))[1];
           if ($.trim($(e.target).val()) === '') {
             delete div.settings.extraParams[fieldname];
           } else {
@@ -1405,6 +1488,7 @@ jQuery.fn.reportgrid.defaults = {
   langNext: 'next',
   langLast: 'last',
   langShowing: 'Showing records {1} to {2} of {3}',
+  langHideInfo: 'Hide info',
   noRecords: 'No records',
   sendOutputToMap: false, // does the current page of report data get shown on a map?
   linkFilterToMap: false, // requires a rowId - filtering the grid also filters the map

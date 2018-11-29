@@ -1,5 +1,22 @@
 /* Theme extension to the default_site.css file which provides Bootstrap 3 optimised style output */
 /* Accessible colour ranges from colorbrewer */
+/* Set the species checklist entry grid width to 100% */
+table.species-grid {
+  width: 100%; }
+
+.attrs-container {
+  /* Indent contents */
+  padding-left: 30px; }
+  .attrs-container legend {
+    font-size: 150%;
+    /* Undo indentation for legend */
+    margin-left: -30px; }
+  .attrs-container .attrs-container legend {
+    font-size: 120%; }
+
+.layer_list ul li label.layer-title {
+  display: initial; }
+
 table.report-grid {
   /* Sizing of thumbnails in image columns */ }
   table.report-grid tr {
@@ -19,17 +36,146 @@ table.report-grid {
     width: 50px;
     margin: 1px; }
 
+.media-gallery ul {
+  padding: 0; }
+  .media-gallery ul li {
+    display: -moz-inline-stack;
+    display: inline-block;
+    zoom: 1;
+    *display: inline;
+    list-style-type: none;
+    vertical-align: top; }
+
+/* Allow info panels to use absolute positioning */
+.gallery-item {
+  position: relative;
+  padding: 0.5em;
+  /* Record status icon overlay on image */ }
+  .gallery-item .status-icon {
+    position: absolute;
+    right: 0;
+    top: 8px; }
+
+/* Media/image information overlays */
+.media-info {
+  position: relative;
+  width: auto;
+  background: white;
+  padding: 8px 16px 8px 8px;
+  border: solid silver 1px;
+  border-radius: 4px;
+  /* Media info can overlay image (not other file types) */
+  /* Media info close button style */ }
+  .media-info.image-info {
+    position: absolute;
+    left: 18px;
+    bottom: 18px;
+    opacity: 0.7; }
+  .media-info .media-info-close {
+    width: 16px;
+    height: 16px;
+    position: absolute;
+    right: 0;
+    top: 0;
+    font-size: 12px;
+    color: #777777;
+    cursor: pointer;
+    text-align: center; }
+
+.image-caption.small {
+  width: 100px;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 10px; }
+
+/* Need to account for Fancybox navigation button z-index */
+.fancybox-outer .media-info {
+  z-index: 9999; }
+
+/* Define the purpose of the 3 columns in the sprite. */
+/* Define the purpose of the rows in the sprite. */
+.status-icon {
+  background: url(../images/statuses-sprite.png) no-repeat center center;
+  width: 32px;
+  height: 16px;
+  display: inline-block;
+  /* Default state, not reviewed */ }
+  .status-icon.status-.substatus-.certainty-, .status-icon.status-C.substatus-.certainty-.query- {
+    background: none; }
+  .status-icon.certainty-C {
+    /* Not reviewed, recorder was certain */
+    background-position: 0px -48px; }
+    .status-icon.certainty-C.query-Q {
+      background-position: -32px -48px; }
+    .status-icon.certainty-C.query-A {
+      background-position: -64px -48px; }
+  .status-icon.certainty-L {
+    /* Not reviewed, recorder thought likely */
+    background-position: 0px -64px; }
+    .status-icon.certainty-L.query-Q {
+      background-position: -32px -64px; }
+    .status-icon.certainty-L.query-A {
+      background-position: -64px -64px; }
+  .status-icon.certainty-U {
+    /* Not reviewed, recorder was uncertain */
+    background-position: 0px -80px; }
+    .status-icon.certainty-U.query-Q {
+      background-position: -32px -80px; }
+    .status-icon.certainty-U.query-A {
+      background-position: -64px -80px; }
+  .status-icon.status-V {
+    /* Accepted */
+    background-position: 0px -16px; }
+    .status-icon.status-V.query-Q {
+      background-position: -32px -16px; }
+    .status-icon.status-V.query-A {
+      background-position: -64px -16px; }
+    .status-icon.status-V.substatus-1 {
+      /* Accepted as correct */
+      background-position: 0px 0px; }
+      .status-icon.status-V.substatus-1.query-Q {
+        background-position: -32px 0px; }
+      .status-icon.status-V.substatus-1.query-A {
+        background-position: -64px 0px; }
+  .status-icon.status-C {
+    /* Not reviewed, recorder certainty not known */
+    background-position: 0px -128px; }
+    .status-icon.status-C.query-Q {
+      background-position: -32px -128px; }
+    .status-icon.status-C.query-A {
+      background-position: -64px -128px; }
+    .status-icon.status-C.substatus-3 {
+      /* Plausible */
+      background-position: 0px -32px; }
+      .status-icon.status-C.substatus-3.query-Q {
+        background-position: -32px -32px; }
+      .status-icon.status-C.substatus-3.query-A {
+        background-position: -64px -32px; }
+  .status-icon.status-R {
+    /* Not accepted */
+    background-position: 0px -96px; }
+    .status-icon.status-R.query-Q {
+      background-position: -32px -96px; }
+    .status-icon.status-R.query-A {
+      background-position: -64px -96px; }
+    .status-icon.status-R.substatus-5 {
+      /* Not accepted as incorrect */
+      background-position: 0px -112px; }
+      .status-icon.status-R.substatus-5.query-Q {
+        background-position: -32px -112px; }
+      .status-icon.status-R.substatus-5.query-A {
+        background-position: -64px -112px; }
+
 /* Reintroduce spacing that is removed from the last control in a list */
 #controls > div {
   padding-bottom: 15px; }
 
-.form-group {
+div.form-group {
   /* Removes last-child reset to zero in default theme overrides. */ }
-  .form-group p.inline-error {
+  div.form-group p.inline-error {
     margin-left: 0; }
-  .form-group:last-child {
+  div.form-group:last-child {
     margin-bottom: 15px; }
-  .form-group input[type="checkbox"] {
+  div.form-group input[type="checkbox"] {
     margin-left: 8px;
     margin-right: 8px;
     font-size: 150%; }

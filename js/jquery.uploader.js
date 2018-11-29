@@ -252,7 +252,7 @@ var checkSubmitInProgress = function () {
         runtimes : this.settings.runtimes,
         container : this.id,
         browse_button : this.settings.browse_button,
-        url : this.settings.uploadScript,
+        url : this.settings.uploadScript + '?destination=' + this.settings.destinationFolder,
         resize : resize,
         flash_swf_url : this.settings.jsPath + 'plupload/js/Moxie.swf',
         silverlight_xap_url : this.settings.jsPath + 'plupload/js/Moxie.xap',

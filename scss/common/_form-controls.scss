@@ -1,0 +1,18 @@
+/* Set the species checklist entry grid width to 100% */
+table.species-grid {
+  width: 100%;
+}
+.attrs-container {
+  /* Indent contents */
+  padding-left: 30px;
+  legend {
+    font-size: 150%;
+    /* Undo indentation for legend */
+    margin-left: -30px;
+  }
+  .attrs-container {
+    legend {
+      font-size: 120%;
+    }
+  }
+}

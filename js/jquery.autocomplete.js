@@ -76,7 +76,11 @@ $.Autocompleter = function(input, options) {
   };
 
   // Create $ object for input element
-  var $input = $(input).attr("autocomplete", "off").addClass(options.inputClass);
+  var $input = $(input)
+    .attr('autocomplete', 'off')
+    .attr('autocorrect', 'off')
+    .attr('spellcheck', 'false')
+    .addClass(options.inputClass);
 
   var timeout;
   var previousValue = "";
@@ -751,8 +755,8 @@ $.Autocompleter.Select = function (options, input, select, config) {
   function movePosition(step) {
     active += step;
     if (active < 0) {
-      active = listItems.size() - 1;
-    } else if (active >= listItems.size()) {
+      active = listItems.length - 1;
+    } else if (active >= listItems.length) {
       active = 0;
     }
   }
@@ -769,7 +773,7 @@ $.Autocompleter.Select = function (options, input, select, config) {
     for (var i=0; i < max; i++) {
       if (!data[i])
         continue;
-      var formatted = options.formatItem(data[i].data, i+1, max, data[i].value, term);
+      var formatted = options.formatItem(data[i].data, i+1, max, data[i].value, term, input);
       if ( formatted === false )
         continue;
       var li = $("<li/>").html( options.highlight(formatted, term) ).addClass(i%2 == 0 ? "ac_even" : "ac_odd").appendTo(list)[0];
@@ -814,8 +818,8 @@ $.Autocompleter.Select = function (options, input, select, config) {
       }
     },
     pageDown: function() {
-      if (active != listItems.size() - 1 && active + 8 > listItems.size()) {
-        moveSelect( listItems.size() - 1 - active );
+      if (active != listItems.length - 1 && active + 8 > listItems.length) {
+        moveSelect( listItems.length - 1 - active );
       } else {
         moveSelect(8);
       }
@@ -835,7 +839,7 @@ $.Autocompleter.Select = function (options, input, select, config) {
       var offset = $(input).offset();
       element.css({
         width: typeof options.width == "string" || options.width > 0 ? options.width : Math.max($(input).width(), 250),
-        top: offset.top + input.offsetHeight,
+        top: offset.top + input.offsetHeight - parseInt($('body').css('margin-top'), 10),
         left: offset.left
       }).show();
             if(options.scroll) {

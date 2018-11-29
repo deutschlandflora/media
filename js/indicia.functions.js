@@ -22,6 +22,7 @@ if (typeof window.indiciaData === 'undefined') {
     idDiffRuleMessages: {},
     documentReady: 'no',
     windowLoaded: 'no',
+    reports: {},
     lang: []
   };
   window.indiciaFns = {};
@@ -296,7 +297,7 @@ if (typeof window.indiciaData === 'undefined') {
         function (data) {
           jQuery.each(data, function (i, item) {
             var selector = 'smpAttr\\:' + item.id;
-            var input = $('[id=' + selector + ']');
+            var input = $('[id=' + selector + '],[name=' + selector + ']');
             if (item.value !== null && item.data_type !== 'Boolean') {
               input.val(item.value);
               if (input.is('select') && input.val() === '') {
@@ -419,12 +420,27 @@ if (typeof window.indiciaData === 'undefined') {
       });
     }
   };
+
+  indiciaFns.afterFancyboxLoad = function(upcoming, previous) {
+    var info = $(upcoming.element).parent().find('.image-info');
+    var fancybox = $('.fancybox-outer');
+    if (info.length && fancybox) {
+      $(info).clone().show().appendTo(fancybox);
+    }
+  };
+
 }(jQuery));
 
 jQuery(document).ready(function ($) {
   var iform;
   var confirmOnPageExit;
   var detectInput;
+
+  // Hook up fancybox if enabled.
+  if ($.fancybox) {
+    $('a.fancybox').fancybox({ afterLoad: indiciaFns.afterFancyboxLoad });
+  }
+
   if ($('form input[name=website_id]').length > 0) {
     iform = $('form input[name=auth_token]').parents('form');
     confirmOnPageExit = function (e) {
@@ -449,4 +465,9 @@ jQuery(document).ready(function ($) {
       window.onbeforeunload = null;
     });
   }
+  // Close handler for x button on image information panels.
+  indiciaFns.on('click', '.media-info-close', {}, function(e) {
+    $(e.currentTarget).parent('.media-info').hide();
+    return false;
+  });
 });

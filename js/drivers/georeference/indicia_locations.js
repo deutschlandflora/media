@@ -14,10 +14,10 @@
  */
 
 /**
- * A driver class to allow the georeference_lookup control to interface with the 
+ * A driver class to allow the georeference_lookup control to interface with the
  * list of locations in Indicia's warehouse.
  */
- 
+
 var Georeferencer;
 
 (function ($) {
@@ -32,10 +32,11 @@ var Georeferencer;
         where.push("location_type_id="+mapdiv.georefOpts.locationTypeId);
       }
       where.push("(name ilike '%" + searchtext + "%' or comment ilike '%" + searchtext + "%' or code ilike '%" + searchtext + "%' or centroid_sref ilike '%" + searchtext + "%')");
-      queryStr=encodeURI(JSON.stringify({'where':[where.join(' and ')]}));
-      request = mapdiv.georefOpts.warehouseUrl + 'index.php/services/data/location?mode=json&nonce=' + mapdiv.georefOpts.nonce +
-            '&auth_token=' + mapdiv.georefOpts.auth_token +
-            '&view=detail&query='+queryStr+'&callback=?';
+      queryStr=encodeURI(JSON.stringify({ where: [where.join(' and ')] }));
+      request = mapdiv.georefOpts.warehouseUrl + 'index.php/services/data/location?mode=json' +
+          '&nonce=' + indiciaData.read.nonce +
+          '&auth_token=' + indiciaData.read.auth_token +
+          '&view=detail&query=' + queryStr + '&callback=?';
       $.getJSON(request,
         null,
         function(response) {
@@ -46,28 +47,28 @@ var Georeferencer;
               centroid = feature.geometry.getCentroid();
               box = {
                 southWest: {
-                  x: centroid.x-mapdiv.georefOpts.zoomToBoxForCentroid, 
+                  x: centroid.x-mapdiv.georefOpts.zoomToBoxForCentroid,
                   y: centroid.y-mapdiv.georefOpts.zoomToBoxForCentroid
                 },
                 northEast: {
-                  x: centroid.x+mapdiv.georefOpts.zoomToBoxForCentroid, 
+                  x: centroid.x+mapdiv.georefOpts.zoomToBoxForCentroid,
                   y: centroid.y+mapdiv.georefOpts.zoomToBoxForCentroid
                 }
-              }; 
+              };
             } else {
               feature = parser.read(place.boundary_geom);
               centroid = feature.geometry.getCentroid();
               bb = feature.geometry.getBounds();
               box = {
                 southWest: {
-                  x: bb.left, 
+                  x: bb.left,
                   y: bb.bottom
                 },
                 northEast: {
-                  x: bb.right, 
+                  x: bb.right,
                   y: bb.top
                 }
-              }; 
+              };
             }
             centroid = feature.geometry.getCentroid();
             var name, nameTokens = ['<strong>'+place.name+'</strong>'];
@@ -96,7 +97,7 @@ var Georeferencer;
         }
       );
     };
-  
+
   };
 }) (jQuery);
 

@@ -58,31 +58,37 @@ var destroyAllFeatures;
     // The ghost grid square drawn when hovering
     var ghost=null;
 
-    var plusKeyDown=false, minusKeyDown=false, overMap=false, currentMousePixel=null;
+    var plusKeyDown = false;
+    var minusKeyDown = false;
+    var overMap = false;
+    var currentMousePixel = null;
 
     /**
      * Adds the distribution point indicated by a record object to a list of features.
      */
     function addPt(features, record, wktCol, opts, id) {
-      if (record[wktCol]===null)
+      var feature;
+      var geom;
+      if (record[wktCol] === null) {
         return;
+      }
       // if an int supplied instead of a geom, this must be an index into the indiciaData.geoms array.
       if (!isNaN(record[wktCol])) {
         record[wktCol] = indiciaData.geoms[record[wktCol]];
       }
-      var feature, geom=OpenLayers.Geometry.fromWKT(record[wktCol]);
-      if (this.map.projection.getCode() != this.indiciaProjection.getCode()) {
+      geom = OpenLayers.Geometry.fromWKT(record[wktCol]);
+      if (this.map.projection.getCode() !== this.indiciaProjection.getCode()) {
         geom.transform(this.indiciaProjection, this.map.projection);
       }
       delete record[wktCol];
-      if (typeof opts.type!=='undefined' && opts.type!=='vector') {
+      if (typeof opts.type !== 'undefined' && opts.type !== 'vector') {
         // render a point for symbols
         geom = geom.getCentroid();
       }
       feature = new OpenLayers.Feature.Vector(geom, record);
-      if (typeof id!=='undefined') {
+      if (typeof id !== 'undefined') {
         // store a supplied identifier against the feature
-        feature.id=id;
+        feature.id = id;
       }
       features.push(feature);
       return feature;
@@ -95,12 +101,14 @@ var destroyAllFeatures;
      */
     function removeAllFeatures(layer, type, inverse) {
       var toRemove = [];
-      if (typeof inverse==='undefined') {
-        inverse=false;
+      if (typeof inverse === 'undefined') {
+        inverse = false;
       }
-      $.each(layer.features, function() {
-        //Annotations is a special seperate mode added after original code was written, so do not interfere with annotations even in inverse mode.
-        if ((!inverse && this.attributes.type===type) || (inverse && this.attributes.type!==type && this.attributes.type!=='annotation')) {
+      $.each(layer.features, function checkFeature() {
+        // Annotations is a special seperate mode added after original code was written, so do not interfere with
+        // annotations even in inverse mode.
+        if ((!inverse && this.attributes.type === type) || (inverse && this.attributes.type !== type
+            && this.attributes.type !== 'annotation')) {
           toRemove.push(this);
         }
       });
@@ -195,6 +203,7 @@ var destroyAllFeatures;
       var ids;
       var featureVal;
       var i;
+      var len;
       for (i = 0, len = layer.features.length; i < len; ++i) {
         if (typeof field !== 'undefined' && typeof layer.features[i].attributes[field + 's'] !== 'undefined') {
           ids = layer.features[i].attributes[field + 's'].split(',');
@@ -469,7 +478,7 @@ var destroyAllFeatures;
       });
 
       $('#' + div.georefOpts.georefCloseBtnId).click(function (e) {
-        $('#' + div.georefOpts.georefDivId).hide('fast', function () {div.map.updateSize();});
+        $('#' + div.georefOpts.georefDivId).hide('fast', function () { div.map.updateSize(); });
         e.preventDefault();
       });
       if ($('#imp-location').length) {
@@ -500,7 +509,9 @@ var destroyAllFeatures;
 
     function switchToSatelliteBaseLayer(map) {
       $.each(map.layers, function() {
-        if (this.isBaseLayer && (this.name.indexOf('Satellite')!==-1 || this.name.indexOf('Hybrid')!==-1) && map.baseLayer!==this) {
+        if (this.isBaseLayer
+            && (this.name.indexOf('Satellite') !== -1 || this.name.indexOf('Hybrid') !== -1)
+            && map.baseLayer !== this) {
           map.setBaseLayer(this);
           return false;
         }
@@ -521,7 +532,7 @@ var destroyAllFeatures;
           helptext.push(div.settings.hlpImproveResolution3.replace('{size}', info.display));
         }
         // switch layer?
-        if (div.settings.helpToPickPrecisionSwitchAt && info.metres<=div.settings.helpToPickPrecisionSwitchAt) {
+        if (div.settings.helpToPickPrecisionSwitchAt && info.metres <= div.settings.helpToPickPrecisionSwitchAt) {
           switchToSatelliteBaseLayer(div.map);
           helptext.push(div.settings.hlpImproveResolutionSwitch);
         }
@@ -544,9 +555,9 @@ var destroyAllFeatures;
             '&mapsystem=' + indiciaFns.projectionToSystem(div.map.projection, false),
           success: function(data) {
             // JSONP can't handle http status code errors. So error check in success response.
-            if(typeof data.error !== 'undefined')
-              if(data.code === 4001) {
-                indiciaData.invalidSrefDetected=true;
+            if (typeof data.error !== 'undefined')
+              if (data.code === 4001) {
+                indiciaData.invalidSrefDetected = true;
                 alert(div.settings.msgSrefNotRecognised);
               } else
                 alert(data.error);
@@ -558,8 +569,8 @@ var destroyAllFeatures;
                 if (div.settings.clickForPlot) {
                   data.sref = value;
                   // Get front of the WKT to find out the spatial reference type the user used, a point would be a lat long, a polygon would be an OSGB square
-                  var typeCheck = data.mapwkt.substr(0,6);
-                  var wktPoints=[];
+                  var typeCheck = data.mapwkt.substr(0, 6);
+                  var wktPoints = [];
                   // The plot is drawn from a lat long position, Just take the first value to draw the plot from for
                   // lat/long. For OSGB, take an average of all the points to get a single point to draw the plot from
                   // as there are multiple points in that instance representing the OSGB square. Note the OSGB value
@@ -569,7 +580,7 @@ var destroyAllFeatures;
                   openlayersLatlong.lon = 0;
                   openlayersLatlong.lat = 0;
                   // Split the points making up the wkt into an array for working on
-                  if (typeCheck == 'POINT(') {
+                  if (typeCheck === 'POINT(') {
                     data.mapwkt = data.mapwkt.slice(6).split(')');
                     wktPoints[0] = data.mapwkt[0];
                   } else {
@@ -953,14 +964,10 @@ var destroyAllFeatures;
       ]};
 
       var r = {
-        // legacy support only
-        virtual_earth: function() {return new OpenLayers.Layer.Bing({name: 'Bing Aerial', 'type': 'Aerial', 'key': settings.bing_api_key, 'sphericalMercator': true});},
         bing_aerial : function() {return new OpenLayers.Layer.Bing({name: 'Bing Aerial', 'type': 'Aerial', 'key': settings.bing_api_key, 'sphericalMercator': true});},
         bing_hybrid : function() {return new OpenLayers.Layer.Bing({name: 'Bing Hybrid', 'type': 'AerialWithLabels', 'key': settings.bing_api_key, 'sphericalMercator': true});},
         bing_shaded : function() {return new OpenLayers.Layer.Bing({name: 'Bing Shaded', 'type': 'road', 'key': settings.bing_api_key, 'sphericalMercator': true});},
-        // multimap layers are no longer provided, so map any requests to OSM for backwards compatibility.
-        multimap_default : function() {return new OpenLayers.Layer.OSM();},
-        multimap_landranger : function() {return new OpenLayers.Layer.OSM();},
+        bing_os : function() {return new OpenLayers.Layer.Bing({name: 'Bing Ordnance Survey', 'type': 'ordnanceSurvey', 'key': settings.bing_api_key, 'sphericalMercator': true});},
         osm : function() {
         // OpenStreetMap standard tile layer
           return new OpenLayers.Layer.OSM("OpenStreetMap", [
@@ -1057,7 +1064,12 @@ var destroyAllFeatures;
               {identifier:"EPSG:27700:8",scaleDenominator:12500.000000000002},
               {identifier:"EPSG:27700:9",scaleDenominator:6250.000000000001}]
           });
-        }
+        },
+        // Layer types that Indicia offered historically but no longer work.
+        // Map them to the best alternative.
+        multimap_default : function() {return new OpenLayers.Layer.OSM();},
+        multimap_landranger : function() {return new OpenLayers.Layer.OSM();},
+        virtual_earth: function() {return new OpenLayers.Layer.Bing({name: 'Bing Aerial', 'type': 'ordnanceSurvey', 'maxZoom':19,'key': settings.bing_api_key, 'sphericalMercator': true});},
       };
       // To protect ourselves against exceptions because the Google script would not link up, we
       // only enable these layers if the Google constants are available. We separately check for google V2 and V3 layers
@@ -1139,7 +1151,7 @@ var destroyAllFeatures;
      * Selects the features in the contents of a geom, appying user specified buffer.
      */
     function selectFeaturesInBufferedGeom(geom, layers, div) {
-      var testGeom, tolerantGeom, layer, tolerance, testGeoms={},
+      var tolerantGeom, layer, tolerance, testGeoms={},
           getRadius, getStrokeWidth, radius, strokeWidth, match;
       var minTolerance;
       if (geom instanceof OpenLayers.Geometry) {
@@ -1187,7 +1199,6 @@ var destroyAllFeatures;
           var featuresToSelect = [];
           for(var i=0, len = layer.features.length; i<len; ++i) {
             var feature = layer.features[i];
-            var testGeom;
             // check if the feature is displayed
             if (!feature.onScreen()) {
               continue;
@@ -1208,17 +1219,20 @@ var destroyAllFeatures;
                 strokeWidth = getStrokeWidth(feature);
               }
             }
-            tolerance = div.map.getResolution() * (radius + (strokeWidth/2));
-            tolerance=Math.max(minTolerance, Math.round(tolerance));
-            testGeom = geom.getCentroid();
-            // keep geoms we create so we don't keep rebuilding them
-            if (typeof testGeoms['geom-'+Math.round(tolerance/100)]!=='undefined') {
-              tolerantGeom = testGeoms['geom-'+Math.round(tolerance/100)];
+            if (geom.CLASS_NAME==='OpenLayers.Geometry.Point') {
+              tolerance = div.map.getResolution() * (radius + (strokeWidth/2));
+              tolerance=Math.max(minTolerance, Math.round(tolerance));
+              // keep geoms we create so we don't keep rebuilding them
+              if (typeof testGeoms['geom-'+Math.round(tolerance/100)]!=='undefined') {
+                tolerantGeom = testGeoms['geom-'+Math.round(tolerance/100)];
+              } else {
+                tolerantGeom = OpenLayers.Geometry.Polygon.createRegularPolygon(geom, tolerance, 8, 0);
+                testGeoms['geom-'+Math.round(tolerance/100)] = tolerantGeom;
+              }
             } else {
-              tolerantGeom = OpenLayers.Geometry.Polygon.createRegularPolygon(testGeom, tolerance, 8, 0);
-              testGeoms['geom-'+Math.round(tolerance/100)] = tolerantGeom;
+              tolerantGeom = geom;
             }
-            if ((tolerantGeom.intersects(feature.geometry) || testGeom.intersects(feature.geometry))) {
+            if (tolerantGeom.intersects(feature.geometry)) {
               featuresToSelect.push(feature);
             }
           }
@@ -1291,19 +1305,30 @@ var destroyAllFeatures;
         //allows a custom function to be run when a user clicks on a map
       } else if (div.settings.clickableLayersOutputMode==='customFunction') {
         // features is already the list of clicked on objects, div.setting's.customClickFn must be a function passed to the map as a param.
-        div.settings.customClickFn(features);
+        div.settings.customClickFn(features, geom);
       } else {
-        for (var i=0; i<div.map.popups.length; i++) {
-          div.map.removePopup(div.map.popups[i]);
+        if (typeof OpenLayers.Popup === 'undefined') {
+          var dialog = $('<div>' + div.settings.clickableLayersOutputFn(features, div) + '</div>').dialog({
+            title: 'Feature information',
+            buttons: {
+              OK: function okClick() {
+                dialog.dialog('close');
+              }
+            }
+          });
+        } else {
+          for (var i=0; i<div.map.popups.length; i++) {
+            div.map.removePopup(div.map.popups[i]);
+          }
+          div.map.addPopup(new OpenLayers.Popup.FramedCloud(
+              "popup",
+              div.map.getLonLatFromPixel(this.lastclick),
+              null,
+              div.settings.clickableLayersOutputFn(features, div),
+              null,
+              true
+          ));
         }
-        div.map.addPopup(new OpenLayers.Popup.FramedCloud(
-            "popup",
-            div.map.getLonLatFromPixel(this.lastclick),
-            null,
-            div.settings.clickableLayersOutputFn(features, div),
-            null,
-            true
-        ));
       }
     }
 
@@ -1354,10 +1379,14 @@ var destroyAllFeatures;
 
         clickableWMSLayerNames = clickableWMSLayerNames.join(',');
         // Create a control that can handle both WMS and vector layer clicks.
+        var toolTitle = div.settings.reportGroup === null ? '' : div.settings.hintQueryDataPointsTool;
+        if (toolTitle && div.settings.selectFeatureBufferProjection) {
+          toolTitle += '. ' + div.settings.hintQueryBufferTool;
+        }
         var infoCtrl = new OpenLayers.Control({
           hoverControl: null,
           displayClass: align + 'olControlSelectFeature',
-          title: div.settings.reportGroup===null ? '' : div.settings.hintQueryDataPointsTool,
+          title: toolTitle,
           lastclick: {},
           allowBox: clickableVectorLayers.length>0 && div.settings.allowBox===true,
           deactivate: function() {
@@ -2360,7 +2389,14 @@ var destroyAllFeatures;
 
       // Convert indicia WMS/WFS layers into js objects
       $.each(this.settings.indiciaWMSLayers, function (key, value) {
-        div.settings.layers.push(new OpenLayers.Layer.WMS(key, div.settings.indiciaGeoSvc + 'wms', {layers: value, transparent: true}, {singleTile: true, isBaseLayer: false, sphericalMercator: true}));
+        // If key is int, title wasn't provided so work it out from the layer name.
+        var layerTitle = (key === parseInt(key, 10)) ? value.replace(/^.*:/, '').replace(/_/g, ' ') : key;
+        div.settings.layers.push(new OpenLayers.Layer.WMS(
+          layerTitle,
+          div.settings.indiciaGeoSvc + 'wms',
+          {layers: value, transparent: true},
+          {singleTile: true, isBaseLayer: false, sphericalMercator: true}
+        ));
       });
       $.each(this.settings.indiciaWFSLayers, function (key, value) {
         div.settings.layers.push(new OpenLayers.Layer.WFS(key, div.settings.indiciaGeoSvc + 'wms', {typename: value, request: 'GetFeature'}, {sphericalMercator: true}));
@@ -2716,8 +2752,10 @@ var destroyAllFeatures;
           toolbarControls.push(new OpenLayers.Control.ClearLayer([div.map.editLayer],
               {'displayClass': align + ' olControlClearLayer', 'title':div.settings.hintClearSelection, 'clearReport':true}));
         } else if (ctrl=='modifyFeature' && div.settings.editLayer) {
-          ctrlObj = new OpenLayers.Control.ModifyFeature(div.map.editLayer,
-              {'displayClass': align + 'olControlModifyFeature', 'title':div.settings.hintModifyFeature});
+          ctrlObj = new OpenLayers.Control.ModifyFeature(
+            div.map.editLayer,
+            { 'displayClass': align + 'olControlModifyFeature', 'title':div.settings.hintModifyFeature }
+          );
           toolbarControls.push(ctrlObj);
         } else if (ctrl=='graticule') {
           $.each($('select#' + div.settings.srefSystemId + ' option,input#' + div.settings.srefSystemId), function() {
@@ -3017,9 +3055,10 @@ jQuery.fn.indiciaMapPanel.defaults = {
     useOlDefaults: true,
     rememberPos: false, // set to true to enable restoring the map position when the page is reloaded. Requires jquery.cookie plugin.
     hintNavigation: 'Select this tool to navigate around the map by dragging, or double clicking to zoom the map.',
-    hintScrollWheel: ' Using the mouse scroll wheel whilst over the map will zoom in and out.',
+    hintScrollWheel: ' Holding Ctrl and using the mouse scroll wheel whilst over the map will zoom in and out.',
     hintClickSpatialRefTool: 'Select this tool to enable clicking on the map to set your location',
     hintQueryDataPointsTool: 'Select this tool then click on or drag a box over data points on the map to view the underlying records.',
+    hintQueryBufferTool: 'The search area covered by a clicked point or dragged box will be enlarged by the amount specified in the Tolerance box shown when this control is active.',
     hintDrawPolygonHint: 'Select this tool to draw a polygon, clicking on the map to draw the shape and double clicking to finish.',
     hintDrawLineHint: 'Select this tool to draw a line, clicking on the map to draw the shape and double clicking to finish.',
     hintDrawPointHint: 'Select this tool to draw points by clicking on the map.',
