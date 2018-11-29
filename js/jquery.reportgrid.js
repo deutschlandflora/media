@@ -642,7 +642,7 @@
                         metadata += '<div class="image-caption">' + response[0].caption + '</div>';
                       }
                       if (response[0].licence_title !== null) {
-                        metadata += '<div class="licence licence-' + response[0].licence_code.toLowerCase() + '">' +
+                        metadata += '<div class="licence"><span class="icon licence-' + response[0].licence_code.toLowerCase() + '"></span>' +
                           response[0].licence_title +
                           '</div>';
                       }
