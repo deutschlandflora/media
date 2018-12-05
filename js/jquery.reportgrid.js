@@ -664,7 +664,6 @@
               }
             }
           });
-          loadColPickerSettingsFromCookie(div);
           if (features.length > 0) {
             indiciaData.reportlayer.addFeatures(features);
             map.zoomToExtent(indiciaData.reportlayer.getDataExtent());
@@ -687,7 +686,7 @@
           if (typeof callback !== 'undefined') {
             callback(response);
           }
-
+          loadColPickerSettingsFromCookie(div);
         },
         error: function () {
           div.loading = false;
