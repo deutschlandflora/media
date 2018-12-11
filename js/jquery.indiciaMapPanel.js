@@ -1379,10 +1379,14 @@ var destroyAllFeatures;
 
         clickableWMSLayerNames = clickableWMSLayerNames.join(',');
         // Create a control that can handle both WMS and vector layer clicks.
+        var toolTitle = div.settings.reportGroup === null ? '' : div.settings.hintQueryDataPointsTool;
+        if (toolTitle && div.settings.selectFeatureBufferProjection) {
+          toolTitle += '. ' + div.settings.hintQueryBufferTool;
+        }
         var infoCtrl = new OpenLayers.Control({
           hoverControl: null,
           displayClass: align + 'olControlSelectFeature',
-          title: div.settings.reportGroup===null ? '' : div.settings.hintQueryDataPointsTool,
+          title: toolTitle,
           lastclick: {},
           allowBox: clickableVectorLayers.length>0 && div.settings.allowBox===true,
           deactivate: function() {
@@ -2190,7 +2194,7 @@ var destroyAllFeatures;
       this.processLonLatPositionOnMap = processLonLatPositionOnMap;
       // wrap the map in a div container
       $(this).wrap('<div id="map-container" style="width:'+opts.width+'" >');
-      $(this).before('<div id="map-loading" class="loading-overlay"></div>');
+      $(this).before('<div id="map-loading" class="loading-spinner" style="display: none"><div>Loading...</div></div>');
 
       // if the validator exists, stop map clicks bubbling up to its event handler as IE can't
       // get the attributes of some map items and errors arise.
@@ -3054,6 +3058,7 @@ jQuery.fn.indiciaMapPanel.defaults = {
     hintScrollWheel: ' Holding Ctrl and using the mouse scroll wheel whilst over the map will zoom in and out.',
     hintClickSpatialRefTool: 'Select this tool to enable clicking on the map to set your location',
     hintQueryDataPointsTool: 'Select this tool then click on or drag a box over data points on the map to view the underlying records.',
+    hintQueryBufferTool: 'The search area covered by a clicked point or dragged box will be enlarged by the amount specified in the Tolerance box shown when this control is active.',
     hintDrawPolygonHint: 'Select this tool to draw a polygon, clicking on the map to draw the shape and double clicking to finish.',
     hintDrawLineHint: 'Select this tool to draw a line, clicking on the map to draw the shape and double clicking to finish.',
     hintDrawPointHint: 'Select this tool to draw points by clicking on the map.',

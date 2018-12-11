@@ -903,18 +903,6 @@ div.note-fail, p.note-fail {
   }
 }
 
-.loading-overlay {
-  display: none;
-  position:absolute;
-  opacity: 0.9;
-  background: url(../images/ajax-loader2.gif) no-repeat center center #fff;
-  z-index: 1000;
-  top: 0;
-  right: 0;
-  bottom: 0;
-  left: 0;
-}
-
 .autocomplete-select {
   border: solid silver 1px;
   display:-moz-inline-stack;
@@ -972,21 +960,7 @@ div.note-fail, p.note-fail {
 #filter-form label {
   display: block;
 }
-.licence {
-  background: url(../images/licences-sprite.png) no-repeat center left;
-  padding-left: 100px;
-  box-sizing: border-box;
-  background-position: 0 0;
-}
-.licence-cc-by {
-  background-position: 0 -18px;
-}
-.licence-cc-by-nc {
-  background-position: 0 -36px;
-}
-.licence-cc0 {
-  background-position: 0 -54px;
-}
+
 /* Flags for record details panes, e.g. verification or record_details prebuilt forms. */
 #record-flags span {
   padding: 0.5em;

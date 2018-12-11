@@ -177,6 +177,21 @@ ul.ui-menu li {
       .status-icon.status-R.substatus-5.query-A {
         background-position: -64px -112px; }
 
+.licence span.icon {
+  background: url(../images/licences-sprite.png) no-repeat center left;
+  width: 100px;
+  height: 18px;
+  box-sizing: border-box;
+  background-position: 0 0;
+  display: inline-block;
+  vertical-align: middle; }
+  .licence span.icon.licence-cc-by {
+    background-position-y: -18px; }
+  .licence span.icon.licence-cc-by-nc {
+    background-position-y: -36px; }
+  .licence span.icon.licence-cc0 {
+    background-position-y: -54px; }
+
 label, form label {
   width: 160px;
   display: -moz-inline-stack;
@@ -262,5 +277,93 @@ input.findme {
 .control-width-6 {
   width: 500px !important;
   box-sizing: border-box; }
+
+.loading-spinner {
+  position: absolute;
+  z-index: 9999;
+  overflow: hidden;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  right: 0;
+  background-color: rgba(230, 230, 230, 0.6);
+  /* :not(:required) hides these rules from IE9 and below */ }
+  .loading-spinner div:not(:required) {
+    /* hide "loading..." text */
+    color: transparent;
+    position: absolute;
+    top: 50%;
+    left: 50%; }
+    .loading-spinner div:not(:required):after {
+      content: '';
+      width: 1em;
+      height: 1em;
+      font-size: 15px;
+      display: block;
+      left: -50%;
+      top: -50%;
+      position: absolute;
+      -webkit-animation: spinner 2500ms infinite linear;
+      -moz-animation: spinner 2500ms infinite linear;
+      -ms-animation: spinner 2500ms infinite linear;
+      -o-animation: spinner 2500ms infinite linear;
+      animation: spinner 2500ms infinite linear;
+      border-radius: 0.5em;
+      -webkit-box-shadow: rgba(0, 0, 0, 0.4) 3em 0 0 0, rgba(0, 0, 0, 0.5) 2.2em 2.2em 0 0, rgba(0, 0, 0, 0.6) 0 3em 0 0, rgba(0, 0, 0, 0.5) -2.2em 2.2em 0 0, rgba(0, 0, 0, 0.4) -3em 0 0 0, rgba(0, 0, 0, 0.5) -2.2em -2.2em 0 0, rgba(0, 0, 0, 0.6) 0 -3em 0 0, rgba(0, 0, 0, 0.5) 2.2em -2.2em 0 0;
+      box-shadow: rgba(0, 0, 0, 0.4) 3em 0 0 0, rgba(0, 0, 0, 0.5) 2.2em 2.2em 0 0, rgba(0, 0, 0, 0.6) 0 3em 0 0, rgba(0, 0, 0, 0.5) -2.2em 2.2em 0 0, rgba(0, 0, 0, 0.4) -3em 0 0 0, rgba(0, 0, 0, 0.5) -2.2em -2.2em 0 0, rgba(0, 0, 0, 0.6) 0 -3em 0 0, rgba(0, 0, 0, 0.5) 2.2em -2.2em 0 0; }
+
+/* Animation for loading overlay */
+@-webkit-keyframes spinner {
+  0% {
+    -webkit-transform: rotate(0deg);
+    -moz-transform: rotate(0deg);
+    -ms-transform: rotate(0deg);
+    -o-transform: rotate(0deg);
+    transform: rotate(0deg); }
+  100% {
+    -webkit-transform: rotate(360deg);
+    -moz-transform: rotate(360deg);
+    -ms-transform: rotate(360deg);
+    -o-transform: rotate(360deg);
+    transform: rotate(360deg); } }
+@-moz-keyframes spinner {
+  0% {
+    -webkit-transform: rotate(0deg);
+    -moz-transform: rotate(0deg);
+    -ms-transform: rotate(0deg);
+    -o-transform: rotate(0deg);
+    transform: rotate(0deg); }
+  100% {
+    -webkit-transform: rotate(360deg);
+    -moz-transform: rotate(360deg);
+    -ms-transform: rotate(360deg);
+    -o-transform: rotate(360deg);
+    transform: rotate(360deg); } }
+@-o-keyframes spinner {
+  0% {
+    -webkit-transform: rotate(0deg);
+    -moz-transform: rotate(0deg);
+    -ms-transform: rotate(0deg);
+    -o-transform: rotate(0deg);
+    transform: rotate(0deg); }
+  100% {
+    -webkit-transform: rotate(360deg);
+    -moz-transform: rotate(360deg);
+    -ms-transform: rotate(360deg);
+    -o-transform: rotate(360deg);
+    transform: rotate(360deg); } }
+@keyframes spinner {
+  0% {
+    -webkit-transform: rotate(0deg);
+    -moz-transform: rotate(0deg);
+    -ms-transform: rotate(0deg);
+    -o-transform: rotate(0deg);
+    transform: rotate(0deg); }
+  100% {
+    -webkit-transform: rotate(360deg);
+    -moz-transform: rotate(360deg);
+    -ms-transform: rotate(360deg);
+    -o-transform: rotate(360deg);
+    transform: rotate(360deg); } }
 
 /*# sourceMappingURL=theme-generic.css.map */

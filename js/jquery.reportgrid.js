@@ -434,7 +434,10 @@
 
     function loadGridFrom(div, request, clearExistingRows, callback) {
       var rowTitle;
-      $(div).find('.loading-overlay').show();
+      $(div).find('.loading-spinner').show();
+      // If the grid is too tall to fit on the page, temporarily shrink it to ensure
+      // the loading spinner is visible.
+      $(div).css('max-height', $(window).height() - $(div).offset().top + $(window).scrollTop() - 20);
       $.ajax({
         dataType: 'json',
         url: request,
@@ -477,7 +480,8 @@
           }
           if (typeof rows.error !== 'undefined') {
             div.loading = false;
-            $(div).find('.loading-overlay').hide();
+            $(div).find('.loading-spinner').hide();
+            $(div).css('max-height', '');
             if (!errorShownOnFilter) {
               alert('The data did not load successfully. The reason given was: \n' + rows.error);
               errorShownOnFilter = true;
@@ -642,7 +646,7 @@
                         metadata += '<div class="image-caption">' + response[0].caption + '</div>';
                       }
                       if (response[0].licence_title !== null) {
-                        metadata += '<div class="licence licence-' + response[0].licence_code.toLowerCase() + '">' +
+                        metadata += '<div class="licence"><span class="icon licence-' + response[0].licence_code.toLowerCase() + '"></span>' +
                           response[0].licence_title +
                           '</div>';
                       }
@@ -660,7 +664,6 @@
               }
             }
           });
-          loadColPickerSettingsFromCookie(div);
           if (features.length > 0) {
             indiciaData.reportlayer.addFeatures(features);
             map.zoomToExtent(indiciaData.reportlayer.getDataExtent());
@@ -674,8 +677,8 @@
           updatePager(div, hasMore);
           div.loading=false;
           setupReloadLinks(div);
-          $(div).find(".loading-overlay").hide();
-
+          $(div).find(".loading-spinner").hide();
+          $(div).css('max-height', '');
           // execute callback it there is one
           if (div.settings.callback !== '') {
             window[div.settings.callback](div);
@@ -683,11 +686,12 @@
           if (typeof callback !== 'undefined') {
             callback(response);
           }
-
+          loadColPickerSettingsFromCookie(div);
         },
         error: function () {
           div.loading = false;
-          $(div).find('.loading-overlay').hide();
+          $(div).find('.loading-spinner').hide();
+          $(div).css('max-height', '');
           alert('The report did not load correctly.');
         }
       });
