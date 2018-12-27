@@ -662,6 +662,10 @@ jQuery(document).ready(function ($) {
           return $('#occurrence_id_op').find("option[value='" + op + "']").html()
             + ' ' + indiciaData.filter.def.occurrence_id;
         }
+        else if (indiciaData.filter.def.occurrence_external_key) {
+          return $('#ctrl-wrap-occurrence_external_key label').html().replace(/:$/, '')
+            + ' ' + indiciaData.filter.def.occurrence_external_key;
+        }
         return '';
       },
       loadForm: function () {
@@ -1645,6 +1649,18 @@ jQuery(document).ready(function ($) {
       'json'
     );
   };
+
+  // Interactions betweem mutually exclusive filters.
+  $('#occurrence_id').change(function() {
+    if ($('#occurrence_id').val().trim() !== '') {
+      $('#occurrence_external_key').val('');
+    }
+  });
+  $('#occurrence_external_key').change(function() {
+    if ($('#occurrence_external_key').val().trim() !== '') {
+      $('#occurrence_id').val('');
+    }
+  });
 
   $('#location_list\\:box').hide();
   $('#filter-save').click(saveFilter);
