@@ -1278,28 +1278,19 @@ jQuery(document).ready(function ($) {
   };
 
   loadFilterUser = function (fu, getParams) {
-    indiciaData.filter.def = $.extend(JSON.parse(fu.filter_definition), getParams);
-    indiciaData.filter.id = fu.filter_id;
+    filterOverride = getParams;
+    filterLoaded([{
+      id: fu.filter_id,
+      title: fu.filter_title,
+      definition: fu.filter_definition,
+      created_by_id: fu.filter_created_by_id
+    }]);
     indiciaData.filter.filters_user_id = fu.id;
-    indiciaData.filter.title = fu.filter_title;
-    $('#filter\\:title').val(fu.filter_title);
     $('#filter\\:description').val(fu.filter_description);
     $('#filter\\:sharing').val(fu.filter_sharing);
     $('#sharing-type-label').html(codeToSharingTerm(fu.filter_sharing));
     $('#filters_user\\:user_id\\:person_name').val(fu.person_name);
     $('#filters_user\\:user_id').val(fu.user_id);
-    indiciaFns.applyFilterToReports();
-    $('#filter-reset').removeClass('disabled');
-    $('#filter-delete').removeClass('disabled');
-    $('#active-filter-label').html('Active filter: ' + fu.filter_title);
-    indiciaFns.updateFilterDescriptions();
-    $('#standard-params .header span.changed').hide();
-    // can't delete a filter you didn't create.
-    if (fu.filter_created_by_id === indiciaData.user_id) {
-      $('#filter-delete').show();
-    } else {
-      $('#filter-delete').hide();
-    }
   };
 
   function filterParamsChanged() {
