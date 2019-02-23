@@ -730,7 +730,7 @@
         }
         div.settings.recordCount = count;
         div.settings.extraParams.knownCount = count;
-        updatePager(div, false);
+        updatePager(div, div.settings.itemsPerPage!== null && div.settings.recordCount > (div.settings.offset + div.settings.itemsPerPage));
       }
     }
 

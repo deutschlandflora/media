@@ -228,6 +228,9 @@ var resetSpeciesTextOnEscape;
       var subSpeciesCellIdBeginsWith;
       var regex;
       var deleteAndEditHtml;
+      if (!data) {
+        return false;
+      }
       /*
        As soon as the user selects a species, we need to save its id as otherwise the information is lost. This is used
        if the user selects a sub-species, but then selects the blank option again, we can then use the main species id.
