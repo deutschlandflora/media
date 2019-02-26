@@ -653,14 +653,14 @@ jQuery(document).ready(function ($) {
         }
       }
     },
-    occurrence_id: {
+    occ_id: {
       getDescription: function () {
         var op;
-        if (indiciaData.filter.def.occurrence_id) {
-          op = typeof indiciaData.filter.def.occurrence_id_op === 'undefined' ?
-            '=' : indiciaData.filter.def.occurrence_id_op.replace(/[<=>]/g, '\\$&');
-          return $('#occurrence_id_op').find("option[value='" + op + "']").html()
-            + ' ' + indiciaData.filter.def.occurrence_id;
+        if (indiciaData.filter.def.occ_id) {
+          op = typeof indiciaData.filter.def.occ_id_op === 'undefined' ?
+            '=' : indiciaData.filter.def.occ_id_op.replace(/[<=>]/g, '\\$&');
+          return $('#occ_id_op').find("option[value='" + op + "']").html()
+            + ' ' + indiciaData.filter.def.occ_id;
         }
         else if (indiciaData.filter.def.occurrence_external_key) {
           return $('#ctrl-wrap-occurrence_external_key label').html().replace(/:$/, '')
@@ -671,13 +671,13 @@ jQuery(document).ready(function ($) {
       loadForm: function () {
       }
     },
-    sample_id: {
+    smp_id: {
       getDescription: function () {
         var op;
-        if (indiciaData.filter.def.sample_id) {
-          op = typeof indiciaData.filter.def.sample_id === 'undefined' ? '=' : indiciaData.filter.def.sample_id.replace(/[<=>]/g, "\\$&");
-          return $('#sample_id_op option[value=' + op + ']').html()
-            + ' ' + indiciaData.filter.def.sample_id;
+        if (indiciaData.filter.def.smp_id) {
+          op = typeof indiciaData.filter.def.smp_id === 'undefined' ? '=' : indiciaData.filter.def.smp_id.replace(/[<=>]/g, "\\$&");
+          return $('#smp_id_op option[value=' + op + ']').html()
+            + ' ' + indiciaData.filter.def.smp_id;
         }
         return '';
       },
@@ -1642,14 +1642,14 @@ jQuery(document).ready(function ($) {
   };
 
   // Interactions betweem mutually exclusive filters.
-  $('#occurrence_id').change(function() {
-    if ($('#occurrence_id').val().trim() !== '') {
+  $('#occ_id').change(function() {
+    if ($('#occ_id').val().trim() !== '') {
       $('#occurrence_external_key').val('');
     }
   });
   $('#occurrence_external_key').change(function() {
     if ($('#occurrence_external_key').val().trim() !== '') {
-      $('#occurrence_id').val('');
+      $('#occ_id').val('');
     }
   });
 

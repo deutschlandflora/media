@@ -14,7 +14,7 @@
 
 #standard-params .header * {
   vertical-align: middle;
-  margin: 0 4px 0 0; 
+  margin: 0 4px 0 0;
   padding: 0;
 }
 
@@ -34,10 +34,10 @@
   opacity: 0.3;
 }
 
-#standard-params .header select, #standard-params .toolbar select, #standard-params .toolbar button {  
+#standard-params .header select, #standard-params .toolbar select, #standard-params .toolbar button {
   padding: 0;
 }
-#standard-params .header button, #standard-params .header input[type=button]{  
+#standard-params .header button, #standard-params .header input[type=button]{
   padding: 0.1em 0.3em;
 }
 #standard-params #filter-panes {
@@ -51,7 +51,7 @@
   display:inline-block;
   zoom:1;
   *display:inline;
-  margin: 2px 0.5% 2px 0; 
+  margin: 2px 0.5% 2px 0;
   vertical-align: top;
   width: 24.625%;
   background-color: #DFDFDE;
@@ -80,7 +80,7 @@
   background-image: url(../images/nuvola/people-32px.png);
 }
 
-#pane-filter_occurrence_id a {
+#pane-filter_occ_id a, #pane-filter_smp_id a {
   background-image: url(../images/nuvola/number-32px.png);
 }
 
@@ -97,7 +97,7 @@
 }
 
 #standard-params .pane a, #standard-params .pane a:hover {
-  padding: 6px 6px 6px 42px;  
+  padding: 6px 6px 6px 42px;
   display: block;
   text-decoration: none;
   min-height: 54px;
@@ -131,8 +131,8 @@
    margin: 1em 0 0 0;
 }
 
-.olMap .olControlDrawFeaturePolygonItemActive, .olMap .olControlDrawFeaturePolygonItemInactive, 
-.olMap .olControlDrawFeaturePathItemActive, .olMap .olControlDrawFeaturePathItemInactive, 
+.olMap .olControlDrawFeaturePolygonItemActive, .olMap .olControlDrawFeaturePolygonItemInactive,
+.olMap .olControlDrawFeaturePathItemActive, .olMap .olControlDrawFeaturePathItemInactive,
 .olMap .olControlDrawFeaturePointItemActive, .olMap .olControlDrawFeaturePointItemInactive,
 .olMap .olControlclearEditLayerItemActive, .olMap .olControlclearEditLayerItemInactive {
   display: none;
@@ -142,14 +142,14 @@
   display: block;
 }
 
-#controls-filter_where .olMap .olControlDrawFeaturePolygonItemActive, #controls-filter_where .olMap .olControlDrawFeaturePolygonItemInactive, 
-#controls-filter_where .olMap .olControlDrawFeaturePathItemActive, #controls-filter_where .olMap .olControlDrawFeatureLinePathInactive, 
+#controls-filter_where .olMap .olControlDrawFeaturePolygonItemActive, #controls-filter_where .olMap .olControlDrawFeaturePolygonItemInactive,
+#controls-filter_where .olMap .olControlDrawFeaturePathItemActive, #controls-filter_where .olMap .olControlDrawFeatureLinePathInactive,
 #controls-filter_where .olMap .olControlDrawFeaturePointItemActive, #controls-filter_where .olMap .olControlDrawFeaturePointItemInactive,
 #controls-filter_where .olMap .olControlclearEditLayerItemActive, #controls-filter_where .olMap .olControlclearEditLayerItemInactive {
   display: block;
 }
-#controls-filter_where .olMap .olControlDrawFeaturePolygonItemActive.disabled, #controls-filter_where .olMap .olControlDrawFeaturePolygonItemInactive.disabled, 
-#controls-filter_where .olMap .olControlDrawFeaturePathItemActive.disabled, #controls-filter_where .olMap .olControlDrawFeatureLinePathInactive.disabled, 
+#controls-filter_where .olMap .olControlDrawFeaturePolygonItemActive.disabled, #controls-filter_where .olMap .olControlDrawFeaturePolygonItemInactive.disabled,
+#controls-filter_where .olMap .olControlDrawFeaturePathItemActive.disabled, #controls-filter_where .olMap .olControlDrawFeatureLinePathInactive.disabled,
 #controls-filter_where .olMap .olControlDrawFeaturePointItemActive.disabled, #controls-filter_where .olMap .olControlDrawFeaturePointItemInactive.disabled,
 #controls-filter_where .olMap .olControlclearEditLayerItemActive.disabled, #controls-filter_where .olMap .olControlclearEditLayerItemInactive.disabled {
   display: none;
@@ -265,10 +265,10 @@ input[disabled] {
   vertical-align: middle;
 }
 
-#controls-filter_who, #controls-filter_occurrence_id{
+#controls-filter_who, #controls-filter_occ_id, #controls-filter_smp_id {
   width: 300px;
 }
-#controls-filter_occurrence_id label {
+#controls-filter_occ_id label, #controls-filter_smp_id label {
   width: auto;
 }
 
