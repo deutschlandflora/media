@@ -1279,18 +1279,18 @@ jQuery(document).ready(function ($) {
 
   loadFilterUser = function (fu, getParams) {
     filterOverride = getParams;
-    filterLoaded([{
-      id: fu.filter_id,
-      title: fu.filter_title,
-      definition: fu.filter_definition,
-      created_by_id: fu.filter_created_by_id
-    }]);
     indiciaData.filter.filters_user_id = fu.id;
     $('#filter\\:description').val(fu.filter_description);
     $('#filter\\:sharing').val(fu.filter_sharing);
     $('#sharing-type-label').html(codeToSharingTerm(fu.filter_sharing));
     $('#filters_user\\:user_id\\:person_name').val(fu.person_name);
     $('#filters_user\\:user_id').val(fu.user_id);
+    filterLoaded([{
+      id: fu.filter_id,
+      title: fu.filter_title,
+      definition: fu.filter_definition,
+      created_by_id: fu.filter_created_by_id
+    }]);
   };
 
   function filterParamsChanged() {
