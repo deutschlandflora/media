@@ -438,6 +438,7 @@
       // If the grid is too tall to fit on the page, temporarily shrink it to ensure
       // the loading spinner is visible.
       $(div).css('max-height', $(window).height() - $(div).offset().top + $(window).scrollTop() - 20);
+      div.settings.populated = true;
       $.ajax({
         dataType: 'json',
         url: request,
@@ -1498,5 +1499,6 @@ jQuery.fn.reportgrid.defaults = {
   linkFilterToMap: false, // requires a rowId - filtering the grid also filters the map
   msgRowLinkedToMapHint: 'Click the row to highlight the record on the map. Double click to zoom in.',
   actionButtonTemplate: '<a{class}{href}{onclick}>{content}</a>',
-  immutableParams: {}
+  immutableParams: {},
+  populated: false
 };
