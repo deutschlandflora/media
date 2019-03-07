@@ -274,8 +274,7 @@ input.findme {
     color: transparent;
     position: absolute;
     top: 50%;
-    left: 50%;
-    max-height: 500px; }
+    left: 50%; }
     .loading-spinner div:not(:required):after {
       content: '';
       width: 1em;
@@ -347,5 +346,41 @@ input.findme {
     -ms-transform: rotate(360deg);
     -o-transform: rotate(360deg);
     transform: rotate(360deg); } }
+/* Provide some basic Bootstrap style classes */
+.alert {
+  padding: 4px;
+  margin: 4px;
+  border-width: 1px;
+  border-style: solid;
+  border-radius: 4px; }
+  .alert.alert-info {
+    border-color: #5577ff;
+    background-color: #eef1ff; }
+  .alert.alert-warning {
+    border-color: #ffc455;
+    background-color: #fff9ee; }
+  .alert.alert-danger {
+    border-color: #ff7777;
+    background-color: white; }
+
+.panel {
+  margin: 4px;
+  border-width: 1px;
+  border-style: solid;
+  border-radius: 4px; }
+  .panel .panel-heading, .panel .panel-body {
+    padding: 4px; }
+  .panel.panel-info {
+    border-color: #5577ff; }
+    .panel.panel-info .panel-heading {
+      background-color: #eef1ff; }
+  .panel.panel-warning {
+    border-color: #ffc455; }
+    .panel.panel-warning .panel-heading {
+      background-color: #fff9ee; }
+  .panel.panel-danger {
+    border-color: #ff7777; }
+    .panel.panel-danger .panel-heading {
+      background-color: white; }
 
 /*# sourceMappingURL=theme-generic.css.map */
