@@ -1,0 +1,52 @@
+/* Provide some basic Bootstrap style classes */
+$color-info: #5577ff;
+$color-warning: #ffc455;
+$color-danger: #ff7777;
+
+.alert {
+  padding: 4px;
+  margin: 4px;
+  border-width: 1px;
+  border-style: solid;
+  border-radius: 4px;
+  &.alert-info {
+    border-color: $color-info;
+    background-color: lighten($color-info, 30%);
+  }
+  &.alert-warning {
+    border-color: $color-warning;
+    background-color: lighten($color-warning, 30%);
+  }
+  &.alert-danger {
+    border-color: $color-danger;
+    background-color: lighten($color-danger, 30%);
+  }
+}
+
+.panel {
+  margin: 4px;
+  border-width: 1px;
+  border-style: solid;
+  border-radius: 4px;
+  .panel-heading, .panel-body {
+    padding: 4px;
+  }
+  &.panel-info {
+    border-color: $color-info;
+    .panel-heading {
+      background-color: lighten($color-info, 30%);
+    }
+  }
+  &.panel-warning {
+    border-color: $color-warning;
+    .panel-heading {
+      background-color: lighten($color-warning, 30%);
+    }
+  }
+  &.panel-danger {
+    border-color: $color-danger;
+    .panel-heading {
+      background-color: lighten($color-danger, 30%);
+    }
+  }
+}
