@@ -134,7 +134,7 @@ if (typeof window.indiciaData === 'undefined') {
    * jQuery UI 1.10 replaced option.selected with option.active. Use this function to allow non-version specific
    * code.
    */
-  indiciaFns.activeTab = function (tabs, index) {
+  indiciaFns.activeTab = function activeTab(tabs, index) {
     var version = $.ui.version.split('.');
     var versionPre1x10 = version[0] === '1' && version[1] < 10;
     var tabIndex;

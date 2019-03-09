@@ -30,6 +30,8 @@ $color-danger: #ff7777;
   border-radius: 4px;
   .panel-heading, .panel-body {
     padding: 4px;
+    border-top-left-radius: 4px;
+    border-top-right-radius: 4px;
   }
   &.panel-info {
     border-color: $color-info;

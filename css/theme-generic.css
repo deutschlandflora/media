@@ -369,7 +369,9 @@ input.findme {
   border-style: solid;
   border-radius: 4px; }
   .panel .panel-heading, .panel .panel-body {
-    padding: 4px; }
+    padding: 4px;
+    border-top-left-radius: 4px;
+    border-top-right-radius: 4px; }
   .panel.panel-info {
     border-color: #5577ff; }
     .panel.panel-info .panel-heading {
