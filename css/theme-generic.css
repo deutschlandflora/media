@@ -362,6 +362,8 @@ input.findme {
   .alert.alert-danger {
     border-color: #ff7777;
     background-color: white; }
+  .alert .fas, .alert .far {
+    margin: 8px; }
 
 .panel {
   margin: 4px;

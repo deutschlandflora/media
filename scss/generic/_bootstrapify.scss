@@ -21,6 +21,10 @@ $color-danger: #ff7777;
     border-color: $color-danger;
     background-color: lighten($color-danger, 30%);
   }
+  // Font awesome
+  .fas, .far {
+    margin: 8px;
+  }
 }
 
 .panel {
