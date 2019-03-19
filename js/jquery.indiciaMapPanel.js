@@ -94,6 +94,12 @@ var destroyAllFeatures;
       return feature;
     }
 
+    function reapplyQuery() {
+      if (this.settings.rememberSelectionGeom) {
+        selectFeaturesAndRowsInBufferedGeom(this.settings.rememberSelectionGeom, this.settings.clickableLayers, this);
+      }
+    }
+
     /**
      * Remove all features of a specific type or not of a specific type
      * This functionality allows a location to have a centroid and separate boundary.
@@ -778,37 +784,38 @@ var destroyAllFeatures;
      * search.
      */
     function _displayGeorefOutput(div, places) {
-      if (places.length>0) {
+      if (places.length > 0) {
         var ref, corner1, corner2, obj, name,
             epsg = (places[0].epsg === undefined ? 4326 : places[0].epsg);
-        if (places.length == 1 &&
-          places[0].name.toLowerCase().replace('.','') == $('#' + div.georefOpts.georefSearchId).val().toLowerCase().replace('.','')) {
+        if (places.length === 1 &&
+          places[0].name.toLowerCase().replace('.', '') === $('#' + div.georefOpts.georefSearchId).val().toLowerCase().replace('.','')) {
           // one place found that matches (ignoring case and full stop) e.g. 'st albans' matches 'St. Albans'
-          ref=places[0].centroid.y + ', ' + places[0].centroid.x;
-          name=places[0].name;
-          corner1=places[0].boundingBox.northEast.y + ', ' + places[0].boundingBox.northEast.x;
-          corner2=places[0].boundingBox.southWest.y + ', ' + places[0].boundingBox.southWest.x;
-          obj = typeof places[0].obj==='undefined' ? {} : places[0].obj;
+          ref = places[0].centroid.y + ', ' + places[0].centroid.x;
+          name = places[0].name;
+          corner1 = places[0].boundingBox.northEast.y + ', ' + places[0].boundingBox.northEast.x;
+          corner2 = places[0].boundingBox.southWest.y + ', ' + places[0].boundingBox.southWest.x;
+          obj = typeof places[0].obj === 'undefined' ? {} : places[0].obj;
           _displayLocation(div, ref, corner1, corner2, epsg, name, obj);
         } else if (places.length !== 0) {
           // one inexact match or multiple matches
-          $('<p>'+opts.msgGeorefSelectPlace+'</p>')
-                  .appendTo('#'+div.georefOpts.georefOutputDivId);
-          var ol=$('<ol>'), placename;
-          $.each(places, function(){
-            ref= this.centroid.y + ', ' + this.centroid.x;
-            corner1=this.boundingBox.northEast.y + ', ' + this.boundingBox.northEast.x;
-            corner2=this.boundingBox.southWest.y + ', ' + this.boundingBox.southWest.x;
-            placename= _getPlacename(this);
+          $('<p>' + opts.msgGeorefSelectPlace + '</p>').appendTo('#' + div.georefOpts.georefOutputDivId);
+          var ol = $('<ol>'), placename;
+          $.each(places, function() {
+            ref = this.centroid.y + ', ' + this.centroid.x;
+            corner1 = this.boundingBox.northEast.y + ', ' + this.boundingBox.northEast.x;
+            corner2 = this.boundingBox.southWest.y + ', ' + this.boundingBox.southWest.x;
+            placename = _getPlacename(this);
 
-            obj = typeof this.obj==='undefined' ? {} : this.obj;
+            obj = typeof this.obj === 'undefined' ? {} : this.obj;
 
-            ol.append($("<li>").append(
-              $("<a href='#'>" + placename + "</a>")
-                .click(function(e) {e.preventDefault();})
+            ol.append($('<li>').append(
+              $("<a href='#'>" + placename + '</a>')
+                .click(function(e) {
+                  e.preventDefault();
+                })
                 .click((
                   // use closures to persist the values of ref, corner1, etc, admin1, admin2
-                  function(ref, corner1, corner2, epsg, placename, obj){
+                  function (ref, corner1, corner2, epsg, placename, obj) {
                     return function() {
                       _displayLocation(div, ref, corner1, corner2, epsg, placename, obj);
                     };
@@ -817,7 +824,7 @@ var destroyAllFeatures;
             ));
           });
 
-          ol.appendTo('#'+div.georefOpts.georefOutputDivId);
+          ol.appendTo('#' + div.georefOpts.georefOutputDivId);
           $('#'+div.georefOpts.georefDivId).show("fast", function() {div.map.updateSize();});
         }
       } else {
@@ -887,8 +894,15 @@ var destroyAllFeatures;
         $('#'+opts.srefLongId).val('');
         $('#'+opts.geomId).val('');
       }
+      if (div.georefOpts.georefQueryMap) {
+        $.each(div.map.controls, function eachControl() {
+          if (typeof this.onGetInfo !== 'undefined') {
+            this.onGetInfo(div.map.getPixelFromLonLat(div.map.getCenter()));
+          }
+        });
+      }
       // call any hooks that need to know about georeferences
-      $.each(mapGeoreferenceHooks, function() {
+      $.each(mapGeoreferenceHooks, function eachHook() {
         this(div, ref, corner1, corner2, epsgCode, name, obj);
       });
       if (div.georefOpts.autoCollapseResults) {
@@ -1199,10 +1213,6 @@ var destroyAllFeatures;
           var featuresToSelect = [];
           for(var i=0, len = layer.features.length; i<len; ++i) {
             var feature = layer.features[i];
-            // check if the feature is displayed
-            if (!feature.onScreen()) {
-              continue;
-            }
             if (getRadius!==null) {
               // getRadius might be a string (fieldname) or a context function, so overwrite the layer default
               if (typeof getRadius==='string') {
@@ -1247,6 +1257,8 @@ var destroyAllFeatures;
       var ids = [];
       var len = 0;
       var clickableVectorLayers = [];
+      // Store the geom in case we reload the layer after a zoom.
+      div.settings.rememberSelectionGeom = geom;
       // build an array of all previuosly selected features in one
       $.each(clickableLayers, function() {
         if (this.CLASS_NAME==='OpenLayers.Layer.Vector') {
@@ -2188,6 +2200,7 @@ var destroyAllFeatures;
       this.settings = opts;
       this.pointToSref = pointToSref;
       this.addPt = addPt;
+      this.reapplyQuery = reapplyQuery;
       this.getFeaturesByVal = getFeaturesByVal;
       this.removeAllFeatures = removeAllFeatures;
       this.locationSelectedInInput = locationSelectedInInput;

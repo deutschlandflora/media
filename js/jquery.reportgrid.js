@@ -881,6 +881,17 @@
       return false;
     }
 
+    /**
+     * Determine if a feature being adding to the map is in the list of selected rows.
+     */
+    function featureInSelectedRows(div, feature) {
+      return typeof indiciaData.selectedRows !== 'undefined' && (
+        (typeof feature[div.settings.rowId] !== 'undefined' && $.inArray(div.settings.rowId, indiciaData.selectedRows)) ||
+        // plural - report returns list of IDs
+        (typeof feature[div.settings.rowId + 's'] !== 'undefined' && hasIntersection(feature[div.settings.rowId + 's'].split(','), indiciaData.selectedRows))
+      );
+    }
+
     function _internalMapRecords(div, request, offset, callback, recordCount) {
       $('#map-loading').show();
       var matchString, feature, url;
@@ -921,16 +932,14 @@
             // whilst that is loading, put the dots on the map
             var features=[];
             $.each(response, function (idx, obj) {
-              feature=indiciaData.mapdiv.addPt(features, obj, 'geom', {"type":"vector"}, obj[div.settings.rowId]);
-              if (typeof indiciaData.selectedRows !== 'undefined' &&
-                  ((typeof obj[div.settings.rowId] !== 'undefined' && $.inArray(div.settings.rowId, indiciaData.selectedRows)) ||
-                  // plural - report returns list of IDs
-                  (typeof obj[div.settings.rowId + 's'] !== 'undefined' && hasIntersection(obj[div.settings.rowId + 's'].split(','), indiciaData.selectedRows)))) {
+              feature = indiciaData.mapdiv.addPt(features, obj, 'geom', {"type":"vector"}, obj[div.settings.rowId]);
+              if (featureInSelectedRows(div, obj)) {
                 feature.renderIntent='select';
                 indiciaData.reportlayer.selectedFeatures.push(feature);
               }
             });
             indiciaData.reportlayer.addFeatures(features);
+            indiciaData.mapdiv.reapplyQuery();
             if (indiciaData.mapdiv.settings.zoomMapToOutput) {
               indiciaData.disableMapDataLoading = true;
               indiciaData.mapdiv.map.zoomToExtent(indiciaData.reportlayer.getDataExtent());
