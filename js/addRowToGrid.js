@@ -234,7 +234,11 @@ var resetSpeciesTextOnEscape;
     var deleteAndEditHtml;
     var gridId = $(e.currentTarget).closest('table').attr('id');
     var lookupListId = $(e.currentTarget).closest('tr').data('lookupListId');
-    var item = data.item;
+    var item;
+    if (!data) {
+      return false;
+    }
+    item = data.item;
     /*
      As soon as the user selects a species, we need to save its id as otherwise the information is lost. This is used
      if the user selects a sub-species, but then selects the blank option again, we can then use the main species id.

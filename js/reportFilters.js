@@ -653,27 +653,31 @@ jQuery(document).ready(function ($) {
         }
       }
     },
-    occurrence_id: {
+    occ_id: {
       getDescription: function () {
         var op;
-        if (indiciaData.filter.def.occurrence_id) {
-          op = typeof indiciaData.filter.def.occurrence_id_op === 'undefined' ?
-            '=' : indiciaData.filter.def.occurrence_id_op.replace(/[<=>]/g, '\\$&');
-          return $('#occurrence_id_op').find("option[value='" + op + "']").html()
-            + ' ' + indiciaData.filter.def.occurrence_id;
+        if (indiciaData.filter.def.occ_id) {
+          op = typeof indiciaData.filter.def.occ_id_op === 'undefined' ?
+            '=' : indiciaData.filter.def.occ_id_op.replace(/[<=>]/g, '\\$&');
+          return $('#occ_id_op').find("option[value='" + op + "']").html()
+            + ' ' + indiciaData.filter.def.occ_id;
+        }
+        else if (indiciaData.filter.def.occurrence_external_key) {
+          return $('#ctrl-wrap-occurrence_external_key label').html().replace(/:$/, '')
+            + ' ' + indiciaData.filter.def.occurrence_external_key;
         }
         return '';
       },
       loadForm: function () {
       }
     },
-    sample_id: {
+    smp_id: {
       getDescription: function () {
         var op;
-        if (indiciaData.filter.def.sample_id) {
-          op = typeof indiciaData.filter.def.sample_id === 'undefined' ? '=' : indiciaData.filter.def.sample_id.replace(/[<=>]/g, "\\$&");
-          return $('#sample_id_op option[value=' + op + ']').html()
-            + ' ' + indiciaData.filter.def.sample_id;
+        if (indiciaData.filter.def.smp_id) {
+          op = typeof indiciaData.filter.def.smp_id === 'undefined' ? '=' : indiciaData.filter.def.smp_id.replace(/[<=>]/g, "\\$&");
+          return $('#smp_id_op option[value=' + op + ']').html()
+            + ' ' + indiciaData.filter.def.smp_id;
         }
         return '';
       },
@@ -1274,28 +1278,19 @@ jQuery(document).ready(function ($) {
   };
 
   loadFilterUser = function (fu, getParams) {
-    indiciaData.filter.def = $.extend(JSON.parse(fu.filter_definition), getParams);
-    indiciaData.filter.id = fu.filter_id;
+    filterOverride = getParams;
     indiciaData.filter.filters_user_id = fu.id;
-    indiciaData.filter.title = fu.filter_title;
-    $('#filter\\:title').val(fu.filter_title);
     $('#filter\\:description').val(fu.filter_description);
     $('#filter\\:sharing').val(fu.filter_sharing);
     $('#sharing-type-label').html(codeToSharingTerm(fu.filter_sharing));
     $('#filters_user\\:user_id\\:person_name').val(fu.person_name);
     $('#filters_user\\:user_id').val(fu.user_id);
-    indiciaFns.applyFilterToReports();
-    $('#filter-reset').removeClass('disabled');
-    $('#filter-delete').removeClass('disabled');
-    $('#active-filter-label').html('Active filter: ' + fu.filter_title);
-    indiciaFns.updateFilterDescriptions();
-    $('#standard-params .header span.changed').hide();
-    // can't delete a filter you didn't create.
-    if (fu.filter_created_by_id === indiciaData.user_id) {
-      $('#filter-delete').show();
-    } else {
-      $('#filter-delete').hide();
-    }
+    filterLoaded([{
+      id: fu.filter_id,
+      title: fu.filter_title,
+      definition: fu.filter_definition,
+      created_by_id: fu.filter_created_by_id
+    }]);
   };
 
   function filterParamsChanged() {
@@ -1645,6 +1640,18 @@ jQuery(document).ready(function ($) {
       'json'
     );
   };
+
+  // Interactions betweem mutually exclusive filters.
+  $('#occ_id').change(function() {
+    if ($('#occ_id').val().trim() !== '') {
+      $('#occurrence_external_key').val('');
+    }
+  });
+  $('#occurrence_external_key').change(function() {
+    if ($('#occurrence_external_key').val().trim() !== '') {
+      $('#occ_id').val('');
+    }
+  });
 
   $('#location_list\\:box').hide();
   $('#filter-save').click(saveFilter);
