@@ -252,7 +252,7 @@ var checkSubmitInProgress = function () {
         runtimes : this.settings.runtimes,
         container : this.id,
         browse_button : this.settings.browse_button,
-        url : this.settings.uploadScript + '?destination=' + this.settings.destinationFolder,
+        url : this.settings.uploadScript + '?destination=' + this.settings.relativeImageFolder,
         resize : resize,
         flash_swf_url : this.settings.jsPath + 'plupload/js/Moxie.swf',
         silverlight_xap_url : this.settings.jsPath + 'plupload/js/Moxie.xap',
@@ -288,7 +288,7 @@ var checkSubmitInProgress = function () {
               .replace(/\{imagewidth\}/g, div.settings.imageWidth);
           $('#' + div.id.replace(/:/g,'\\:') + ' .filelist').append(existing);
           $('#' + uniqueId + ' .progress').remove();
-          if (file.id==='') {
+          if (file.id === '') {
             thumbnailfilepath = div.settings.destinationFolder + file.path;
           }
           else {
@@ -560,6 +560,7 @@ jQuery.fn.uploader.defaults = {
   msgNoembedResponseError : 'An error occurred trying to link to that resource. Are you sure the URL is correct and that you are connected to the internet?',
   uploadScript : 'upload.php',
   destinationFolder : '',
+  relativeImageFolder: '',
   runtimes : 'html5,flash,silverlight,html4',
   mediaTypes : ["Image:Local"],
   fileTypes : {image : ["jpg", "gif", "png", "jpeg"],
