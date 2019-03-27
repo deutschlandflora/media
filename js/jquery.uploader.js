@@ -261,7 +261,8 @@ var checkSubmitInProgress = function () {
         ],
         chunk_size: '1MB',
         // limit the max file size to the Indicia limit, unless it is first resized.
-        max_file_size : resize ? '10mb' : plupload.formatSize(this.settings.maxUploadSize)
+        max_file_size : resize ? '10mb' : plupload.formatSize(this.settings.maxUploadSize),
+        drop_element: $(this).find('.image-drop')[0]
       });
 
       this.uploader.bind('QueueChanged', function(up) {
@@ -534,8 +535,9 @@ jQuery.fn.uploader.defaults = {
   maxFileCount : 4,
   existingFiles : [],
   buttonTemplate : '<button id="{id}" type="button"{class} title="{title}">{caption}</button>',
-  file_boxTemplate : '<fieldset class="ui-corner-all">\n<legend class={captionClass}>{caption}</legend>\n{uploadSelectBtn}\n{linkSelectBtn}\n<div class="filelist"></div>' +
-                 '</fieldset>\n<p class="{helpTextClass}">{helpText}</p>',
+  file_boxTemplate : '<fieldset class="ui-corner-all">\n<legend class={captionClass}>{caption}</legend>\n{uploadSelectBtn}\n{linkSelectBtn}\n' +
+    '<div class="filelist"><div class="image-drop">Drop files here...</div></div>' +
+    '</fieldset>\n<p class="{helpTextClass}">{helpText}</p>',
   file_box_initial_link_infoTemplate : '<div id="link-{linkRequestId}" class="ui-widget-content ui-corner-all link"><div class="ui-widget-header ui-corner-all ui-helper-clearfix"><span id="link-title-{linkRequestId}">Loading...</span> ' +
           '<span class="delete-file ind-delete-icon" id="del-{id}"></span></div>'+
           '<div id="link-embed-{linkRequestId}"></div></div>',
