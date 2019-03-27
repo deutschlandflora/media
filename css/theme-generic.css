@@ -36,6 +36,18 @@ table.report-grid {
     width: 50px;
     margin: 1px; }
 
+.image-drop {
+  display: inline-block;
+  zoom: 1;
+  margin: 1em;
+  padding: 0.5em;
+  vertical-align: top;
+  border: dashed 1px silver;
+  min-width: 60px;
+  min-height: 160px;
+  border-radius: 4px;
+  color: gray; }
+
 .media-gallery ul {
   padding: 0; }
   .media-gallery ul li {
