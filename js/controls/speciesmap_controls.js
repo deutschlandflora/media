@@ -102,7 +102,13 @@ var control_speciesmap_addcontrols;
       fillInMainSref();
       // TODO if map projection != indicia internal projection transform to internal projection
       $(indiciaData.control_speciesmap_opts.mapDiv).hide(indiciaData.control_speciesmap_opts.animationDuration);
-      $('#' + indiciaData.control_speciesmap_opts.id + '-container').show(indiciaData.control_speciesmap_opts.animationDuration).find('.new').removeClass('new');
+      $('#' + indiciaData.control_speciesmap_opts.id + '-container')
+        .show(indiciaData.control_speciesmap_opts.animationDuration, function after() {
+          // Trigger footable resize so visible columns are updated.
+          $('#' + indiciaData.control_speciesmap_opts.id + '-container table').trigger('footable_resize');
+        })
+        .find('.new')
+        .removeClass('new');
       $('#' + indiciaData.control_speciesmap_opts.id + '-blocks').find(' > div').hide();
       $('#' + indiciaData.control_speciesmap_opts.id + ' > tbody > tr').not('.scClonableRow').hide();
       $('#' + indiciaData.control_speciesmap_opts.id + ' .scClonableRow').find('[name$="\:sampleIDX"]').each(
