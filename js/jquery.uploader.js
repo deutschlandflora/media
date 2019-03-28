@@ -78,6 +78,7 @@ var checkSubmitInProgress = function () {
               .replace(/\{pathValue\}/g, url)
               .replace(/\{captionField\}/g, div.settings.table + ':caption:' + uniqueId)
               .replace(/\{captionValue\}/g, caption)
+              .replace(/\{captionPlaceholder\}/g, div.settings.msgCaptionPlaceholder)
               .replace(/\{typeField\}/g, div.settings.table + ':media_type_id:' + uniqueId)
               .replace(/\{typeValue\}/g, typeId)
               .replace(/\{typeNameField\}/g, div.settings.table + ':media_type:' + uniqueId)
@@ -316,6 +317,7 @@ var checkSubmitInProgress = function () {
                 .replace(/\{imagewidth\}/g, div.settings.imageWidth)
                 .replace(/\{captionField\}/g, div.settings.table + ':caption:' + uniqueId)
                 .replace(/\{captionValue\}/g, file.caption.replace(/\"/g, '&quot;'))
+                .replace(/\{captionPlaceholder\}/g, div.settings.msgCaptionPlaceholder)
                 .replace(/\{pathField\}/g, div.settings.table + ':path:' + uniqueId)
                 .replace(/\{pathValue\}/g, file.path)
                 .replace(/\{typeField\}/g, div.settings.table + ':media_type_id:' + uniqueId)
@@ -341,6 +343,8 @@ var checkSubmitInProgress = function () {
       // Add a box to indicate a file that is added to the list to upload, but not yet uploaded.
       this.uploader.bind('FilesAdded', function(up, files) {
         $(div).parents('form').bind('submit', checkSubmitInProgress);
+        // Hide the drop here hint once we have something, so it doesn't occupy space.
+        $(div).find('.drop-instruct').remove();
         // Find any files over the upload limit
         var existingCount = $('#' + div.id.replace(/:/g,'\\:') + ' .filelist').children().length, ext;
         extras = files.splice(div.settings.maxFileCount - existingCount, 9999);
@@ -448,6 +452,7 @@ var checkSubmitInProgress = function () {
                 .replace(/\{imagewidth\}/g, div.settings.imageWidth)
                 .replace(/\{captionField\}/g, div.settings.table + ':caption:' + uniqueId)
                 .replace(/\{captionValue\}/g, '')
+                .replace(/\{captionPlaceholder\}/g, div.settings.msgCaptionPlaceholder)
                 .replace(/\{pathField\}/g, div.settings.table + ':path:' + uniqueId)
                 .replace(/\{pathValue\}/g, '')
                 .replace(/\{typeField\}/g, div.settings.table + ':media_type_id:' + uniqueId)
@@ -524,6 +529,7 @@ jQuery.fn.uploader.defaults = {
   msgDelete : 'Delete this item',
   msgUseAddFileBtn: 'Use the Add file button to select a file from your local disk. Files of type {1} are allowed.',
   msgUseAddLinkBtn: 'Use the Add link button to add a link to information stored elsewhere on the internet. You can enter links from {1}.',
+  msgCaptionPlaceholder: 'Enter caption...',
   helpText : '',
   helpTextClass: 'helpText',
   useFancybox: true,
@@ -536,7 +542,7 @@ jQuery.fn.uploader.defaults = {
   existingFiles : [],
   buttonTemplate : '<button id="{id}" type="button"{class} title="{title}">{caption}</button>',
   file_boxTemplate : '<fieldset class="ui-corner-all">\n<legend class={captionClass}>{caption}</legend>\n{uploadSelectBtn}\n{linkSelectBtn}\n' +
-    '<div class="filelist"><div class="image-drop">Drop files here...</div></div>' +
+    '<div class="filelist image-drop"><span class="drop-instruct">Drop files here...</span></div>' +
     '</fieldset>\n<p class="{helpTextClass}">{helpText}</p>',
   file_box_initial_link_infoTemplate : '<div id="link-{linkRequestId}" class="ui-widget-content ui-corner-all link"><div class="ui-widget-header ui-corner-all ui-helper-clearfix"><span id="link-title-{linkRequestId}">Loading...</span> ' +
           '<span class="delete-file ind-delete-icon" id="del-{id}"></span></div>'+
@@ -550,7 +556,7 @@ jQuery.fn.uploader.defaults = {
       '<input type="hidden" name="{typeNameField}" id="{typeNameField}" value="{typeNameValue}" />' +
       '<input type="hidden" name="{deletedField}" id="{deletedField}" value="{deletedValue}" class="deleted-value" />' +
       '<input type="hidden" id="{isNewField}" value="{isNewValue}" />' +
-      '<label for="{captionField}">Caption:</label><br/><input type="text" maxlength="100" style="width: {imagewidth}px" name="{captionField}" id="{captionField}" value="{captionValue}"/>',
+      '<input type="text" maxlength="100" style="width: {imagewidth}px" name="{captionField}" id="{captionField}" value="{captionValue}" placeholder="{captionPlaceholder}" />',
   file_box_uploaded_linkTemplate : '<div>{embed}</div>',
   file_box_uploaded_imageTemplate : '<a class="fancybox" href="{origfilepath}"><img src="{thumbnailfilepath}" width="{imagewidth}"/></a>',
   file_box_uploaded_audioTemplate : '<audio controls src="{origfilepath}" type="audio/mpeg"/>',
