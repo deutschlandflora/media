@@ -38,6 +38,8 @@ var checkSubmitInProgress = function () {
 
 
 (function($) {
+
+  var currentDiv;
   // When adding a link to a remote resource, the oembed protocol is used to
   // fetch the HTML to display for the external resource. Use the noembed
   // service to guarantee jsonp support and a consistent response.
@@ -123,7 +125,15 @@ var checkSubmitInProgress = function () {
     }
   };
 
-  var currentDiv;
+  function enableDropIfDesktop(el, uploadOpts) {
+    var dropEl;
+    if (!/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+      dropEl = $(el).find('.filelist');
+      dropEl.addClass('image-drop');
+      dropEl.append('<span class="drop-instruct">Drop files s here...</span>');
+      uploadOpts.drop_element = dropEl[0];
+    }
+  }
 
   $(document).ready(function() {
     $("#add-link-form").keypress(function(e) {
@@ -249,7 +259,7 @@ var checkSubmitInProgress = function () {
       // Set up a resize object if required
       var resize = (this.settings.resizeWidth!==0 || this.settings.resizeHeight!==0) ?
           {width: this.settings.resizeWidth, height: this.settings.resizeHeight, quality: this.settings.resizeQuality} : null;
-      this.uploader = new plupload.Uploader({
+      var uploadOpts = {
         runtimes : this.settings.runtimes,
         container : this.id,
         browse_button : this.settings.browse_button,
@@ -262,10 +272,10 @@ var checkSubmitInProgress = function () {
         ],
         chunk_size: '1MB',
         // limit the max file size to the Indicia limit, unless it is first resized.
-        max_file_size : resize ? '10mb' : plupload.formatSize(this.settings.maxUploadSize),
-        drop_element: $(this).find('.image-drop')[0]
-      });
-
+        max_file_size : resize ? '10mb' : plupload.formatSize(this.settings.maxUploadSize)
+      };
+      enableDropIfDesktop(this, uploadOpts);
+      this.uploader = new plupload.Uploader(uploadOpts);
       this.uploader.bind('QueueChanged', function(up) {
         up.start();
       });
@@ -542,7 +552,7 @@ jQuery.fn.uploader.defaults = {
   existingFiles : [],
   buttonTemplate : '<button id="{id}" type="button"{class} title="{title}">{caption}</button>',
   file_boxTemplate : '<fieldset class="ui-corner-all">\n<legend class={captionClass}>{caption}</legend>\n{uploadSelectBtn}\n{linkSelectBtn}\n' +
-    '<div class="filelist image-drop"><span class="drop-instruct">Drop files here...</span></div>' +
+    '<div class="filelist"></div>' +
     '</fieldset>\n<p class="{helpTextClass}">{helpText}</p>',
   file_box_initial_link_infoTemplate : '<div id="link-{linkRequestId}" class="ui-widget-content ui-corner-all link"><div class="ui-widget-header ui-corner-all ui-helper-clearfix"><span id="link-title-{linkRequestId}">Loading...</span> ' +
           '<span class="delete-file ind-delete-icon" id="del-{id}"></span></div>'+
