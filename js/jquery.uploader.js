@@ -38,6 +38,8 @@ var checkSubmitInProgress = function () {
 
 
 (function($) {
+
+  var currentDiv;
   // When adding a link to a remote resource, the oembed protocol is used to
   // fetch the HTML to display for the external resource. Use the noembed
   // service to guarantee jsonp support and a consistent response.
@@ -78,6 +80,7 @@ var checkSubmitInProgress = function () {
               .replace(/\{pathValue\}/g, url)
               .replace(/\{captionField\}/g, div.settings.table + ':caption:' + uniqueId)
               .replace(/\{captionValue\}/g, caption)
+              .replace(/\{captionPlaceholder\}/g, div.settings.msgCaptionPlaceholder)
               .replace(/\{typeField\}/g, div.settings.table + ':media_type_id:' + uniqueId)
               .replace(/\{typeValue\}/g, typeId)
               .replace(/\{typeNameField\}/g, div.settings.table + ':media_type:' + uniqueId)
@@ -97,32 +100,40 @@ var checkSubmitInProgress = function () {
 
   indiciaData.mediaTypes = {
     "Audio:SoundCloud" : {
-      "regex":/^http(s)?:\/\/(www.)?soundcloud.com\//
+      regex: /^http(s)?:\/\/(www.)?soundcloud.com\//
     },
     "Image:Flickr" : {
-      "regex":/^http(s)?:\/\/((www.)?flickr.com|flic.kr)\//
+      regex: /^http(s)?:\/\/((www.)?flickr.com|flic.kr)\//
     },
     "Image:Instagram" : {
-      "regex":/^http:\/\/(instagram.com|instagr.am)\//
+      regex: /^http:\/\/(instagram.com|instagr.am)\//
     },
     "Image:Twitpic" : {
-      "regex":/^http:\/\/twitpic.com\//
+      regex: /^http:\/\/twitpic.com\//
     },
     "Social:Facebook" : {
-      "regex":/^http:\/\/(www.)?facebook.com\//
+      regex: /^http:\/\/(www.)?facebook.com\//
     },
     "Social:Twitter" : {
-      "regex":/^http:\/\/twitter.com\//
+      regex: /^http:\/\/twitter.com\//
     },
     "Video:Youtube" : {
-      "regex":/^http:\/\/(www.youtube.com|youtu.be)\//
+      regex: /^http:\/\/(www.youtube.com|youtu.be)\//
     },
     "Video:Vimeo" : {
-      "regex":/^http:\/\/vimeo.com\//
+      regex: /^http:\/\/vimeo.com\//
     }
   };
 
-  var currentDiv;
+  function enableDropIfDesktop(el, uploadOpts) {
+    var dropEl;
+    if (!/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+      dropEl = $(el).find('.filelist');
+      dropEl.addClass('image-drop');
+      dropEl.append('<span class="drop-instruct">Drop files s here...</span>');
+      uploadOpts.drop_element = dropEl[0];
+    }
+  }
 
   $(document).ready(function() {
     $("#add-link-form").keypress(function(e) {
@@ -248,7 +259,7 @@ var checkSubmitInProgress = function () {
       // Set up a resize object if required
       var resize = (this.settings.resizeWidth!==0 || this.settings.resizeHeight!==0) ?
           {width: this.settings.resizeWidth, height: this.settings.resizeHeight, quality: this.settings.resizeQuality} : null;
-      this.uploader = new plupload.Uploader({
+      var uploadOpts = {
         runtimes : this.settings.runtimes,
         container : this.id,
         browse_button : this.settings.browse_button,
@@ -262,8 +273,9 @@ var checkSubmitInProgress = function () {
         chunk_size: '1MB',
         // limit the max file size to the Indicia limit, unless it is first resized.
         max_file_size : resize ? '10mb' : plupload.formatSize(this.settings.maxUploadSize)
-      });
-
+      };
+      enableDropIfDesktop(this, uploadOpts);
+      this.uploader = new plupload.Uploader(uploadOpts);
       this.uploader.bind('QueueChanged', function(up) {
         up.start();
       });
@@ -315,6 +327,7 @@ var checkSubmitInProgress = function () {
                 .replace(/\{imagewidth\}/g, div.settings.imageWidth)
                 .replace(/\{captionField\}/g, div.settings.table + ':caption:' + uniqueId)
                 .replace(/\{captionValue\}/g, file.caption.replace(/\"/g, '&quot;'))
+                .replace(/\{captionPlaceholder\}/g, div.settings.msgCaptionPlaceholder)
                 .replace(/\{pathField\}/g, div.settings.table + ':path:' + uniqueId)
                 .replace(/\{pathValue\}/g, file.path)
                 .replace(/\{typeField\}/g, div.settings.table + ':media_type_id:' + uniqueId)
@@ -340,6 +353,8 @@ var checkSubmitInProgress = function () {
       // Add a box to indicate a file that is added to the list to upload, but not yet uploaded.
       this.uploader.bind('FilesAdded', function(up, files) {
         $(div).parents('form').bind('submit', checkSubmitInProgress);
+        // Hide the drop here hint once we have something, so it doesn't occupy space.
+        $(div).find('.drop-instruct').remove();
         // Find any files over the upload limit
         var existingCount = $('#' + div.id.replace(/:/g,'\\:') + ' .filelist').children().length, ext;
         extras = files.splice(div.settings.maxFileCount - existingCount, 9999);
@@ -447,6 +462,7 @@ var checkSubmitInProgress = function () {
                 .replace(/\{imagewidth\}/g, div.settings.imageWidth)
                 .replace(/\{captionField\}/g, div.settings.table + ':caption:' + uniqueId)
                 .replace(/\{captionValue\}/g, '')
+                .replace(/\{captionPlaceholder\}/g, div.settings.msgCaptionPlaceholder)
                 .replace(/\{pathField\}/g, div.settings.table + ':path:' + uniqueId)
                 .replace(/\{pathValue\}/g, '')
                 .replace(/\{typeField\}/g, div.settings.table + ':media_type_id:' + uniqueId)
@@ -523,6 +539,7 @@ jQuery.fn.uploader.defaults = {
   msgDelete : 'Delete this item',
   msgUseAddFileBtn: 'Use the Add file button to select a file from your local disk. Files of type {1} are allowed.',
   msgUseAddLinkBtn: 'Use the Add link button to add a link to information stored elsewhere on the internet. You can enter links from {1}.',
+  msgCaptionPlaceholder: 'Enter caption...',
   helpText : '',
   helpTextClass: 'helpText',
   useFancybox: true,
@@ -534,8 +551,9 @@ jQuery.fn.uploader.defaults = {
   maxFileCount : 4,
   existingFiles : [],
   buttonTemplate : '<button id="{id}" type="button"{class} title="{title}">{caption}</button>',
-  file_boxTemplate : '<fieldset class="ui-corner-all">\n<legend class={captionClass}>{caption}</legend>\n{uploadSelectBtn}\n{linkSelectBtn}\n<div class="filelist"></div>' +
-                 '</fieldset>\n<p class="{helpTextClass}">{helpText}</p>',
+  file_boxTemplate : '<fieldset class="ui-corner-all">\n<legend class={captionClass}>{caption}</legend>\n{uploadSelectBtn}\n{linkSelectBtn}\n' +
+    '<div class="filelist"></div>' +
+    '</fieldset>\n<p class="{helpTextClass}">{helpText}</p>',
   file_box_initial_link_infoTemplate : '<div id="link-{linkRequestId}" class="ui-widget-content ui-corner-all link"><div class="ui-widget-header ui-corner-all ui-helper-clearfix"><span id="link-title-{linkRequestId}">Loading...</span> ' +
           '<span class="delete-file ind-delete-icon" id="del-{id}"></span></div>'+
           '<div id="link-embed-{linkRequestId}"></div></div>',
@@ -548,7 +566,7 @@ jQuery.fn.uploader.defaults = {
       '<input type="hidden" name="{typeNameField}" id="{typeNameField}" value="{typeNameValue}" />' +
       '<input type="hidden" name="{deletedField}" id="{deletedField}" value="{deletedValue}" class="deleted-value" />' +
       '<input type="hidden" id="{isNewField}" value="{isNewValue}" />' +
-      '<label for="{captionField}">Caption:</label><br/><input type="text" maxlength="100" style="width: {imagewidth}px" name="{captionField}" id="{captionField}" value="{captionValue}"/>',
+      '<input type="text" maxlength="100" style="width: {imagewidth}px" name="{captionField}" id="{captionField}" value="{captionValue}" placeholder="{captionPlaceholder}" />',
   file_box_uploaded_linkTemplate : '<div>{embed}</div>',
   file_box_uploaded_imageTemplate : '<a class="fancybox" href="{origfilepath}"><img src="{thumbnailfilepath}" width="{imagewidth}"/></a>',
   file_box_uploaded_audioTemplate : '<audio controls src="{origfilepath}" type="audio/mpeg"/>',
