@@ -563,29 +563,33 @@ var resetSpeciesTextOnEscape;
    * it has been linked to a taxon. Adds a row to the grid specifically to contain a file uploader for images
    * linked to that occurrence.
    */
-  indiciaFns.on('click', '.add-media-link', {}, function(evt) {
-    evt.preventDefault();
-    var table = evt.target.id.replace('add-media','sc') + ':occurrence_medium';
-    var ctrlId='container-'+table+'-'+Math.floor((Math.random())*0x10000);
+  indiciaFns.on('click', '.add-media-link', {}, function onClick(evt) {
+    var table = evt.target.id.replace('add-media', 'sc') + ':occurrence_medium';
+    var ctrlId = 'container-' + table + '-' + Math.floor((Math.random()) * 0x10000);
     var colspan = $($(evt.target).parent().parent()).children().length;
     var imageRow = '<tr class="image-row"><td colspan="' + colspan + '">';
     var mediaTypes = indiciaData.uploadSettings.mediaTypes;
-    var settingsToClone = ['uploadScript', 'destinationFolder', 'resizeWidth', 'resizeHeight', 'resizeQuality',
-      'caption', 'addBtnCaption', 'msgPhoto', 'msgFile', 'msgLink', 'msgNewImage', 'msgDelete'];
+    var settingsToClone = [
+      'uploadScript', 'destinationFolder', 'relativeImageFolder',
+      'resizeWidth', 'resizeHeight', 'resizeQuality',
+      'caption', 'addBtnCaption', 'msgPhoto', 'msgFile',
+      'msgLink', 'msgNewImage', 'msgDelete'
+    ];
+    evt.preventDefault();
     imageRow += '<div class="file-box" id="' + ctrlId + '"></div>';
     imageRow += '</td></tr>';
     imageRow = $(imageRow);
     $($(evt.target).parent().parent()).after(imageRow);
-    var opts={
-      caption : (mediaTypes.length===1 && mediaTypes[0]==='Image:Local') ? 'Photos' : 'Files',
-      autoupload : '1',
-      msgUploadError : 'An error occurred uploading the file.',
-      msgFileTooBig : 'The image file cannot be uploaded because it is larger than the maximum file size allowed.',
-      runtimes : 'html5,flash,silverlight,html4',
-      imagewidth : '250',
-      jsPath : indiciaData.uploadSettings.jsPath,
-      table : table,
-      maxUploadSize : '4000000', // 4mb
+    var opts = {
+      caption: (mediaTypes.length === 1 && mediaTypes[0] === 'Image:Local') ? 'Photos' : 'Files',
+      autoupload: '1',
+      msgUploadError: 'An error occurred uploading the file.',
+      msgFileTooBig: 'The image file cannot be uploaded because it is larger than the maximum file size allowed.',
+      runtimes: 'html5,flash,silverlight,html4',
+      imagewidth: '250',
+      jsPath: indiciaData.uploadSettings.jsPath,
+      table: table,
+      maxUploadSize: '4000000', // 4mb
       container: ctrlId,
       autopick: true,
       mediaTypes: mediaTypes

@@ -6,26 +6,26 @@
 (function($){
   // Track whether the controls tab has an event handler attached
   var tabsHandled = false;
-  
+
   // Add indiciaFootableReport to the jQuery function object.
   $.fn.indiciaFootableReport = function(options) {
-    
+
     // Loop through the selected items (which are assumed to be indicia
     // report grid containers).
     this.each(function() {
       // Work on the table which is a child of the container div.
       var $table = $(this).find('table');
-      
-      // Using the version-independent 'on' function requires a selector for 
+
+      // Using the version-independent 'on' function requires a selector for
       // the table to uniquely locate it from the context of document.
       var tableSelector = '#' + $(this).attr('id') + ' table';
 
-      // We need to manually remove the filter row before trying to 
+      // We need to manually remove the filter row before trying to
       // initialise with FooTable.
       var $filterRow = removeFilterRow($table);
-      
-      // Attach an event handler to precede the normal footable_redraw to  
-      // remove the filter row on all future changes too.      
+
+      // Attach an event handler to precede the normal footable_redraw to
+      // remove the filter row on all future changes too.
       indiciaFns.on('footable_resizing.indiciaFootableReport', tableSelector, {}, function(){
         var $table = $(this);
         // Remove the filter row from the thead before calling footable
@@ -37,19 +37,19 @@
 
       // Manually restore the filter row after initialisation with FooTable.
       restoreFilterRow($table, $filterRow);
-      
-      // Attach an event handler to follow the normal footable_redraw to  
-      // reattach the filter row on all future changes.      
+
+      // Attach an event handler to follow the normal footable_redraw to
+      // reattach the filter row on all future changes.
       indiciaFns.on('footable_resized.indiciaFootableReport', tableSelector, $filterRow, function(){
         var $table = $(this);
         restoreFilterRow($table, $filterRow);
-      });      
-    
-      // The table may be hidden on a tab, in which case it will have not 
+      });
+
+      // The table may be hidden on a tab, in which case it will have not
       // responded to resize events. Therefore, when its tab is activated,
       // trigger a redraw.
       // The tabs may not be initialised at the point when this code is hit but
-      // the html will be present and the Dynamic Report Explorer puts all the 
+      // the html will be present and the Dynamic Report Explorer puts all the
       // tabs in a div#controls.
       var $tabs = $(this).closest('#controls');
       if ($tabs.length > 0 && !tabsHandled) {
@@ -68,19 +68,19 @@
         });
       }
     });
-    
+
     // Return the original object for chaining.
     return this;
   }
-  
+
   function removeFilterRow($table) {
-    return $table.find('.filter-row').detach();
+    return $table.find('.filter-row,.es-filter-row').detach();
   }
-  
+
   function restoreFilterRow($table, $filterRow) {
     // If there is no filter row then do nothing.
     if($filterRow.length == 0) return;
-    
+
     // Each filter cell needs restoring with the same visibility as the
     // corresponding header cell
     var $headerCells = $table.find('th');
@@ -100,7 +100,7 @@
       }
     });
     $table.find('thead tr').after($filterRow);
-    
+
   }
-  
+
 })(jQuery);

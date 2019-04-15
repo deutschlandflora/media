@@ -674,14 +674,6 @@ label#click-buffer {
   float: left !important;
 }
 
-.delete-file {
-  float: right;
-}
-
-.filelist label {
-  width: auto;
-}
-
 .unlocked-icon {
   background-image: url(../images/Indicia_PadlockIcons_Open.png);
   width: 19px;
