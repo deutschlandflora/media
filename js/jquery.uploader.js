@@ -130,7 +130,7 @@ var checkSubmitInProgress = function () {
     if (!/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
       dropEl = $(el).find('.filelist');
       dropEl.addClass('image-drop');
-      dropEl.append('<span class="drop-instruct">Drop files s here...</span>');
+      dropEl.append('<span class="drop-instruct">Drop files here...</span>');
       uploadOpts.drop_element = dropEl[0];
     }
   }
