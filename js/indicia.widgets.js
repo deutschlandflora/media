@@ -60,7 +60,9 @@ jQuery UI widgets - override existing UI plugons.
       }
       // Disable browser autocomplete.
       $(this)
-        .attr('autocomplete', 'off')
+        // Set a random string as browsers don't respect correct "off" setting:
+        // https://gist.github.com/niksumeiko/360164708c3b326bd1c8
+        .attr('autocomplete', 'please_dont_autocomplete')
         .attr('autocorrect', 'off')
         .attr('spellcheck', 'false');
     },
