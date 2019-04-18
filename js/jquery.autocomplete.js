@@ -77,7 +77,9 @@ $.Autocompleter = function(input, options) {
 
   // Create $ object for input element
   var $input = $(input)
-    .attr('autocomplete', 'off')
+    // Set a random string as browsers don't respect correct "off" setting:
+    // https://gist.github.com/niksumeiko/360164708c3b326bd1c8
+    .attr('autocomplete', 'please_dont_autocomplete')
     .attr('autocorrect', 'off')
     .attr('spellcheck', 'false')
     .addClass(options.inputClass);
