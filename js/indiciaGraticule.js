@@ -206,6 +206,15 @@
       var centerLonPoints;
       var centerLatPoints;
       var newPoint;
+      var lat;
+      var lon;
+      var pointList;
+      var latStart;
+      var lonStart;
+      var latEnd;
+      var lonEnd;
+      var latDelta;
+      var lonDelta;
       // Round the LL center to an even number based on the interval.
       mapCenterLL.x = Math.floor(mapCenterLL.x / xInterval) * xInterval;
       mapCenterLL.y = Math.floor(mapCenterLL.y / yInterval) * yInterval;
@@ -249,21 +258,21 @@
         centerLatPoints.push(newPoint);
       } while (mapBounds.right >= mapXY.x && ++iter < 1000);
 
-      //now generate a line for each node in the central lat and lon lines
-      //first loop over constant longitude
+      // Now generate a line for each node in the central lat and lon lines.
+      // First loop over constant longitude.
       var lines = [];
-      for(var i=0; i < centerLatPoints.length; ++i) {
-        var lon = centerLatPoints[i].x;
-        if (lon<this.bounds[0] || lon>this.bounds[2]) {  //latitudes only valid between -90 and 90
+      for (var i = 0; i < centerLatPoints.length; ++i) {
+        lon = centerLatPoints[i].x;
+        if (lon<this.bounds[0] || lon > this.bounds[2]) {  //latitudes only valid between -90 and 90
             continue;
         }
-        var pointList = [];
-        var latEnd = Math.min(centerLonPoints[0].y, this.bounds[3]);
-        var latStart = Math.max(centerLonPoints[centerLonPoints.length - 1].y, this.bounds[1]);
-        var latDelta = (latEnd - latStart)/this.numPoints;
-        var lat = latStart;
-        for(var j=0; j<= this.numPoints; ++j) {
-          var gridPoint = new OpenLayers.Geometry.Point(lon,lat);
+        pointList = [];
+        latEnd = Math.min(centerLonPoints[0].y, this.bounds[3]);
+        latStart = Math.max(centerLonPoints[centerLonPoints.length - 1].y, this.bounds[1]);
+        latDelta = (latEnd - latStart) / this.numPoints;
+        lat = latStart;
+        for (var j = 0; j <= this.numPoints; ++j) {
+          var gridPoint = new OpenLayers.Geometry.Point(lon, lat);
           gridPoint.transform(llProj, mapProj);
           pointList.push(gridPoint);
           lat += latDelta;
@@ -272,19 +281,19 @@
         lines.push(new OpenLayers.Feature.Vector(geom, null, style));
       }
 
-      //now draw the lines of constant latitude
-      for (var j=0; j < centerLonPoints.length; ++j) {
+      // Now draw the lines of constant latitude.
+      for (var j = 0; j < centerLonPoints.length; ++j) {
         lat = centerLonPoints[j].y;
         if (lat<this.bounds[1] || lat>this.bounds[3]) {
             continue;
         }
-        var pointList = [];
-        var lonStart = Math.max(centerLatPoints[0].x, this.bounds[0]);
-        var lonEnd = Math.min(centerLatPoints[centerLatPoints.length - 1].x, this.bounds[2]);
-        var lonDelta = (lonEnd - lonStart)/this.numPoints;
-        var lon = lonStart;
-        for(var i=0; i <= this.numPoints ; ++i) {
-          var gridPoint = new OpenLayers.Geometry.Point(lon,lat);
+        pointList = [];
+        lonStart = Math.max(centerLatPoints[0].x, this.bounds[0]);
+        lonEnd = Math.min(centerLatPoints[centerLatPoints.length - 1].x, this.bounds[2]);
+        lonDelta = (lonEnd - lonStart)/this.numPoints;
+        lon = lonStart;
+        for (var i = 0; i <= this.numPoints; ++i) {
+          var gridPoint = new OpenLayers.Geometry.Point(lon, lat);
           gridPoint.transform(llProj, mapProj);
           pointList.push(gridPoint);
           lon += lonDelta;
@@ -315,6 +324,18 @@
       // Lon and lat here are really map x and y.
       var mapCenter = this.map.getCenter();
       var mapCenterLL = new OpenLayers.Pixel(mapCenter.lon, mapCenter.lat);
+      // Find lat/lon interval that results in a grid of less than the target size.
+      var testSq = this.targetSize * mapRes;
+      var xIntervals;
+      var yIntervals;
+      var xDelta;
+      var yDelta;
+      var p1;
+      var p2;
+      var distSq;
+      var i;
+      var smallestLayerIdx;
+
       if (!mapBounds) {
         return;
       }
@@ -328,9 +349,6 @@
        * center.  Iterates through the intervals array until the diagonal
        * length is less than the targetSize option.
        */
-      //find lat/lon interval that results in a grid of less than the target size
-      var testSq = this.targetSize*mapRes,
-        xIntervals, yIntervals, xDelta, yDelta, p1, p2, distSq, i, smallestLayerIdx;
       testSq *= testSq;   //compare squares rather than doing a square root to save time
       // can either be a single array for both dims, or 2 arrays in the intervals
       if ($.isArray(this.intervals[0])) {
@@ -341,13 +359,13 @@
         yIntervals = this.intervals;
       }
       for (i = 0; i < xIntervals.length; ++i) {
-        xDelta = xIntervals[i]/2;
-        yDelta = yIntervals[i]/2;
-        var p1 = mapCenterLL.offset(new OpenLayers.Pixel(-xDelta, -yDelta));  //test coords in EPSG:4326 space
-        var p2 = mapCenterLL.offset(new OpenLayers.Pixel( xDelta, yDelta));
+        xDelta = xIntervals[i] / 2;
+        yDelta = yIntervals[i] / 2;
+        p1 = mapCenterLL.offset(new OpenLayers.Pixel(-xDelta, -yDelta));  //test coords in EPSG:4326 space
+        p2 = mapCenterLL.offset(new OpenLayers.Pixel(xDelta, yDelta));
         OpenLayers.Projection.transform(p1, llProj, mapProj); // convert them back to map projection
         OpenLayers.Projection.transform(p2, llProj, mapProj);
-        var distSq = (p1.x - p2.x) * (p1.x - p2.x) + (p1.y - p2.y) * (p1.y - p2.y);
+        distSq = ((p1.x - p2.x) * (p1.x - p2.x)) + ((p1.y - p2.y) * (p1.y - p2.y));
         smallestLayerIdx = i;
         if (distSq <= testSq) {
           break;
