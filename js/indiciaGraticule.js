@@ -39,18 +39,31 @@
     autoActivate: true,
 
     /**
-    * APIProperty: intervals
-    * {Array(Float)} A list of possible graticule widths in degrees. Can also be configured to
-    * contain an object with x and y properties, each holding the array of possible graticule widths
-    * for that dimension, e.g. {"x":[ 50000,5000,500,50 ],"y":[ 100000,10000,1000,100 ]}
-    */
+     * APIProperty: intervals
+     * {Array(Float)} A list of possible graticule widths in degrees. Can also be configured to
+     * contain an object with x and y properties, each holding the array of possible graticule widths
+     * for that dimension, e.g. {"x":[ 50000,5000,500,50 ],"y":[ 100000,10000,1000,100 ]}
+     */
     intervals: [100000, 10000, 1000, 100],
 
     /**
-    * APIProperty: intervalColours
-    * {Array(string)} A list of possible CSS colours corresponding to the lines drawn for each graticule width.
-    */
-    intervalColours: ['#999999', '#999999', '#999999', '#999999'],
+     * APIProperty: intervalColours
+     * {Array(string)} A list of possible CSS colours corresponding to the lines drawn for each graticule width.
+     */
+    intervalColours: ['#777777', '#777777', '#777777', '#999999', '#BBBBBB'],
+
+    /**
+     * APIProperty: intervalLineWidth
+     * {Array(string)} A list of possible CSS widths corresponding to the lines drawn for each graticule width.
+     */
+    intervalLineWidth: [3, 2, 1, 1, 1],
+
+    /**
+     * APIProperty: intervalLineOpacity
+     * {Array(string)} A list of possible CSS stroke opacities corresponding to the lines drawn for each graticule
+     * width.
+     */
+    intervalLineOpacity: [1.0, 1.0, 1.0, 0.5, 0.3],
 
     /**
      * APIProperty: displayInLayerSwitcher
@@ -291,22 +304,23 @@
      * {DOMElement}
      */
     update: function update() {
-      //wait for the map to be initialized before proceeding
+      // Wait for the map to be initialized before proceeding.
       var mapBounds = this.map.getExtent();
+      var width;
+      // Get the projection objects required.
+      var llProj = new OpenLayers.Projection(this.projection);
+      var mapProj = this.map.getProjectionObject();
+      var mapRes = this.map.getResolution();
+      // Get the map center in chosen projection.
+      // Lon and lat here are really map x and y.
+      var mapCenter = this.map.getCenter();
+      var mapCenterLL = new OpenLayers.Pixel(mapCenter.lon, mapCenter.lat);
       if (!mapBounds) {
         return;
       }
 
-      //clear out the old grid
+      // Clear out the old grid.
       this.gratLayer.destroyFeatures();
-
-      //get the projection objects required
-      var llProj = new OpenLayers.Projection(this.projection),
-          mapProj = this.map.getProjectionObject(),
-          mapRes = this.map.getResolution(),
-          //get the map center in chosen projection
-          mapCenter = this.map.getCenter(), //lon and lat here are really map x and y
-          mapCenterLL = new OpenLayers.Pixel(mapCenter.lon, mapCenter.lat);
       OpenLayers.Projection.transform(mapCenterLL, mapProj, llProj);
 
       /* This block of code determines the lon/lat interval to use for the
@@ -326,25 +340,30 @@
         xIntervals = this.intervals;
         yIntervals = this.intervals;
       }
-      for (i=0; i<xIntervals.length; ++i) {
+      for (i = 0; i < xIntervals.length; ++i) {
         xDelta = xIntervals[i]/2;
         yDelta = yIntervals[i]/2;
         var p1 = mapCenterLL.offset(new OpenLayers.Pixel(-xDelta, -yDelta));  //test coords in EPSG:4326 space
-        var p2 = mapCenterLL.offset(new OpenLayers.Pixel( xDelta,  yDelta));
+        var p2 = mapCenterLL.offset(new OpenLayers.Pixel( xDelta, yDelta));
         OpenLayers.Projection.transform(p1, llProj, mapProj); // convert them back to map projection
         OpenLayers.Projection.transform(p2, llProj, mapProj);
-        var distSq = (p1.x-p2.x)*(p1.x-p2.x) + (p1.y-p2.y)*(p1.y-p2.y);
+        var distSq = (p1.x - p2.x) * (p1.x - p2.x) + (p1.y - p2.y) * (p1.y - p2.y);
         smallestLayerIdx = i;
         if (distSq <= testSq) {
           break;
         }
       }
-      for (i=smallestLayerIdx; i>=0; i--) {
-        this.buildGrid(xIntervals[i], yIntervals[i], mapCenterLL.clone(), llProj, mapProj, {strokeColor: this.intervalColours[i], strokeOpacity: 0.7 - i/10});
+      for (i = smallestLayerIdx; i >= 0; i--) {
+        // Ensure lines don't thicken too much.
+        width = this.intervalLineWidth[i] * (this.map.zoom / 18);
+        this.buildGrid(xIntervals[i], yIntervals[i], mapCenterLL.clone(), llProj, mapProj, {
+          strokeColor: this.intervalColours[i],
+          strokeOpacity: this.intervalLineOpacity,
+          strokeWidth: width
+        });
       }
     },
 
     CLASS_NAME: 'OpenLayers.Control.Graticule'
   });
-
-}) (jQuery);
+})(jQuery);
