@@ -378,13 +378,19 @@ var destroyAllFeatures;
 
     /**
      * Hides graticules other than the one currently selected as a system.
+     *
+     * If the currently selected system doesn't have an associated graticule,
+     * then the last shown graticule is left visible.
      */
     function _hideOtherGraticules(div) {
+      var graticuleProjection;
       if (typeof div.settings.graticules[$('#' + opts.srefSystemId).val()] !== 'undefined') {
+        graticuleProjection = 'EPSG:' + div.settings.graticules[$('#' + opts.srefSystemId).val()].projection;
         $.each(div.map.controls, function updateGratControl() {
+          var show;
           if (this.CLASS_NAME === 'OpenLayers.Control.Graticule') {
-            this.gratLayer.setVisibility(this.projection === 'EPSG:' +
-                div.settings.graticules[$('#' + opts.srefSystemId).val()].projection);
+            show = this.projection === graticuleProjection;
+            this.gratLayer.setVisibility(show);
           }
         });
       }
@@ -2770,7 +2776,7 @@ var destroyAllFeatures;
             { 'displayClass': align + 'olControlModifyFeature', 'title':div.settings.hintModifyFeature }
           );
           toolbarControls.push(ctrlObj);
-        } else if (ctrl=='graticule') {
+        } else if (ctrl === 'graticule') {
           $.each($('select#' + div.settings.srefSystemId + ' option,input#' + div.settings.srefSystemId), function() {
             var graticuleDef;
             if (typeof div.settings.graticules[$(this).val()] !== 'undefined') {
@@ -2780,10 +2786,12 @@ var destroyAllFeatures;
                 bounds: graticuleDef.bounds,
                 intervals: graticuleDef.intervals,
                 intervalColours: div.settings.graticuleIntervalColours,
+                intervalLineWidth: graticuleDef.intervalLineWidth,
+                intervalLineOpacity: graticuleDef.lineOpacity,
                 layerName: 'Map grid for ' + ($(this).html() !== '' ? $(this).html() : $(this).val())
               });
               div.map.addControl(ctrlObj);
-              if ($.inArray(ctrl, div.settings.activatedStandardControls)===-1) {
+              if ($.inArray(ctrl, div.settings.activatedStandardControls) === -1) {
                 // if this control is not active, also need to reflect this in the layer.
                 ctrlObj.gratLayer.setVisibility(false);
               }
@@ -2957,7 +2965,7 @@ jQuery.fn.indiciaMapPanel.defaults = {
     locationLayerFilter: '', // a cql filter that can be used to limit locations shown on the location layer
     controls: [],
     standardControls: ['layerSwitcher','panZoom'],
-    activatedStandardControls: ["hoverFeatureHighlight","graticule"],
+    activatedStandardControls: ['hoverFeatureHighlight', 'graticule'],
     toolbarDiv: 'map', // map, top, bottom, or div ID
     toolbarPrefix: '', // content to prepend to the toolbarDiv content if not on the map
     toolbarSuffix: '', // content to append to the toolbarDiv content if not on the map
