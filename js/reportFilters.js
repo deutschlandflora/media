@@ -750,17 +750,22 @@ jQuery(document).ready(function ($) {
       getDescription: function () {
         var r = [];
         var list = [];
+        var paramValue;
         if (indiciaData.filter.def.input_form_list) {
           $.each(indiciaData.filter.def.input_form_list.split(','), function (idx, id) {
             list.push($('#check-form-' + indiciaData.formsList[id.replace(/'/g, '')]).next('label').html());
           });
           r.push((indiciaData.filter.def.input_form_list_op === 'not in' ? 'Exclude ' : '') + list.join(', '));
         } else if (indiciaData.filter.def.survey_list) {
-          $.each(indiciaData.filter.def.survey_list.split(','), function (idx, id) {
+          paramValue = typeof indiciaData.filter.def.survey_list === 'string'
+            ? indiciaData.filter.def.survey_list.split(',') : [indiciaData.filter.def.survey_list ];
+          $.each(paramValue, function (idx, id) {
             list.push($('#check-survey-' + id).next('label').html());
           });
           r.push((indiciaData.filter.def.survey_list_op === 'not in' ? 'Exclude ' : '') + list.join(', '));
         } else if (indiciaData.filter.def.website_list) {
+          paramValue = typeof indiciaData.filter.def.website_list === 'string'
+            ? indiciaData.filter.def.website_list.split(',') : [indiciaData.filter.def.survey_list ];
           $.each(indiciaData.filter.def.website_list.split(','), function (idx, id) {
             list.push($('#check-website-' + id).next('label').html());
           });
