@@ -470,4 +470,29 @@ jQuery(document).ready(function ($) {
     $(e.currentTarget).parent('.media-info').hide();
     return false;
   });
+
+  //Tie the selection of the dynamic1 & dymanic2 checkboxes together 
+  //and make one of them invisible.
+  var dyn1 = $("input[value='dynamic1']");
+  var dyn2 = $("input[value='dynamic2']");
+  dyn2.parent().hide(); //Parent list item
+  dyn1.change(function() {
+    dyn2.attr('checked', this.checked);
+  })
+  dyn2.change(function() {
+    dyn1.attr('checked', this.checked);
+  })
+
+  //Hide the basemap selection options if the dynamic basemap layers override is used
+  //and this is *not* a verification form.
+  var basemapLayersOverride = false;
+  var iformCategory = "";
+  try {
+    basemapLayersOverride = Drupal.settings.iform_user_ui_options.basemap_layers_override;
+    iformCategory = $("#form-category-picker option:selected").val();
+  } catch {
+  }
+  if (iformCategory != "Verification" && basemapLayersOverride) {
+    $('#ctrl-wrap-preset_layers').hide();
+  }
 });

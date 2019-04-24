@@ -989,6 +989,12 @@ var destroyAllFeatures;
             "https://b.tile.openstreetmap.org/${z}/${x}/${y}.png",
             "https://c.tile.openstreetmap.org/${z}/${x}/${y}.png"]);
           },
+        dynamic1 : function() {
+          return lyr =  new OpenLayers.Layer.OSM("OS/Google Satellite", [
+            "https://a.tile.openstreetmap.org/${z}/${x}/${y}.png",
+            "https://b.tile.openstreetmap.org/${z}/${x}/${y}.png",
+            "https://c.tile.openstreetmap.org/${z}/${x}/${y}.png"]);
+        },
         otm : function() {
           // OpenTopoMap standard tile layer
           return new OpenLayers.Layer.OSM("OpenTopoMap", [
@@ -1097,6 +1103,8 @@ var destroyAllFeatures;
             function() {return new OpenLayers.Layer.Google('Google Hybrid', {type: G_HYBRID_MAP, numZoomLevels: 20, 'sphericalMercator': true});};
         r.google_satellite =
             function() {return new OpenLayers.Layer.Google('Google Satellite', {type: G_SATELLITE_MAP, numZoomLevels: 20, 'sphericalMercator': true});};
+        r.dynamic2 =
+            function() {return new OpenLayers.Layer.Google('Google Satellite/OS', {type: G_SATELLITE_MAP, numZoomLevels: 20, 'sphericalMercator': true});};
       } else if (typeof google !== 'undefined' && typeof google.maps !== 'undefined') {
         r.google_physical =
             function() {return new OpenLayers.Layer.Google('Google Physical', {type: google.maps.MapTypeId.TERRAIN, 'sphericalMercator': true});};
@@ -1106,6 +1114,8 @@ var destroyAllFeatures;
             function() {return new OpenLayers.Layer.Google('Google Hybrid', {type: google.maps.MapTypeId.HYBRID, numZoomLevels: 20, 'sphericalMercator': true});};
         r.google_satellite =
             function() {return new OpenLayers.Layer.Google('Google Satellite', {type: google.maps.MapTypeId.SATELLITE, numZoomLevels: 20, 'sphericalMercator': true});};
+        r.dynamic2 =
+            function() {return new OpenLayers.Layer.Google('Google Satellite/OS', {type: google.maps.MapTypeId.SATELLITE, numZoomLevels: 20, 'sphericalMercator': true});};
       }
       return r;
     }
@@ -2399,6 +2409,42 @@ var destroyAllFeatures;
           alert('Requested preset layer ' + item + ' is not recognised.');
         }
       });
+
+      //Is this the best place to add this event handler?
+      //Handle the automatic switching between layers for the dynamic layer.
+      div.map.events.register('zoomend', null, function() {
+
+        var zoomThreshold = 13;
+        var zoomedIn = div.map.getZoom() >= zoomThreshold;
+        var inLayer = "Google Satellite/OS";
+        var outLayer = "OS/Google Satellite";
+
+        var visLayers = div.map.getLayersBy("visibility", true);
+        for (var i=0; i<visLayers.length; i++) {
+          var l = visLayers[i];
+          if (l.name == inLayer && !zoomedIn) { 
+            var lSwitch = div.map.getLayersByName(outLayer)[0];
+            div.map.setBaseLayer(lSwitch);
+            break;
+          } else if (l.name == outLayer && zoomedIn) {
+            var lSwitch = div.map.getLayersByName(inLayer)[0];
+            div.map.setBaseLayer(lSwitch);
+            break;
+          }
+        } 
+        //Adjust layer switcher control layer visibility regardless
+        //of whether or not one of the layers selected.
+        var onLayer = zoomedIn ? inLayer : outLayer;
+        var offLayer = zoomedIn ? outLayer : inLayer;
+        var offInput = $('input[value="' + offLayer + '"]');
+        var onInput = $('input[value="' + onLayer + '"]');
+        offInput.hide(); //radio
+        offInput.next().hide(); //label
+        offInput.next().next().hide(); //br tag
+        onInput.show(); //radio
+        onInput.next().show(); //label
+        onInput.next().next().show(); //br tag
+      })
 
       // Convert indicia WMS/WFS layers into js objects
       $.each(this.settings.indiciaWMSLayers, function (key, value) {
