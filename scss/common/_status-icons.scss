@@ -115,3 +115,44 @@ $not-reviewed-row: -$icon-size*8;
     }
   }
 }
+
+/* New style font-awesome icons */
+
+@mixin fa-box($border-color, $fill-color, $color) {
+  border: solid $border-color 1px;
+  border-radius: 2px;
+  background-color: $fill-color;
+  color: $color;
+}
+
+.fas, .far {
+  margin: 3px;
+  padding: 1px;
+  &.fa-check-circle, &.fa-thumbs-up {
+    color: green;
+  }
+  &.fa-check-double {
+    @include fa-box(green, white, green);
+  }
+  &.fa-check {
+    @include fa-box(green, white, green);
+  }
+  &.fa-check-square {
+    color: orange;
+  }
+  &.fa-times-circle {
+    color: red;
+  }
+  &.fa-times {
+    @include fa-box(red, white, red);
+    &.status-R5 {
+      @include fa-box(red, red, white);
+    }
+  }
+  &.fa-thumbs-down, &.fa-exclamation, &.fa-exclamation-circle, &.fa-exclamation-triangle {
+    color: red;
+  }
+  &.fa-eye-slash, &.fa-cog, &.fa-clock {
+    color: silver;
+  }
+}
