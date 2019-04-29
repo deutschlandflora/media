@@ -66,11 +66,14 @@ table.es-data-grid {
 }
 
 /* idcVerificationButtons plugin */
-.idc-verification-buttons {
+.idc-verification-buttons, .idc-verification-buttons-row {
   * {
     display: inline-block;
     vertical-align: middle;
   }
+}
+
+.idc-verification-buttons-row {
   button, a {
     font-size: 120%;
     border: none;

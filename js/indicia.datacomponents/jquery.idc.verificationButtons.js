@@ -200,12 +200,13 @@
         var doc;
         var key;
         var keyParts;
+        $('.external-record-link').remove();
         if (tr) {
           // Update the view and edit button hrefs. This allows the user to
           // right click and open in a new tab, rather than have an active
           // button.
           doc = JSON.parse($(tr).attr('data-doc-source'));
-          $('.idc-verification-buttons-wrap').show();
+          $('.idc-verification-buttons').show();
           sep = el.settings.viewPath.indexOf('?') === -1 ? '?' : '&';
           $(el).find('.view').attr('href', el.settings.viewPath + sep + 'occurrence_id=' + doc.id);
           $(el).find('.edit').attr('href', el.settings.editPath + sep + 'occurrence_id=' + doc.id);
@@ -217,16 +218,16 @@
             if (key.match(/^iNat:/)) {
               keyParts = key.split(':');
               $(el).find('.view').after('<a href="https://www.inaturalist.org/observations/' + keyParts[1] + '" ' +
-                'target="_blank" title="View source record on iNaturalist">' +
+                'target="_blank" title="View source record on iNaturalist" class="external-record-link">' +
                 '<span class="fas fa-file-invoice"></span>iNaturalist</a>');
             }
           }
         } else {
-          $('.idc-verification-buttons-wrap').hide();
+          $('.idc-verification-buttons').hide();
         }
       });
       $(dataGrid).idcDataGrid('on', 'populate', function rowSelect() {
-        $('.idc-verification-buttons-wrap').hide();
+        $('.idc-verification-buttons').hide();
       });
       $(el).find('button.verify').click(function buttonClick(e) {
         var status = $(e.currentTarget).attr('data-status');

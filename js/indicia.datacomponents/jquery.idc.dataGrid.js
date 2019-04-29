@@ -151,8 +151,7 @@
       if ($(table).hasClass('multiselect-mode')) {
         $(table).removeClass('multiselect-mode');
         $(table).find('.multiselect-cell').remove();
-        $('.idc-verification-buttons-wrap').append($('.idc-verification-buttons'));
-        $('.idc-verification-buttons .single-only').show();
+        $('.selection-buttons-placeholder').append($('.all-selected-buttons'));
       } else {
         $(table).addClass('multiselect-mode');
         $(table).find('thead tr').prepend(
@@ -165,9 +164,8 @@
           '<td class="multiselect-cell"><input type="checkbox" class="multiselect" /></td>'
         );
         $(table).closest('div').prepend(
-          $('.idc-verification-buttons')
+          $('.all-selected-buttons')
         );
-        $('.idc-verification-buttons .single-only').hide();
       }
     });
 
