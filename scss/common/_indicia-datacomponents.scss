@@ -1,0 +1,191 @@
+$shadow-colour: silver;
+$file-box-width: 400px;
+$file-box-padding: 20px;
+$file-box-icon-size: 30px;
+$colour-even-row: #f7f7f7;
+$colour-odd-row: transparent;
+$colour-hover-row-bg: #fff899;
+$colour-hover-row: #333333;
+$colour-select-row: #ffffff;
+$colour-select-row-bg: #3333ee;
+
+/* idcDataGrid plugin */
+table.es-data-grid {
+  thead {
+    .fa-sort {
+      opacity: 0.3;
+      &:hover {
+        opacity: 1;
+      }
+    }
+    .es-filter-row {
+      input {
+        width: 100%;
+        box-sizing: border-box;
+        margin: 0;
+      }
+      /* Position search value warning icon over input. */
+      .fa-exclamation-circle {
+        margin-left: -20px;
+      }
+    }
+  }
+  tbody {
+    tr {
+      &:nth-child(even), &:nth-child(even) td {
+        background-color: $colour-even-row;
+      }
+      &:nth-child(odd), &:nth-child(odd) td {
+        background-color: $colour-odd-row;
+      }
+      &:hover, &:hover td {
+        color: $colour-hover-row;
+        background-color: $colour-hover-row-bg;
+      }
+      &.selected, &.selected td {
+        color: $colour-select-row;
+        background-color: $colour-select-row-bg;
+      }
+      img {
+        max-height: 60px;
+        border-radius: 4px;
+        margin: 0 2px;
+        box-shadow: #aaa 0px 2px 4px 0px;
+        &.multi {
+          max-height: 45px;
+        }
+      }
+    }
+  }
+}
+
+
+/* idcLeafletMap plugin */
+.idc-output-leafletMap {
+  height: 500px;
+}
+
+/* idcVerificationButtons plugin */
+.idc-verification-buttons {
+  * {
+    display: inline-block;
+    vertical-align: middle;
+  }
+  button, a {
+    font-size: 120%;
+    border: none;
+    border-radius: 4px;
+    background: none;
+    box-shadow: none;
+    color: black;
+    text-shadow: none;
+    min-height: 25px;
+    margin: 4px;
+    padding: 6px;
+    &:hover {
+      background: silver;
+    }
+  }
+  .sep {
+    height: 20px;
+    width: 1px;
+    background-color: silver;
+    margin: 0 8px;
+  }
+}
+
+/* idcEsDownload */
+.idc-download-files {
+  display: none;
+  -webkit-box-shadow: 6px 7px 8px 1px $shadow-colour;
+  -moz-box-shadow: 6px 7px 8px 1px $shadow-colour;
+  box-shadow: 6px 7px 8px 1px $shadow-colour;
+  max-width: $file-box-width;
+  padding: $file-box-padding;
+  margin: auto;
+  > div {
+    border: dashed silver 1px;
+    margin: $file-box-icon-size / 3;
+    padding: $file-box-icon-size / 3;
+    pre {
+      background: #f4f4f4;
+      border: 1px solid #ddd;
+      border-left: 3px solid #f36d33;
+      color: #666;
+      page-break-inside: avoid;
+      font-family: monospace;
+      font-size: 15px;
+      line-height: 1.6;
+      margin: $file-box-icon-size / 3 0 0 0;
+      max-width: 100%;
+      overflow: auto;
+      padding: $file-box-icon-size / 3;
+      display: block;
+      word-wrap: break-word;
+    }
+  }
+}
+
+/* idcRecordDetailsPane */
+.details-container {
+  .ui-tabs-nav {
+    border-bottom: solid silver 1px;
+  }
+  .ui-tabs .ui-tabs-panel {
+    padding: 8px;
+    min-height: 150px;
+  }
+  .record-details {
+    th {
+      width: 200px;
+      padding: 0 0.5em;
+    }
+    td {
+      padding: 0 0.5em;
+    }
+    .fas, .far {
+      font-size: 130%;
+    }
+  }
+  .recorder-experience {
+    position: relative;
+    min-height: 150px;
+    th {
+      width: 25%;
+    }
+    td {
+      span {
+        margin-left: 15px;
+        display: inline-block;
+        height: 15px;
+        border-radius: 4px;
+        box-shadow: #aaa 0px 2px 4px 0px;
+        &.exp-V {
+          background-color: green;
+        }
+        &.exp-C {
+          background-color: silver;
+        }
+        &.exp-R {
+          background-color: red;
+        }
+      }
+    }
+  }
+}
+
+.comment-popup {
+  label {
+    display: block;
+    width: auto;
+  }
+  textarea {
+    min-width: 300px;
+    width: 100%;
+    min-height: 250px;
+  }
+}
+
+.field-taxon--accepted-name {
+  font-style: italic;
+}
