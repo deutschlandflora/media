@@ -983,6 +983,62 @@ var destroyAllFeatures;
           {identifier:"EPSG:3857:20",scaleDenominator:533.1823958882264}
       ]};
 
+      var osLeisureOptions = {
+        name: "Ordnance Survey Leisure",
+        layer: "Leisure 27700",
+        url: "https://api2.ordnancesurvey.co.uk/mapping_api/v1/service/wmts?key=" + settings.os_api_key,
+        version: "1.0.0",
+        style: true,
+        format: "image/png",
+        projection: "EPSG:27700",
+        tileMatrixSet: "EPSG:27700",
+        matrixSet: "EPSG:27700",
+        tileOrigin: new OpenLayers.LonLat(-238375, 1376256),
+        tileSize: new OpenLayers.Size(256, 256),
+        /*  serverResolutions have to have the values set by the provider in order to position the layer correctly.
+         *  resolutions different to serverResolutions cause the tiles to be resized and allows approximate matching
+         *  of the scales between this and the standard Web Mercator layers.
+         *
+         *  The resolution of Web Mercator varies with the cosine of the latitude. Britain is roughly centred on
+         *  54 degrees north. Our target resolutions are therefore res = wm_res * cos(54). E.g, for the lowest zoom
+         *  level
+         *      r = 1222.9924523925783 * cos(54) = 718.8569
+         *
+         *  Providing more resolutions than serverResolutions allows us to magnify/reduce the final/first tile layer
+         *  and add extra zoom levels.
+         *
+         *  When switching to a Web Mercator base layer, the new zoom is set based upon closest matching resolution.
+         *  This means that from zoom 0 (res 718) we will end up with zoom 1 (res 611). Likewise, when switching
+         *  back we will end up zoomed out a level. This is compensated for in matchMapProjectionToLayer()
+         */
+        serverResolutions: [896, 448, 224, 112, 56, 28, 14, 7, 3.5, 1.75],
+        resolutions: [
+          1437.713854,
+          718.8569272,
+          359.4284636,
+          179.7142318,
+          89.8571159,
+          44.92855795,
+          22.46427897,
+          11.23213949,
+          5.616069744,
+          2.808034872,
+          1.404017436,
+          0.702008718,
+          0.351004359],
+        maxExtent: [0, 0, 700000, 1300000],
+        matrixIds: [
+          {identifier:"EPSG:27700:0",scaleDenominator:3200000.0000000005},
+          {identifier:"EPSG:27700:1",scaleDenominator:1600000.0000000002},
+          {identifier:"EPSG:27700:2",scaleDenominator:800000.0000000001},
+          {identifier:"EPSG:27700:3",scaleDenominator:400000.00000000006},
+          {identifier:"EPSG:27700:4",scaleDenominator:200000.00000000003},
+          {identifier:"EPSG:27700:5",scaleDenominator:100000.00000000001},
+          {identifier:"EPSG:27700:6",scaleDenominator:50000.00000000001},
+          {identifier:"EPSG:27700:7",scaleDenominator:25000.000000000004},
+          {identifier:"EPSG:27700:8",scaleDenominator:12500.000000000002},
+          {identifier:"EPSG:27700:9",scaleDenominator:6250.000000000001}]
+      };
       var r = {
         bing_aerial : function() {return new OpenLayers.Layer.Bing({name: 'Bing Aerial', 'type': 'Aerial', 'key': settings.bing_api_key, 'sphericalMercator': true});},
         bing_hybrid : function() {return new OpenLayers.Layer.Bing({name: 'Bing Hybrid', 'type': 'AerialWithLabels', 'key': settings.bing_api_key, 'sphericalMercator': true});},
@@ -996,10 +1052,7 @@ var destroyAllFeatures;
             "https://c.tile.openstreetmap.org/${z}/${x}/${y}.png"]);
           },
         dynamic1 : function() {
-          return lyr =  new OpenLayers.Layer.OSM("OS/Google Satellite", [
-            "https://a.tile.openstreetmap.org/${z}/${x}/${y}.png",
-            "https://b.tile.openstreetmap.org/${z}/${x}/${y}.png",
-            "https://c.tile.openstreetmap.org/${z}/${x}/${y}.png"]);
+          return new OpenLayers.Layer.WMTS(osLeisureOptions);
         },
         otm : function() {
           // OpenTopoMap standard tile layer
@@ -1034,62 +1087,7 @@ var destroyAllFeatures;
           }, os_options));
         },
         os_leisure: function() {
-          return new OpenLayers.Layer.WMTS({
-            name: "Ordnance Survey Leisure",
-            layer: "Leisure 27700",
-            url: "https://api2.ordnancesurvey.co.uk/mapping_api/v1/service/wmts?key=" + settings.os_api_key,
-            version: "1.0.0",
-            style: true,
-            format: "image/png",
-            projection: "EPSG:27700",
-            tileMatrixSet: "EPSG:27700",
-            matrixSet: "EPSG:27700",
-            tileOrigin: new OpenLayers.LonLat(-238375, 1376256),
-            tileSize: new OpenLayers.Size(256, 256),
-            /*  serverResolutions have to have the values set by the provider in order to position the layer correctly.
-             *  resolutions different to serverResolutions cause the tiles to be resized and allows approximate matching
-             *  of the scales between this and the standard Web Mercator layers.
-             *
-             *  The resolution of Web Mercator varies with the cosine of the latitude. Britain is roughly centred on
-             *  54 degrees north. Our target resolutions are therefore res = wm_res * cos(54). E.g, for the lowest zoom
-             *  level
-             *      r = 1222.9924523925783 * cos(54) = 718.8569
-             *
-             *  Providing more resolutions than serverResolutions allows us to magnify/reduce the final/first tile layer
-             *  and add extra zoom levels.
-             *
-             *  When switching to a Web Mercator base layer, the new zoom is set based upon closest matching resolution.
-             *  This means that from zoom 0 (res 718) we will end up with zoom 1 (res 611). Likewise, when switching
-             *  back we will end up zoomed out a level. This is compensated for in matchMapProjectionToLayer()
-             */
-            serverResolutions: [896, 448, 224, 112, 56, 28, 14, 7, 3.5, 1.75],
-            resolutions: [
-              1437.713854,
-              718.8569272,
-              359.4284636,
-              179.7142318,
-              89.8571159,
-              44.92855795,
-              22.46427897,
-              11.23213949,
-              5.616069744,
-              2.808034872,
-              1.404017436,
-              0.702008718,
-              0.351004359],
-            maxExtent: [0, 0, 700000, 1300000],
-            matrixIds: [
-              {identifier:"EPSG:27700:0",scaleDenominator:3200000.0000000005},
-              {identifier:"EPSG:27700:1",scaleDenominator:1600000.0000000002},
-              {identifier:"EPSG:27700:2",scaleDenominator:800000.0000000001},
-              {identifier:"EPSG:27700:3",scaleDenominator:400000.00000000006},
-              {identifier:"EPSG:27700:4",scaleDenominator:200000.00000000003},
-              {identifier:"EPSG:27700:5",scaleDenominator:100000.00000000001},
-              {identifier:"EPSG:27700:6",scaleDenominator:50000.00000000001},
-              {identifier:"EPSG:27700:7",scaleDenominator:25000.000000000004},
-              {identifier:"EPSG:27700:8",scaleDenominator:12500.000000000002},
-              {identifier:"EPSG:27700:9",scaleDenominator:6250.000000000001}]
-          });
+          return new OpenLayers.Layer.WMTS(osLeisureOptions);
         },
         // Layer types that Indicia offered historically but no longer work.
         // Map them to the best alternative.
@@ -1100,7 +1098,7 @@ var destroyAllFeatures;
       // To protect ourselves against exceptions because the Google script would not link up, we
       // only enable these layers if the Google constants are available. We separately check for google V2 and V3 layers
       // to maintain backwards compatibility
-      if (typeof G_PHYSICAL_MAP != 'undefined') {
+      if (typeof G_PHYSICAL_MAP !== 'undefined') {
         r.google_physical =
             function() {return new OpenLayers.Layer.Google('Google Physical', {type: G_PHYSICAL_MAP, 'sphericalMercator': true});};
         r.google_streets =
@@ -2428,7 +2426,7 @@ var destroyAllFeatures;
         var visLayers = div.map.getLayersBy("visibility", true);
         for (var i=0; i<visLayers.length; i++) {
           var l = visLayers[i];
-          if (l.name == inLayer && !zoomedIn) { 
+          if (l.name == inLayer && !zoomedIn) {
             var lSwitch = div.map.getLayersByName(outLayer)[0];
             div.map.setBaseLayer(lSwitch);
             break;
@@ -2437,7 +2435,7 @@ var destroyAllFeatures;
             div.map.setBaseLayer(lSwitch);
             break;
           }
-        } 
+        }
         //Adjust layer switcher control layer visibility regardless
         //of whether or not one of the layers selected.
         var onLayer = zoomedIn ? inLayer : outLayer;
