@@ -1049,9 +1049,10 @@ var destroyAllFeatures;
           return new OpenLayers.Layer.OSM("OpenStreetMap", [
             "https://a.tile.openstreetmap.org/${z}/${x}/${y}.png",
             "https://b.tile.openstreetmap.org/${z}/${x}/${y}.png",
-            "https://c.tile.openstreetmap.org/${z}/${x}/${y}.png"]);
-          },
-        dynamic1 : function() {
+            "https://c.tile.openstreetmap.org/${z}/${x}/${y}.png"
+          ]);
+        },
+        dynamicOSleisureGoogleSat : function() {
           return new OpenLayers.Layer.WMTS(osLeisureOptions);
         },
         otm : function() {
@@ -1107,7 +1108,7 @@ var destroyAllFeatures;
             function() {return new OpenLayers.Layer.Google('Google Hybrid', {type: G_HYBRID_MAP, numZoomLevels: 20, 'sphericalMercator': true});};
         r.google_satellite =
             function() {return new OpenLayers.Layer.Google('Google Satellite', {type: G_SATELLITE_MAP, numZoomLevels: 20, 'sphericalMercator': true});};
-        r.dynamic2 =
+        r.dynamicOSleisureGoogleSatZoomed =
             function() {return new OpenLayers.Layer.Google('Google Satellite/OS', {type: G_SATELLITE_MAP, numZoomLevels: 20, 'sphericalMercator': true});};
       } else if (typeof google !== 'undefined' && typeof google.maps !== 'undefined') {
         r.google_physical =
@@ -1118,7 +1119,7 @@ var destroyAllFeatures;
             function() {return new OpenLayers.Layer.Google('Google Hybrid', {type: google.maps.MapTypeId.HYBRID, numZoomLevels: 20, 'sphericalMercator': true});};
         r.google_satellite =
             function() {return new OpenLayers.Layer.Google('Google Satellite', {type: google.maps.MapTypeId.SATELLITE, numZoomLevels: 20, 'sphericalMercator': true});};
-        r.dynamic2 =
+        r.dynamicOSleisureGoogleSatZoomed =
             function() {return new OpenLayers.Layer.Google('Google Satellite/OS', {type: google.maps.MapTypeId.SATELLITE, numZoomLevels: 20, 'sphericalMercator': true});};
       }
       return r;
