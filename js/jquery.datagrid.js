@@ -28,7 +28,7 @@
 
 (function($) {
   $.extend({
-    indiciaDataGrid: new function() {
+    dataGrid: new function() {
       this.defaults = {
         cssTable: "ui-widget ui-widget-content",
         cssHeader: "header",
@@ -51,7 +51,7 @@
         // Set the default settings object
         var settings = {};
         // Extend with defaults and options
-        $.extend(settings, $.indiciaDataGrid.defaults, options);
+        $.extend(settings, $.dataGrid.defaults, options);
         return this.each(function(){
           this.page = 1;
           this.entity = entity;
@@ -212,7 +212,7 @@
     function generateBody(div){
       var body = "";
       var url = getUrl(div);
-      var storedData; 
+      var storedData;
       $.getJSON(url, function(data){
         if (div.recordCount==0 && div.entity.substring(0,4)=='rpt:') {
             div.recordCount = data.length;
@@ -258,9 +258,9 @@
             $.each(div.settings.actionColumns, function(key, value){
               body += "<td>";
               if(value.substr(0,7) == 'script:') {
-    			body += "<button type=\"button\" onclick=\""+value.substr(7).replace(/£([a-zA-Z_\-]+)£/g, function($0, $1){ return record[$1]; })+"\">"+key+"</button>";
+    			body += "<button type=\"button\" onclick=\""+value.substr(7).replace(/ï¿½([a-zA-Z_\-]+)ï¿½/g, function($0, $1){ return record[$1]; })+"\">"+key+"</button>";
               } else {
-            	body += "<a href='" + value.replace(/£([a-zA-Z_\-]+)£/g, function($0, $1){ return record[$1]; }) + "'>"+key+"</a>";
+            	body += "<a href='" + value.replace(/ï¿½([a-zA-Z_\-]+)ï¿½/g, function($0, $1){ return record[$1]; }) + "'>"+key+"</a>";
               }
               body += "</td>";
             });
@@ -356,6 +356,6 @@
   * Extend the function object.
   */
   $.fn.extend({
-    indiciaDataGrid: $.indiciaDataGrid.construct
+    dataGrid: $.dataGrid.construct
   });
 })(jQuery);
