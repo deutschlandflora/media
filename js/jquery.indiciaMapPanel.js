@@ -933,185 +933,264 @@ var destroyAllFeatures;
     * Some pre-configured layers that can be added to the map.
     */
     function _getPresetLayers(settings) {
-      var os_options = {
-        url: "https://api2.ordnancesurvey.co.uk/mapping_api/v1/service/wmts?key=" + settings.os_api_key,
-        version: "1.0.0",
+      var osOptions = {
+        url: 'https://api2.ordnancesurvey.co.uk/mapping_api/v1/service/wmts?key=' + settings.os_api_key,
+        version: '1.0.0',
         style: true,
-        format: "image/png",
-        tileMatrixSet: "EPSG:3857",
-        matrixSet: "EPSG:3857",
+        format: 'image/png',
+        tileMatrixSet: 'EPSG:3857',
+        matrixSet: 'EPSG:3857',
         tileOrigin: new OpenLayers.LonLat(-20037508, 20037508),
         tileSize: new OpenLayers.Size(256, 256),
         resolutions: [
-                1222.9924523925783,
-                611.4962261962892,
-                305.7481130981446,
-                152.8740565490723,
-                76.43702827453615,
-                38.21851413726807,
-                19.109257068634037,
-                9.554628534317018,
-                4.777314267158509,
-                2.3886571335792546,
-                1.1943285667896273,
-                0.5971642833948136,
-                0.2985821416974068,
-                0.1492910708487034],
+          1222.9924523925783,
+          611.4962261962892,
+          305.7481130981446,
+          152.8740565490723,
+          76.43702827453615,
+          38.21851413726807,
+          19.109257068634037,
+          9.554628534317018,
+          4.777314267158509,
+          2.3886571335792546,
+          1.1943285667896273,
+          0.5971642833948136,
+          0.2985821416974068,
+          0.1492910708487034
+        ],
         // 49.52834N 10.76418W ; 61.33122N 1.7801E
         maxExtent: [-1198264, 6364988, 198162, 8702278],
         matrixIds: [
-          {identifier:"EPSG:3857:0",scaleDenominator:559082263.9508929},
-          {identifier:"EPSG:3857:1",scaleDenominator:279541131.97544646},
-          {identifier:"EPSG:3857:2",scaleDenominator:139770565.98772323},
-          {identifier:"EPSG:3857:3",scaleDenominator:69885282.99386162},
-          {identifier:"EPSG:3857:4",scaleDenominator:34942641.49693081},
-          {identifier:"EPSG:3857:5",scaleDenominator:17471320.748465404},
-          {identifier:"EPSG:3857:6",scaleDenominator:8735660.374232702},
-          {identifier:"EPSG:3857:7",scaleDenominator:4367830.187116351},
-          {identifier:"EPSG:3857:8",scaleDenominator:2183915.0935581755},
-          {identifier:"EPSG:3857:9",scaleDenominator:1091957.5467790877},
-          {identifier:"EPSG:3857:10",scaleDenominator:545978.7733895439},
-          {identifier:"EPSG:3857:11",scaleDenominator:272989.38669477194},
-          {identifier:"EPSG:3857:12",scaleDenominator:136494.69334738597},
-          {identifier:"EPSG:3857:13",scaleDenominator:68247.34667369298},
-          {identifier:"EPSG:3857:14",scaleDenominator:34123.67333684649},
-          {identifier:"EPSG:3857:15",scaleDenominator:17061.836668423246},
-          {identifier:"EPSG:3857:16",scaleDenominator:8530.918334211623},
-          {identifier:"EPSG:3857:17",scaleDenominator:4265.4591671058115},
-          {identifier:"EPSG:3857:18",scaleDenominator:2132.7295835529058},
-          {identifier:"EPSG:3857:19",scaleDenominator:1066.3647917764529},
-          {identifier:"EPSG:3857:20",scaleDenominator:533.1823958882264}
-      ]};
+          { identifier: 'EPSG:3857:0', scaleDenominator: 559082263.9508929 },
+          { identifier: 'EPSG:3857:1', scaleDenominator: 279541131.97544646 },
+          { identifier: 'EPSG:3857:2', scaleDenominator: 139770565.98772323 },
+          { identifier: 'EPSG:3857:3', scaleDenominator: 69885282.99386162 },
+          { identifier: 'EPSG:3857:4', scaleDenominator: 34942641.49693081 },
+          { identifier: 'EPSG:3857:5', scaleDenominator: 17471320.748465404 },
+          { identifier: 'EPSG:3857:6', scaleDenominator: 8735660.374232702 },
+          { identifier: 'EPSG:3857:7', scaleDenominator: 4367830.187116351 },
+          { identifier: 'EPSG:3857:8', scaleDenominator: 2183915.0935581755 },
+          { identifier: 'EPSG:3857:9', scaleDenominator: 1091957.5467790877 },
+          { identifier: 'EPSG:3857:10', scaleDenominator: 545978.7733895439 },
+          { identifier: 'EPSG:3857:11', scaleDenominator: 272989.38669477194 },
+          { identifier: 'EPSG:3857:12', scaleDenominator: 136494.69334738597 },
+          { identifier: 'EPSG:3857:13', scaleDenominator: 68247.34667369298 },
+          { identifier: 'EPSG:3857:14', scaleDenominator: 34123.67333684649 },
+          { identifier: 'EPSG:3857:15', scaleDenominator: 17061.836668423246 },
+          { identifier: 'EPSG:3857:16', scaleDenominator: 8530.918334211623 },
+          { identifier: 'EPSG:3857:17', scaleDenominator: 4265.4591671058115 },
+          { identifier: 'EPSG:3857:18', scaleDenominator: 2132.7295835529058 },
+          { identifier: 'EPSG:3857:19', scaleDenominator: 1066.3647917764529 },
+          { identifier: 'EPSG:3857:20', scaleDenominator: 533.1823958882264 }
+        ]
+      };
 
+      var osLeisureOptions = {
+        name: 'Ordnance Survey Leisure',
+        layer: 'Leisure 27700',
+        layerId: 'os_leisure',
+        url: 'https://api2.ordnancesurvey.co.uk/mapping_api/v1/service/wmts?key=' + settings.os_api_key,
+        version: '1.0.0',
+        style: true,
+        format: 'image/png',
+        projection: 'EPSG:27700',
+        tileMatrixSet: 'EPSG:27700',
+        matrixSet: 'EPSG:27700',
+        tileOrigin: new OpenLayers.LonLat(-238375, 1376256),
+        tileSize: new OpenLayers.Size(256, 256),
+        /*  serverResolutions have to have the values set by the provider in order to position the layer correctly.
+         *  resolutions different to serverResolutions cause the tiles to be resized and allows approximate matching
+         *  of the scales between this and the standard Web Mercator layers.
+         *
+         *  The resolution of Web Mercator varies with the cosine of the latitude. Britain is roughly centred on
+         *  54 degrees north. Our target resolutions are therefore res = wm_res * cos(54). E.g, for the lowest zoom
+         *  level
+         *      r = 1222.9924523925783 * cos(54) = 718.8569
+         *
+         *  Providing more resolutions than serverResolutions allows us to magnify/reduce the final/first tile layer
+         *  and add extra zoom levels.
+         *
+         *  When switching to a Web Mercator base layer, the new zoom is set based upon closest matching resolution.
+         *  This means that from zoom 0 (res 718) we will end up with zoom 1 (res 611). Likewise, when switching
+         *  back we will end up zoomed out a level. This is compensated for in matchMapProjectionToLayer()
+         */
+        serverResolutions: [896, 448, 224, 112, 56, 28, 14, 7, 3.5, 1.75],
+        resolutions: [
+          1437.713854,
+          718.8569272,
+          359.4284636,
+          179.7142318,
+          89.8571159,
+          44.92855795,
+          22.46427897,
+          11.23213949,
+          5.616069744,
+          2.808034872,
+          1.404017436,
+          0.702008718,
+          0.351004359],
+        maxExtent: [0, 0, 700000, 1300000],
+        matrixIds: [
+          { identifier: 'EPSG:27700:0', scaleDenominator: 3200000.0000000005 },
+          { identifier: 'EPSG:27700:1', scaleDenominator: 1600000.0000000002 },
+          { identifier: 'EPSG:27700:2', scaleDenominator: 800000.0000000001 },
+          { identifier: 'EPSG:27700:3', scaleDenominator: 400000.00000000006 },
+          { identifier: 'EPSG:27700:4', scaleDenominator: 200000.00000000003 },
+          { identifier: 'EPSG:27700:5', scaleDenominator: 100000.00000000001 },
+          { identifier: 'EPSG:27700:6', scaleDenominator: 50000.00000000001 },
+          { identifier: 'EPSG:27700:7', scaleDenominator: 25000.000000000004 },
+          { identifier: 'EPSG:27700:8', scaleDenominator: 12500.000000000002 },
+          { identifier: 'EPSG:27700:9', scaleDenominator: 6250.000000000001 }
+        ]
+      };
       var r = {
-        bing_aerial : function() {return new OpenLayers.Layer.Bing({name: 'Bing Aerial', 'type': 'Aerial', 'key': settings.bing_api_key, 'sphericalMercator': true});},
-        bing_hybrid : function() {return new OpenLayers.Layer.Bing({name: 'Bing Hybrid', 'type': 'AerialWithLabels', 'key': settings.bing_api_key, 'sphericalMercator': true});},
-        bing_shaded : function() {return new OpenLayers.Layer.Bing({name: 'Bing Shaded', 'type': 'road', 'key': settings.bing_api_key, 'sphericalMercator': true});},
-        bing_os : function() {return new OpenLayers.Layer.Bing({name: 'Bing Ordnance Survey', 'type': 'ordnanceSurvey', 'key': settings.bing_api_key, 'sphericalMercator': true});},
-        osm : function() {
-        // OpenStreetMap standard tile layer
-          return new OpenLayers.Layer.OSM("OpenStreetMap", [
-            "https://a.tile.openstreetmap.org/${z}/${x}/${y}.png",
-            "https://b.tile.openstreetmap.org/${z}/${x}/${y}.png",
-            "https://c.tile.openstreetmap.org/${z}/${x}/${y}.png"]);
-          },
-        otm : function() {
-          // OpenTopoMap standard tile layer
-          return new OpenLayers.Layer.OSM("OpenTopoMap", [
-            "https://a.tile.opentopomap.org/${z}/${x}/${y}.png",
-            "https://b.tile.opentopomap.org/${z}/${x}/${y}.png",
-            "https://c.tile.opentopomap.org/${z}/${x}/${y}.png"],
-            {tileOptions: {crossOriginKeyword: null}});
-        },
-        os_outdoor: function() {
-          return new OpenLayers.Layer.WMTS($.extend({
-            name: "Ordnance Survey Outdoor",
-            layer: "Outdoor 3857"
-          }, os_options));
-        },
-        os_road: function() {
-          return new OpenLayers.Layer.WMTS($.extend({
-            name: "Ordnance Survey Road",
-            layer: "Road 3857"
-          }, os_options));
-        },
-        os_light: function() {
-          return new OpenLayers.Layer.WMTS($.extend({
-            name: "Ordnance Survey Light",
-            layer: "Light 3857"
-          }, os_options));
-        },
-        os_night: function() {
-          return new OpenLayers.Layer.WMTS($.extend({
-            name: "Ordnance Survey Night",
-            layer: "Night 3857"
-          }, os_options));
-        },
-        os_leisure: function() {
-          return new OpenLayers.Layer.WMTS({
-            name: "Ordnance Survey Leisure",
-            layer: "Leisure 27700",
-            url: "https://api2.ordnancesurvey.co.uk/mapping_api/v1/service/wmts?key=" + settings.os_api_key,
-            version: "1.0.0",
-            style: true,
-            format: "image/png",
-            projection: "EPSG:27700",
-            tileMatrixSet: "EPSG:27700",
-            matrixSet: "EPSG:27700",
-            tileOrigin: new OpenLayers.LonLat(-238375, 1376256),
-            tileSize: new OpenLayers.Size(256, 256),
-            /*  serverResolutions have to have the values set by the provider in order to position the layer correctly.
-             *  resolutions different to serverResolutions cause the tiles to be resized and allows approximate matching
-             *  of the scales between this and the standard Web Mercator layers.
-             *
-             *  The resolution of Web Mercator varies with the cosine of the latitude. Britain is roughly centred on
-             *  54 degrees north. Our target resolutions are therefore res = wm_res * cos(54). E.g, for the lowest zoom
-             *  level
-             *      r = 1222.9924523925783 * cos(54) = 718.8569
-             *
-             *  Providing more resolutions than serverResolutions allows us to magnify/reduce the final/first tile layer
-             *  and add extra zoom levels.
-             *
-             *  When switching to a Web Mercator base layer, the new zoom is set based upon closest matching resolution.
-             *  This means that from zoom 0 (res 718) we will end up with zoom 1 (res 611). Likewise, when switching
-             *  back we will end up zoomed out a level. This is compensated for in matchMapProjectionToLayer()
-             */
-            serverResolutions: [896, 448, 224, 112, 56, 28, 14, 7, 3.5, 1.75],
-            resolutions: [
-              1437.713854,
-              718.8569272,
-              359.4284636,
-              179.7142318,
-              89.8571159,
-              44.92855795,
-              22.46427897,
-              11.23213949,
-              5.616069744,
-              2.808034872,
-              1.404017436,
-              0.702008718,
-              0.351004359],
-            maxExtent: [0, 0, 700000, 1300000],
-            matrixIds: [
-              {identifier:"EPSG:27700:0",scaleDenominator:3200000.0000000005},
-              {identifier:"EPSG:27700:1",scaleDenominator:1600000.0000000002},
-              {identifier:"EPSG:27700:2",scaleDenominator:800000.0000000001},
-              {identifier:"EPSG:27700:3",scaleDenominator:400000.00000000006},
-              {identifier:"EPSG:27700:4",scaleDenominator:200000.00000000003},
-              {identifier:"EPSG:27700:5",scaleDenominator:100000.00000000001},
-              {identifier:"EPSG:27700:6",scaleDenominator:50000.00000000001},
-              {identifier:"EPSG:27700:7",scaleDenominator:25000.000000000004},
-              {identifier:"EPSG:27700:8",scaleDenominator:12500.000000000002},
-              {identifier:"EPSG:27700:9",scaleDenominator:6250.000000000001}]
+        bing_aerial: function bingAerial() {
+          return new OpenLayers.Layer.Bing({
+            name: 'Bing Aerial',
+            type: 'Aerial',
+            key: settings.bing_api_key,
+            sphericalMercator: true,
+            layerId: 'bing_aerial'
           });
         },
-        // Layer types that Indicia offered historically but no longer work.
-        // Map them to the best alternative.
-        multimap_default : function() {return new OpenLayers.Layer.OSM();},
-        multimap_landranger : function() {return new OpenLayers.Layer.OSM();},
-        virtual_earth: function() {return new OpenLayers.Layer.Bing({name: 'Bing Aerial', 'type': 'ordnanceSurvey', 'maxZoom':19,'key': settings.bing_api_key, 'sphericalMercator': true});},
+        bing_hybrid: function bingHybrid() {
+          return new OpenLayers.Layer.Bing({
+            name: 'Bing Hybrid',
+            type: 'AerialWithLabels',
+            key: settings.bing_api_key,
+            sphericalMercator: true,
+            layerId: 'bing_hybrid'
+          });
+        },
+        bing_shaded: function bingShaded() {
+          return new OpenLayers.Layer.Bing({
+            name: 'Bing Shaded',
+            type: 'road',
+            key: settings.bing_api_key,
+            sphericalMercator: true,
+            layerId: 'bing_shaded'
+          });
+        },
+        bing_os: function bingOs() {
+          return new OpenLayers.Layer.Bing({
+            name: 'Bing Ordnance Survey',
+            type: 'ordnanceSurvey',
+            key: settings.bing_api_key,
+            sphericalMercator: true,
+            layerId: 'bing_os'
+          });
+        },
+        osm: function osm() {
+        // OpenStreetMap standard tile layer
+          return new OpenLayers.Layer.OSM('OpenStreetMap',
+            [
+              'https://a.tile.openstreetmap.org/${z}/${x}/${y}.png',
+              'https://b.tile.openstreetmap.org/${z}/${x}/${y}.png',
+              'https://c.tile.openstreetmap.org/${z}/${x}/${y}.png'
+            ], {
+              layerId: 'osm'
+            }
+          );
+        },
+        otm: function otm() {
+          // OpenTopoMap standard tile layer
+          return new OpenLayers.Layer.OSM('OpenTopoMap',
+            [
+              'https://a.tile.opentopomap.org/${z}/${x}/${y}.png',
+              'https://b.tile.opentopomap.org/${z}/${x}/${y}.png',
+              'https://c.tile.opentopomap.org/${z}/${x}/${y}.png'
+            ],
+            {
+              tileOptions: { crossOriginKeyword: null },
+              layerId: 'otm'
+            }
+          );
+        },
+        dynamicOSGoogleSat: function dynamicOSGoogleSat() {
+          return new OpenLayers.Layer.WMTS($.extend({}, osOptions, {
+            name: 'Ordnance Survey Outdoor with Google Satellite when zoomed in',
+            // Use Web Mercator to avoid oddities on layer switch.
+            layer: 'Outdoor 3857',
+            zoomInLayerId: 'dynamicOSGoogleSatZoomed',
+            switchAtZoom: 11,
+            layerId: 'dynamicOSGoogleSat'
+          }));
+        },
+        os_outdoor: function osOutdoor() {
+          return new OpenLayers.Layer.WMTS($.extend({
+            name: 'Ordnance Survey Outdoor',
+            layer: 'Outdoor 3857',
+            layerId: 'os_outdoor'
+          }, osOptions));
+        },
+        os_road: function osRoad() {
+          return new OpenLayers.Layer.WMTS($.extend({
+            name: 'Ordnance Survey Road',
+            layer: 'Road 3857',
+            layerId: 'os_road'
+          }, osOptions));
+        },
+        os_light: function osLight() {
+          return new OpenLayers.Layer.WMTS($.extend({
+            name: 'Ordnance Survey Light',
+            layer: 'Light 3857',
+            layerId: 'os_light'
+          }, osOptions));
+        },
+        os_night: function osNight() {
+          return new OpenLayers.Layer.WMTS($.extend({
+            name: 'Ordnance Survey Night',
+            layer: 'Night 3857',
+            layerId: 'os_night'
+          }, osOptions));
+        },
+        os_leisure: function osLeisure() {
+          return new OpenLayers.Layer.WMTS(osLeisureOptions);
+        }
       };
       // To protect ourselves against exceptions because the Google script would not link up, we
-      // only enable these layers if the Google constants are available. We separately check for google V2 and V3 layers
-      // to maintain backwards compatibility
-      if (typeof G_PHYSICAL_MAP != 'undefined') {
-        r.google_physical =
-            function() {return new OpenLayers.Layer.Google('Google Physical', {type: G_PHYSICAL_MAP, 'sphericalMercator': true});};
-        r.google_streets =
-            function() {return new OpenLayers.Layer.Google('Google Streets', {numZoomLevels : 20, 'sphericalMercator': true});};
-        r.google_hybrid =
-            function() {return new OpenLayers.Layer.Google('Google Hybrid', {type: G_HYBRID_MAP, numZoomLevels: 20, 'sphericalMercator': true});};
-        r.google_satellite =
-            function() {return new OpenLayers.Layer.Google('Google Satellite', {type: G_SATELLITE_MAP, numZoomLevels: 20, 'sphericalMercator': true});};
-      } else if (typeof google !== 'undefined' && typeof google.maps !== 'undefined') {
-        r.google_physical =
-            function() {return new OpenLayers.Layer.Google('Google Physical', {type: google.maps.MapTypeId.TERRAIN, 'sphericalMercator': true});};
-        r.google_streets =
-            function() {return new OpenLayers.Layer.Google('Google Streets', {numZoomLevels : 20, 'sphericalMercator': true});};
-        r.google_hybrid =
-            function() {return new OpenLayers.Layer.Google('Google Hybrid', {type: google.maps.MapTypeId.HYBRID, numZoomLevels: 20, 'sphericalMercator': true});};
-        r.google_satellite =
-            function() {return new OpenLayers.Layer.Google('Google Satellite', {type: google.maps.MapTypeId.SATELLITE, numZoomLevels: 20, 'sphericalMercator': true});};
+      // only enable these layers if the Google constants are available.
+      if (typeof google !== 'undefined' && typeof google.maps !== 'undefined') {
+        r.google_physical = function googlePhysical() {
+          return new OpenLayers.Layer.Google('Google Physical', {
+            type: google.maps.MapTypeId.TERRAIN,
+            sphericalMercator: true,
+            layerId: 'google_physical'
+          });
+        };
+        r.google_streets = function googleStreets() {
+          return new OpenLayers.Layer.Google('Google Streets', {
+            numZoomLevels: 20,
+            sphericalMercator: true,
+            layerId: 'google_streets'
+          });
+        };
+        r.google_hybrid = function googleHybrid() {
+          return new OpenLayers.Layer.Google('Google Hybrid', {
+            type: google.maps.MapTypeId.HYBRID,
+            numZoomLevels: 20,
+            sphericalMercator: true,
+            layerId: 'google_hybrid'
+          });
+        };
+        r.google_satellite = function googleSatellite() {
+          return new OpenLayers.Layer.Google('Google Satellite', {
+            type: google.maps.MapTypeId.SATELLITE,
+            numZoomLevels: 20,
+            sphericalMercator: true,
+            layerId: 'google_satellite'
+          });
+        };
+        r.dynamicOSGoogleSatZoomed = function dynamicOSGoogleSatZoomed() {
+          return new OpenLayers.Layer.Google('Ordnance Survey Outdoor with Google Satellite when zoomed in (zoomed)', {
+            type: google.maps.MapTypeId.SATELLITE,
+            numZoomLevels: 20,
+            sphericalMercator: true,
+            zoomOutLayerId: 'dynamicOSGoogleSat',
+            switchAtZoom: 17,
+            layerId: 'dynamicOSGoogleSatZoomed'
+          });
+        };
       }
       return r;
     }
@@ -2130,10 +2209,10 @@ var destroyAllFeatures;
         var centre = map.getCenter();
         var zoom = map.getZoom();
         // Compensate for incorrect choice of zoom level when switching from Web Mercator layer to OS Leisure.
-        if (map.lastLayer && map.lastLayer.name === 'Ordnance Survey Leisure') {
+        if (map.lastLayer && map.lastLayer.name.match(/^Ordnance Survey Leisure/)) {
           zoom -= (zoom === 0) ? 0 : 1;
         }
-        if (map.baseLayer.name === 'Ordnance Survey Leisure') {
+        if (map.baseLayer.name.match(/^Ordnance Survey Leisure/)) {
           zoom += 1;
         }
         if (centre !== null) {
@@ -2365,7 +2444,7 @@ var destroyAllFeatures;
           $.cookie('mapzoom', div.map.zoom, {expires: 7});
           $.cookie('maplon', div.map.center.lon, {expires: 7});
           $.cookie('maplat', div.map.center.lat, {expires: 7});
-          $.cookie('mapbase', div.map.baseLayer.name, {expires: 7});
+          $.cookie('mapbaselayerid', div.map.baseLayer.layerId, {expires: 7});
         });
       }
 
@@ -2384,27 +2463,92 @@ var destroyAllFeatures;
 
       // Iterate over the preset layers, adding them to the map
       var presetLayers = _getPresetLayers(this.settings);
-      var layer;
       $.each(this.settings.presetLayers, function(i, item) {
+        var layer;
         // Check whether this is a defined layer
-        if (presetLayers.hasOwnProperty(item))
-        {
-          layer = presetLayers[item]();
-          div.map.addLayer(layer);
-          if (typeof layer.mapObject !== 'undefined') {
-            layer.mapObject.setTilt(0);
-          }
-          if (item.match(/^google/)) {
-            // Workaround.
-            // If there is a Google layer loaded but the initial layer is smaller (e.g. OS Leisure)
-            // then both may appear. This occurs because the Google layer cannot be
-            // hidden until it has been loaded. Therefore, set up a callback to handle this.
-            google.maps.event.addListenerOnce(layer.mapObject, 'tilesloaded', hideGMapCallback);
+        if (presetLayers.hasOwnProperty(item)) {
+          // Don't load layers that only appear when zoomed in initially.
+          if (!item.match(/Zoomed$/)) {
+            layer = presetLayers[item]();
+            div.map.addLayer(layer);
+            if (typeof layer.mapObject !== 'undefined') {
+              layer.mapObject.setTilt(0);
+            }
+            if (item.match(/^google/)) {
+              // Workaround.
+              // If there is a Google layer loaded but the initial layer is smaller (e.g. OS Leisure)
+              // then both may appear. This occurs because the Google layer cannot be
+              // hidden until it has been loaded. Therefore, set up a callback to handle this.
+              google.maps.event.addListenerOnce(layer.mapObject, 'tilesloaded', hideGMapCallback);
+            }
           }
         } else {
           alert('Requested preset layer ' + item + ' is not recognised.');
         }
       });
+
+      function switchToBaseLayer(div, id) {
+        var presetLayers;
+        var lSwitch = div.map.getLayersBy('layerId', id)[0];
+        if (lSwitch) {
+          if (!lSwitch.getVisibility()) {
+            div.map.setBaseLayer(lSwitch);
+          }
+        }
+        else {
+          presetLayers = _getPresetLayers(div.settings);
+          if (presetLayers[id]) {
+            lSwitch = presetLayers[id]();
+            div.map.addLayer(lSwitch);
+            div.map.setBaseLayer(lSwitch);
+          }
+        }
+        return lSwitch;
+      }
+
+      //Is this the best place to add this event handler?
+      //Handle the automatic switching between layers for the dynamic layer.
+      div.map.events.register('zoomend', null, function() {
+        var thisZoomLevel = div.map.getZoom();
+        var visLayers = div.map.getLayersBy('visibility', true);
+        var l;
+        var lSwitch;
+        var i;
+        var offLayer;
+        var onLayer;
+        // Careful about recursion.
+        if (indiciaData.settingBaseLayer) {
+          return;
+        }
+        indiciaData.settingBaseLayer = true;
+        for (i = 0; i < visLayers.length; i++) {
+          l = visLayers[i];
+          if (l.isBaseLayer) {
+            // Ensure switch is immediate.
+            l.removeBackBufferDelay = 0;
+            if (l.zoomInLayerId && thisZoomLevel >= l.switchAtZoom) {
+              onLayer = switchToBaseLayer(div, l.zoomInLayerId);
+              offLayer = l;
+            } else if (l.zoomOutLayerId && thisZoomLevel <= l.switchAtZoom) {
+              onLayer = switchToBaseLayer(div, l.zoomOutLayerId);
+              offLayer = l;
+            }
+          }
+        }
+        indiciaData.settingBaseLayer = false;
+        if (onLayer && offLayer) {
+          ///Adjust layer switcher control layer visibility regardless
+          // of whether or not one of the layers selected.
+          var offInput = $('input[value="' + offLayer.name + '"]');
+          var onInput = $('input[value="' + onLayer.name + '"]');
+          offInput.hide(); //radio
+          offInput.next().hide(); //label
+          offInput.next().next().hide(); //br tag
+          onInput.show(); //radio
+          onInput.next().show(); //label
+          onInput.next().next().show(); //br tag*/
+        }
+      })
 
       // Convert indicia WMS/WFS layers into js objects
       $.each(this.settings.indiciaWMSLayers, function (key, value) {
@@ -2432,15 +2576,16 @@ var destroyAllFeatures;
         zoom = $.cookie('mapzoom');
         center.lon = $.cookie('maplon');
         center.lat = $.cookie('maplat');
-        baseLayerName = $.cookie('mapbase');
+        baseLayerId = $.cookie('mapbaselayerid');
       }
       // Missing cookies result in null or undefined variables
 
       // Set the base layer using cookie if remembering.
       // Do this before centring to ensure lat/long are in correct projection.
-      if (typeof baseLayerName !== 'undefined' && baseLayerName !== null) {
+      if (typeof baseLayerId !== 'undefined' && baseLayerId !== null) {
+        switchToBaseLayer(div, baseLayerId);
         $.each(div.map.layers, function (idx, layer) {
-          if (layer.isBaseLayer && layer.name === baseLayerName && div.map.baseLayer !== layer) {
+          if (layer.isBaseLayer && layer.name === baseLayerId && div.map.baseLayer !== layer) {
             div.map.setBaseLayer(layer);
           }
         });
@@ -2482,13 +2627,6 @@ var destroyAllFeatures;
       div.map.events.register('changebaselayer', null, function() {
         // New layer may have different projection.
         matchMapProjectionToLayer(div.map);
-
-        // keep a local reference to the map div, so we can access it from the timeout
-        var tmp = div;
-        // trigger layer redraw by changing the map size
-        div.style.height = (parseInt(div.style.height, 10) - 1) + 'px';
-        // after half a second, reset the map size
-        setTimeout(function () { tmp.style.height = (parseInt(tmp.style.height, 10) + 1) + 'px'; }, 500);
       });
 
       if (this.settings.editLayer) {
@@ -2557,7 +2695,7 @@ var destroyAllFeatures;
                     $.inArray('wkt', indiciaData.srefHandlers[_getSystem().toLowerCase()].returns)!==-1) {
                   var ll=div.map.getLonLatFromPixel(evt.xy), handler=indiciaData.srefHandlers[_getSystem().toLowerCase()],
                       pt, proj, recalcGhost = ghost===null || !ghost.atPoint(ll, 0, 0), precisionInfo;
-                  if (recalcGhost) {
+                  if (recalcGhost && ll) {
                     precisionInfo=getPrecisionInfo(div);
                     proj=new OpenLayers.Projection('EPSG:'+indiciaData.srefHandlers[_getSystem().toLowerCase()].srid);
                     ll.transform(div.map.projection, proj);
