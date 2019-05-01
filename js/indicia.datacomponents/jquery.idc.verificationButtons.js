@@ -99,16 +99,14 @@
     // Now post update to Elasticsearch.
     data = {
       ids: occurrenceIds,
-      warehouse_url: indiciaData.warehouseUrl,
       doc: doc
     };
     $.ajax({
-      url: indiciaData.ajaxUrl + '/esproxy_updateids/' + indiciaData.nid,
+      url: indiciaData.esProxyAjaxUrl + '/updateids/' + indiciaData.nid,
       type: 'post',
       data: data,
       success: function success(response) {
         if (typeof response.error !== 'undefined' || (response.code && response.code !== 200)) {
-          console.log(response);
           alert('Elasticsearch update failed');
         } else {
           if (response.updated !== occurrenceIds.length) {
@@ -119,7 +117,6 @@
         }
       },
       error: function error(jqXHR, textStatus, errorThrown) {
-        console.log('Error thrown');
         alert('Elasticsearch update failed');
       },
       dataType: 'json'

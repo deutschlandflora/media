@@ -226,7 +226,6 @@
     }
     loadedExperienceOcurrenceId = doc.id;
     data = {
-      warehouse_url: indiciaData.warehouseUrl,
       size: 0,
       query: {
         term: { 'metadata.created_by_id': doc.metadata.created_by_id }
@@ -290,7 +289,7 @@
     };
     $(el).find('.loading-spinner').show();
     $.ajax({
-      url: indiciaData.ajaxUrl + '/esproxy_rawsearch/' + indiciaData.nid,
+      url: indiciaData.esProxyAjaxUrl + '/rawsearch/' + indiciaData.nid,
       type: 'post',
       data: data,
       success: function success(response) {

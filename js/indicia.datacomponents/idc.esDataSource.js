@@ -91,7 +91,7 @@ var IdcEsDataSource;
       // Don't repopulate if exactly the same request as already loaded.
       if (JSON.stringify(request) !== this.lastRequestStr || force) {
         this.lastRequestStr = JSON.stringify(request);
-        url = indiciaData.ajaxUrl + '/esproxy_searchbyparams/' + indiciaData.nid;
+        url = indiciaData.esProxyAjaxUrl + '/searchbyparams/' + indiciaData.nid;
         // Pass through additional parameters to the request.
         if (source.settings.filterPath) {
           // Filter path allows limiting of content in the response.

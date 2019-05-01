@@ -90,10 +90,9 @@
       // Post to the ES proxy. Pass scroll_id parameter to request the next
       // chunk of the dataset.
       $.ajax({
-        url: indiciaData.ajaxUrl + '/esproxy_download/' + indiciaData.nid,
+        url: indiciaData.esProxyAjaxUrl + '/download/' + indiciaData.nid,
         type: 'post',
         data: {
-          warehouse_url: indiciaData.warehouseUrl,
           scroll_id: data.scroll_id
         },
         success: function success(response) {
@@ -141,7 +140,7 @@
         data = indiciaFns.getFormQueryData(source);
         // Post to the ES proxy.
         $.ajax({
-          url: indiciaData.ajaxUrl + '/esproxy_download/' + indiciaData.nid,
+          url: indiciaData.esProxyAjaxUrl + '/download/' + indiciaData.nid,
           type: 'post',
           data: data,
           success: function success(response) {

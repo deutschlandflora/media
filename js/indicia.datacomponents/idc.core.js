@@ -545,7 +545,6 @@
    */
   indiciaFns.getFormQueryData = function getFormQueryData(source) {
     var data = {
-      warehouse_url: indiciaData.warehouseUrl,
       filters: {},
       bool_queries: [],
       user_filters: []
@@ -732,11 +731,11 @@ jQuery(document).ready(function docReady() {
           '&nonce=' + indiciaData.read.nonce + '&auth_token=' + indiciaData.read.auth_token +
           '&mode=json&callback=?', function getLoc(data) {
         $.each($('.idc-leaflet-map'), function eachMap() {
-          $(this).indiciaMap('showFeature', data[0].boundary_geom, true);
+          $(this).idcLeafletMap('showFeature', data[0].boundary_geom, true);
         });
       });
     } else {
-      $(this).indiciaMap('clearFeature');
+      $(this).idcLeafletMap('clearFeature');
     }
   });
 
