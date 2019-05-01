@@ -2509,6 +2509,7 @@ var destroyAllFeatures;
       //Is this the best place to add this event handler?
       //Handle the automatic switching between layers for the dynamic layer.
       div.map.events.register('zoomend', null, function() {
+        console.log("handler fired");
         var thisZoomLevel = div.map.getZoom();
         var visLayers = div.map.getLayersBy('visibility', true);
         var l;
@@ -2516,6 +2517,9 @@ var destroyAllFeatures;
         var i;
         var offLayer;
         var onLayer;
+        var lyrsForShownInputs = [];
+        var lyrsForHiddenInputs = []; 
+
         // Careful about recursion.
         if (indiciaData.settingBaseLayer) {
           return;
@@ -2539,15 +2543,58 @@ var destroyAllFeatures;
         if (onLayer && offLayer) {
           ///Adjust layer switcher control layer visibility regardless
           // of whether or not one of the layers selected.
-          var offInput = $('input[value="' + offLayer.name + '"]');
-          var onInput = $('input[value="' + onLayer.name + '"]');
-          offInput.hide(); //radio
-          offInput.next().hide(); //label
-          offInput.next().next().hide(); //br tag
+          lyrsForShownInputs.push(onLayer.id);
+          lyrsForHiddenInputs.push(offLayer.id);
+          
+          // var offInput = $('input[value="' + offLayer.name + '"]');
+          // var onInput = $('input[value="' + onLayer.name + '"]');
+          // offInput.hide(); //radio
+          // offInput.next().hide(); //label
+          // offInput.next().next().hide(); //br tag
+          // onInput.show(); //radio
+          // onInput.next().show(); //label
+          // onInput.next().next().show(); //br tag*/
+        }
+
+        visLayerIds = visLayers.map(function(l) {
+          return l.id;
+        })
+
+        for (i = 0; i < div.map.layers.length; i++) {
+          var l = div.map.layers[i];
+
+          if (l.zoomOutLayerId && lyrsForShownInputs.concat(lyrsForHiddenInputs).indexOf(l.id) == -1) {
+            //The layer has a corresponding zoomout layer and is not already accounted for 
+            var inId = l.id;
+            var outId = div.map.getLayersBy("layerId", l.zoomOutLayerId)[0].id;
+
+            if (visLayerIds.indexOf(inId) == -1 && visLayerIds.indexOf(outId) == -1) {
+              //Neither in or out layer is displayed, so only display control for out layer.
+              lyrsForShownInputs.push(outId);
+              lyrsForHiddenInputs.push(inId);
+            } else if (visLayerIds.indexOf(inId) > -1) {
+              lyrsForShownInputs.push(inId);
+              lyrsForHiddenInputs.push(outId);
+            } else {
+              lyrsForShownInputs.push(outId);
+              lyrsForHiddenInputs.push(inId);
+            }
+          }
+        }
+
+        lyrsForShownInputs.forEach(function(id) {
+          console.log("id", id)
+          var onInput = $('input[value="' + div.map.getLayer(id).name + '"]');
           onInput.show(); //radio
           onInput.next().show(); //label
           onInput.next().next().show(); //br tag*/
-        }
+        })
+        lyrsForHiddenInputs.forEach(function(id) {
+          var offInput = $('input[value="' + div.map.getLayer(id).name + '"]');
+          offInput.hide(); //radio
+          offInput.next().hide(); //label
+          offInput.next().next().hide(); //br tag
+        })
       })
 
       // Convert indicia WMS/WFS layers into js objects
