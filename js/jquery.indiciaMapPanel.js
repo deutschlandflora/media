@@ -2509,7 +2509,6 @@ var destroyAllFeatures;
       //Is this the best place to add this event handler?
       //Handle the automatic switching between layers for the dynamic layer.
       div.map.events.register('zoomend', null, function() {
-        console.log("handler fired");
         var thisZoomLevel = div.map.getZoom();
         var visLayers = div.map.getLayersBy('visibility', true);
         var l;
@@ -2545,15 +2544,6 @@ var destroyAllFeatures;
           // of whether or not one of the layers selected.
           lyrsForShownInputs.push(onLayer.id);
           lyrsForHiddenInputs.push(offLayer.id);
-          
-          // var offInput = $('input[value="' + offLayer.name + '"]');
-          // var onInput = $('input[value="' + onLayer.name + '"]');
-          // offInput.hide(); //radio
-          // offInput.next().hide(); //label
-          // offInput.next().next().hide(); //br tag
-          // onInput.show(); //radio
-          // onInput.next().show(); //label
-          // onInput.next().next().show(); //br tag*/
         }
 
         visLayerIds = visLayers.map(function(l) {
@@ -2573,9 +2563,11 @@ var destroyAllFeatures;
               lyrsForShownInputs.push(outId);
               lyrsForHiddenInputs.push(inId);
             } else if (visLayerIds.indexOf(inId) > -1) {
+              //In layer is displayed
               lyrsForShownInputs.push(inId);
               lyrsForHiddenInputs.push(outId);
             } else {
+              //Out layer is displayed
               lyrsForShownInputs.push(outId);
               lyrsForHiddenInputs.push(inId);
             }
@@ -2583,7 +2575,6 @@ var destroyAllFeatures;
         }
 
         lyrsForShownInputs.forEach(function(id) {
-          console.log("id", id)
           var onInput = $('input[value="' + div.map.getLayer(id).name + '"]');
           onInput.show(); //radio
           onInput.next().show(); //label
