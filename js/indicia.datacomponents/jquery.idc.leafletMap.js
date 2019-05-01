@@ -368,7 +368,7 @@
   };
 
   /**
-   * Extend jQuery to declare indiciaMap method.
+   * Extend jQuery to declare leafletMap method.
    */
   $.fn.idcLeafletMap = function buildLeafletMap(methodOrOptions) {
     var passedArgs = arguments;
@@ -381,7 +381,7 @@
         return methods.init.apply(this, passedArgs);
       }
       // If we get here, the wrong method was called.
-      $.error('Method ' + methodOrOptions + ' does not exist on jQuery.indiciaMap');
+      $.error('Method ' + methodOrOptions + ' does not exist on jQuery.idcLeafletMap');
       return true;
     });
     return this;
