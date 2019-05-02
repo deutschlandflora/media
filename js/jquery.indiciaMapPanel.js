@@ -2513,19 +2513,17 @@ var destroyAllFeatures;
         var visLayers = div.map.getLayersBy('visibility', true);
         var l;
         var lSwitch;
-        var i;
         var offLayer;
         var onLayer;
         var lyrsForShownInputs = [];
-        var lyrsForHiddenInputs = []; 
+        var lyrsForHiddenInputs = [];
 
         // Careful about recursion.
         if (indiciaData.settingBaseLayer) {
           return;
         }
         indiciaData.settingBaseLayer = true;
-        for (i = 0; i < visLayers.length; i++) {
-          l = visLayers[i];
+        visLayers.forEach(function(l) {
           if (l.isBaseLayer) {
             // Ensure switch is immediate.
             l.removeBackBufferDelay = 0;
@@ -2537,7 +2535,7 @@ var destroyAllFeatures;
               offLayer = l;
             }
           }
-        }
+        });
         indiciaData.settingBaseLayer = false;
         if (onLayer && offLayer) {
           ///Adjust layer switcher control layer visibility regardless
@@ -2550,11 +2548,10 @@ var destroyAllFeatures;
           return l.id;
         })
 
-        for (i = 0; i < div.map.layers.length; i++) {
-          var l = div.map.layers[i];
+        div.map.layers.forEach(function(l) {
 
           if (l.zoomOutLayerId && lyrsForShownInputs.concat(lyrsForHiddenInputs).indexOf(l.id) == -1) {
-            //The layer has a corresponding zoomout layer and is not already accounted for 
+            //The layer has a corresponding zoomout layer and is not already accounted for
             var inId = l.id;
             var outId = div.map.getLayersBy("layerId", l.zoomOutLayerId)[0].id;
 
@@ -2572,7 +2569,7 @@ var destroyAllFeatures;
               lyrsForHiddenInputs.push(inId);
             }
           }
-        }
+        });
 
         lyrsForShownInputs.forEach(function(id) {
           var onInput = $('input[value="' + div.map.getLayer(id).name + '"]');
