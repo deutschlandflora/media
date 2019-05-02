@@ -126,8 +126,7 @@
      */
     $(el).find('.do-download').click(function doDownload() {
       var data;
-      var sources = JSON.parse($(el).attr('data-es-source'));
-      $.each(sources, function eachSource(sourceId) {
+      $.each(el.settings.source, function eachSource(sourceId) {
         var source = indiciaData.esSourceObjects[sourceId];
         if (typeof source === 'undefined') {
           indiciaFns.controlFail(el, 'Download source not found.');

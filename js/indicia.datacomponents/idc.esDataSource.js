@@ -42,8 +42,7 @@ var IdcEsDataSource;
     });
     $.each($('.idc-output'), function eachOutput() {
       var el = this;
-      var source = JSON.parse($(el).attr('data-es-source'));
-      if (Object.prototype.hasOwnProperty.call(source, ds.settings.id)) {
+      if (Object.prototype.hasOwnProperty.call(el.settings.source, ds.settings.id)) {
         $.each(indiciaData.outputPluginClasses, function eachPluginClass(i, pluginClass) {
           var controlName = pluginClass.replace(/^idc/, '');
           controlName = controlName.charAt(0).toLowerCase() + controlName.substr(1);
