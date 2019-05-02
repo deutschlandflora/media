@@ -1108,10 +1108,8 @@ var destroyAllFeatures;
           );
         },
         dynamicOSGoogleSat: function dynamicOSGoogleSat() {
-          return new OpenLayers.Layer.WMTS($.extend({}, osOptions, {
-            name: 'Ordnance Survey Outdoor with Google Satellite when zoomed in',
-            // Use Web Mercator to avoid oddities on layer switch.
-            layer: 'Outdoor 3857',
+          return new OpenLayers.Layer.WMTS($.extend({}, osLeisureOptions, {
+            name: 'Ordnance Survey Leisure with Google Satellite when zoomed in',
             zoomInLayerId: 'dynamicOSGoogleSatZoomed',
             switchAtZoom: 11,
             layerId: 'dynamicOSGoogleSat'
@@ -1183,12 +1181,12 @@ var destroyAllFeatures;
           });
         };
         r.dynamicOSGoogleSatZoomed = function dynamicOSGoogleSatZoomed() {
-          return new OpenLayers.Layer.Google('Ordnance Survey Outdoor with Google Satellite when zoomed in (zoomed)', {
+          return new OpenLayers.Layer.Google('Ordnance Survey Leisure with Google Satellite when zoomed in (zoomed)', {
             type: google.maps.MapTypeId.SATELLITE,
             numZoomLevels: 20,
             sphericalMercator: true,
             zoomOutLayerId: 'dynamicOSGoogleSat',
-            switchAtZoom: 17,
+            switchAtZoom: 16,
             layerId: 'dynamicOSGoogleSatZoomed'
           });
         };
@@ -2212,10 +2210,10 @@ var destroyAllFeatures;
         var centre = map.getCenter();
         var zoom = map.getZoom();
         // Compensate for incorrect choice of zoom level when switching from Web Mercator layer to OS Leisure.
-        if (map.lastLayer && map.lastLayer.name.match(/^Ordnance Survey Leisure/)) {
+        if (map.lastLayer && map.lastLayer.projection.getCode() === 'EPSG:27700') {
           zoom -= (zoom === 0) ? 0 : 1;
         }
-        if (map.baseLayer.name.match(/^Ordnance Survey Leisure/)) {
+        if (map.baseLayer.projection.getCode() === 'EPSG:27700') {
           zoom += 1;
         }
         if (centre !== null) {
@@ -2260,6 +2258,120 @@ var destroyAllFeatures;
         olLayer.display(false);
       }
     }
+
+    /**
+     * Switches to a base layer with a given ID.
+     */
+    function switchToBaseLayer(div, id) {
+      var availableLayers;
+      var lSwitch = div.map.getLayersBy('layerId', id)[0];
+      if (lSwitch) {
+        if (!lSwitch.getVisibility()) {
+          div.map.setBaseLayer(lSwitch);
+        }
+      } else {
+        availableLayers = _getPresetLayers(div.settings);
+        if (availableLayers[id]) {
+          lSwitch = availableLayers[id]();
+          div.map.addLayer(lSwitch);
+          // Ensure layer inserts at correct position.
+          div.map.setLayerIndex(lSwitch, div.map.getLayerIndex(div.map.baseLayer));
+          div.map.setBaseLayer(lSwitch);
+        }
+      }
+      return lSwitch;
+    }
+
+    /**
+     * Handle the automatic switching between layers for the dynamic layer.
+     */
+    function handleDynamicLayerSwitching(div) {
+      var thisZoomLevel = div.map.getZoom();
+      var visLayers = div.map.getLayersBy('visibility', true);
+      var visLayerIds;
+      var offLayer;
+      var onLayer;
+      var lyrsForShownInputs = [];
+      var lyrsForHiddenInputs = [];
+      var switcherChange = false;
+
+      // Careful about recursion.
+      if (indiciaData.settingBaseLayer) {
+        return;
+      }
+      indiciaData.settingBaseLayer = true;
+      visLayers.forEach(function (l) {
+        if (l.isBaseLayer) {
+          // Ensure switch is immediate.
+          l.removeBackBufferDelay = 0;
+          if (l.zoomInLayerId && thisZoomLevel >= l.switchAtZoom) {
+            onLayer = switchToBaseLayer(div, l.zoomInLayerId);
+            offLayer = l;
+          } else if (l.zoomOutLayerId && thisZoomLevel <= l.switchAtZoom) {
+            onLayer = switchToBaseLayer(div, l.zoomOutLayerId);
+            offLayer = l;
+          } else if (l.zoomOutLayerId || l.zoomInLayerId) {
+            onLayer = l;
+            offLayer = div.map.getLayersBy('layerId', l.zoomOutLayerId || l.zoomInLayerId)[0];
+          }
+        }
+      });
+      indiciaData.settingBaseLayer = false;
+      if (onLayer && offLayer) {
+        // Adjust layer switcher control layer visibility regardless
+        // of whether or not one of the layers selected.
+        lyrsForShownInputs.push(onLayer.id);
+        lyrsForHiddenInputs.push(offLayer.id);
+      }
+
+      visLayerIds = visLayers.map(function (l) {
+        return l.id;
+      });
+
+      div.map.layers.forEach(function (l) {
+        var inId;
+        var outId;
+        if (l.zoomOutLayerId && lyrsForShownInputs.concat(lyrsForHiddenInputs).indexOf(l.id) === -1) {
+          // The layer has a corresponding zoomout layer and is not already accounted for
+          inId = l.id;
+          outId = div.map.getLayersBy('layerId', l.zoomOutLayerId)[0].id;
+
+          if (visLayerIds.indexOf(inId) === -1 && visLayerIds.indexOf(outId) === -1) {
+            // Neither in or out layer is displayed, so only display control for out layer.
+            lyrsForShownInputs.push(outId);
+            lyrsForHiddenInputs.push(inId);
+          } else if (visLayerIds.indexOf(inId) > -1) {
+            // In layer is displayed.
+            lyrsForShownInputs.push(inId);
+            lyrsForHiddenInputs.push(outId);
+          } else {
+            // Out layer is displayed.
+            lyrsForShownInputs.push(outId);
+            lyrsForHiddenInputs.push(inId);
+          }
+        }
+      });
+      lyrsForShownInputs.forEach(function (id) {
+        switcherChange = switcherChange || div.map.getLayer(id).displayInLayerSwitcher !== true;
+        div.map.getLayer(id).displayInLayerSwitcher = true;
+      });
+      lyrsForHiddenInputs.forEach(function (id) {
+        switcherChange = switcherChange || div.map.getLayer(id).displayInLayerSwitcher !== false;
+        div.map.getLayer(id).displayInLayerSwitcher = false;
+      });
+      if (switcherChange) {
+        // Force the layerSwitcher to update. Unfortunately the OL code to detect
+        // whether it needs a redraw doesn't check displayInLayerSwitcher, so we
+        // need to force it through.
+        div.map.controls.forEach(function (control) {
+          if (control.CLASS_NAME === 'OpenLayers.Control.LayerSwitcher') {
+            control.layerStates = [];
+            control.redraw();
+          }
+        });
+      }
+    }
+
 
     // Extend our default options with those provided, basing this on an empty object
     // so the defaults don't get changed.
@@ -2443,13 +2555,17 @@ var destroyAllFeatures;
 
       // setup the map to save the last position
       if (div.settings.rememberPos && typeof $.cookie !== 'undefined') {
-        div.map.events.register('moveend', null, function() {
-          $.cookie('mapzoom', div.map.zoom, {expires: 7});
-          $.cookie('maplon', div.map.center.lon, {expires: 7});
-          $.cookie('maplat', div.map.center.lat, {expires: 7});
-          $.cookie('mapbaselayerid', div.map.baseLayer.layerId, {expires: 7});
+        div.map.events.register('moveend', null, function () {
+          $.cookie('mapzoom', div.map.zoom, { expires: 7 });
+          $.cookie('maplon', div.map.center.lon, { expires: 7 });
+          $.cookie('maplat', div.map.center.lat, { expires: 7 });
+          $.cookie('mapbaselayerid', div.map.baseLayer.layerId, { expires: 7 });
         });
       }
+
+      div.map.events.register('zoomend', null, function () {
+        handleDynamicLayerSwitching(div);
+      });
 
       // and prepare a georeferencer
       div.georefOpts = $.extend({}, $.fn.indiciaMapPanel.georeferenceDriverSettings, $.fn.indiciaMapPanel.georeferenceLookupSettings);
@@ -2490,102 +2606,6 @@ var destroyAllFeatures;
         }
       });
 
-      function switchToBaseLayer(id) {
-        var availableLayers;
-        var lSwitch = div.map.getLayersBy('layerId', id)[0];
-        if (lSwitch) {
-          if (!lSwitch.getVisibility()) {
-            div.map.setBaseLayer(lSwitch);
-          }
-        } else {
-          availableLayers = _getPresetLayers(div.settings);
-          if (availableLayers[id]) {
-            lSwitch = availableLayers[id]();
-            div.map.addLayer(lSwitch);
-            div.map.setBaseLayer(lSwitch);
-          }
-        }
-        return lSwitch;
-      }
-
-      // Handle the automatic switching between layers for the dynamic layer.
-      div.map.events.register('zoomend', null, function () {
-        var thisZoomLevel = div.map.getZoom();
-        var visLayers = div.map.getLayersBy('visibility', true);
-        var visLayerIds;
-        var offLayer;
-        var onLayer;
-        var lyrsForShownInputs = [];
-        var lyrsForHiddenInputs = [];
-
-        // Careful about recursion.
-        if (indiciaData.settingBaseLayer) {
-          return;
-        }
-        indiciaData.settingBaseLayer = true;
-        visLayers.forEach(function (l) {
-          if (l.isBaseLayer) {
-            // Ensure switch is immediate.
-            l.removeBackBufferDelay = 0;
-            if (l.zoomInLayerId && thisZoomLevel >= l.switchAtZoom) {
-              onLayer = switchToBaseLayer(l.zoomInLayerId);
-              offLayer = l;
-            } else if (l.zoomOutLayerId && thisZoomLevel <= l.switchAtZoom) {
-              onLayer = switchToBaseLayer(l.zoomOutLayerId);
-              offLayer = l;
-            }
-          }
-        });
-        indiciaData.settingBaseLayer = false;
-        if (onLayer && offLayer) {
-          // Adjust layer switcher control layer visibility regardless
-          // of whether or not one of the layers selected.
-          lyrsForShownInputs.push(onLayer.id);
-          lyrsForHiddenInputs.push(offLayer.id);
-        }
-
-        visLayerIds = visLayers.map(function (l) {
-          return l.id;
-        });
-
-        div.map.layers.forEach(function (l) {
-          var inId;
-          var outId;
-          if (l.zoomOutLayerId && lyrsForShownInputs.concat(lyrsForHiddenInputs).indexOf(l.id) === -1) {
-            // The layer has a corresponding zoomout layer and is not already accounted for
-            inId = l.id;
-            outId = div.map.getLayersBy('layerId', l.zoomOutLayerId)[0].id;
-
-            if (visLayerIds.indexOf(inId) === -1 && visLayerIds.indexOf(outId) === -1) {
-              // Neither in or out layer is displayed, so only display control for out layer.
-              lyrsForShownInputs.push(outId);
-              lyrsForHiddenInputs.push(inId);
-            } else if (visLayerIds.indexOf(inId) > -1) {
-              // In layer is displayed.
-              lyrsForShownInputs.push(inId);
-              lyrsForHiddenInputs.push(outId);
-            } else {
-              // Out layer is displayed.
-              lyrsForShownInputs.push(outId);
-              lyrsForHiddenInputs.push(inId);
-            }
-          }
-        });
-
-        lyrsForShownInputs.forEach(function (id) {
-          var onInput = $('input[value="' + div.map.getLayer(id).name + '"]');
-          onInput.show(); //radio
-          onInput.next().show(); //label
-          onInput.next().next().show(); //br tag*/
-        });
-        lyrsForHiddenInputs.forEach(function (id) {
-          var offInput = $('input[value="' + div.map.getLayer(id).name + '"]');
-          offInput.hide(); //radio
-          offInput.next().hide(); //label
-          offInput.next().next().hide(); //br tag
-        });
-      });
-
       // Convert indicia WMS/WFS layers into js objects
       $.each(this.settings.indiciaWMSLayers, function (key, value) {
         // If key is int, title wasn't provided so work it out from the layer name.
@@ -2624,7 +2644,7 @@ var destroyAllFeatures;
       // Set the base layer using cookie if remembering.
       // Do this before centring to ensure lat/long are in correct projection.
       if (typeof baseLayerId !== 'undefined' && baseLayerId !== null) {
-        switchToBaseLayer(baseLayerId);
+        switchToBaseLayer(div, baseLayerId);
         $.each(div.map.layers, function (idx, layer) {
           if (layer.isBaseLayer && layer.name === baseLayerId && div.map.baseLayer !== layer) {
             div.map.setBaseLayer(layer);
