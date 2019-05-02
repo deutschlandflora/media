@@ -273,7 +273,7 @@ var destroyAllFeatures;
           if (typeof transform !== 'undefined' && transform && div.map.projection.getCode() !== div.indiciaProjection.getCode()) {
             this.geometry.transform(div.indiciaProjection, div.map.projection);
           }
-          this.style = new style(styletype, div.settings);
+          this.style = new Style(styletype, div.settings);
           this.attributes.type = type;
           if (temporary) {
             this.attributes.temp = true;
@@ -291,7 +291,7 @@ var destroyAllFeatures;
         // there are invisible features that define the map extent
         $.each(invisible, function () {
           feature = parser.read(this);
-          feature.style = new style('invisible', div.settings);
+          feature.style = new Style('invisible', div.settings);
           // give the invisible features a type so that they are replaced too
           feature.attributes.type = type;
           if (temporary) {
@@ -327,7 +327,7 @@ var destroyAllFeatures;
     /*
      * An OpenLayers vector style object
      */
-    function style(styletype, settings) {
+    function Style(styletype, settings) {
       var styleToApply = (typeof styletype !== 'undefined') ? styletype : 'default';
 
       this.fillColor = settings.fillColor;
@@ -742,7 +742,7 @@ var destroyAllFeatures;
       }
       feature = parser.read(data.mapwkt);
       feature.attributes = { type: 'clickPoint' };
-      feature.style = new style('default', div.settings);
+      feature.style = new Style('default', div.settings);
       div.map.editLayer.addFeatures([feature]);
 
       // Call any code which handles a click to set the spatial reference, e.g. zoom the map in, or set help hints.
@@ -1390,7 +1390,7 @@ var destroyAllFeatures;
           });
           $('table.report-grid tr').removeClass('selected');
           $.each(ids, function () {
-            $('table.report-grid tr#row'+this).addClass('selected');
+            $('table.report-grid tr#row' + this).addClass('selected');
           });
         }
       } else if (div.settings.clickableLayersOutputMode === 'reportHighlight' && typeof indiciaData.reports !== 'undefined') {
@@ -1398,7 +1398,7 @@ var destroyAllFeatures;
         $('table.report-grid tr').removeClass('selected');
         // grab the features which should have an id corresponding to the rows to select
         $.each(features, function () {
-          $('table.report-grid tr#row'+this.id).addClass('selected');
+          $('table.report-grid tr#row' + this.id).addClass('selected');
         });
       } else if (div.settings.clickableLayersOutputMode === 'div') {
         $('#'+div.settings.clickableLayersOutputDiv).html(div.settings.clickableLayersOutputFn(features, div));
@@ -1787,7 +1787,7 @@ var destroyAllFeatures;
         }
         if (separateBoundary) {
           $('#' + div.settings.boundaryGeomId).val(geom.toString());
-          evt.feature.style = new style('boundary', div.settings);
+          evt.feature.style = new Style('boundary', div.settings);
           if(this.map.div.settings.autoFillInCentroid) {
             var centroid = evt.feature.geometry.getCentroid();
             $('#imp-geom').val(centroid.toString());
@@ -2508,8 +2508,7 @@ var destroyAllFeatures;
         return lSwitch;
       }
 
-      //Is this the best place to add this event handler?
-      //Handle the automatic switching between layers for the dynamic layer.
+      // Handle the automatic switching between layers for the dynamic layer.
       div.map.events.register('zoomend', null, function () {
         var thisZoomLevel = div.map.getZoom();
         var visLayers = div.map.getLayersBy('visibility', true);
@@ -2539,7 +2538,7 @@ var destroyAllFeatures;
         });
         indiciaData.settingBaseLayer = false;
         if (onLayer && offLayer) {
-          ///Adjust layer switcher control layer visibility regardless
+          // Adjust layer switcher control layer visibility regardless
           // of whether or not one of the layers selected.
           lyrsForShownInputs.push(onLayer.id);
           lyrsForHiddenInputs.push(offLayer.id);
@@ -2578,14 +2577,14 @@ var destroyAllFeatures;
           onInput.show(); //radio
           onInput.next().show(); //label
           onInput.next().next().show(); //br tag*/
-        })
+        });
         lyrsForHiddenInputs.forEach(function (id) {
           var offInput = $('input[value="' + div.map.getLayer(id).name + '"]');
           offInput.hide(); //radio
           offInput.next().hide(); //label
           offInput.next().next().hide(); //br tag
-        })
-      })
+        });
+      });
 
       // Convert indicia WMS/WFS layers into js objects
       $.each(this.settings.indiciaWMSLayers, function (key, value) {
@@ -2666,7 +2665,7 @@ var destroyAllFeatures;
       };
 
       // This hack fixes an IE8 bug where it won't display Google layers when switching using the Layer Switcher.
-      div.map.events.register('changebaselayer', null, function() {
+      div.map.events.register('changebaselayer', null, function () {
         // New layer may have different projection.
         matchMapProjectionToLayer(div.map);
       });
@@ -2681,51 +2680,52 @@ var destroyAllFeatures;
           // Change the feature colour to make it a ghost when we are in add mode and zoomed into a location (as the location boundary isn't
           // used, it is only visual)
           editLayer = new OpenLayers.Layer.Vector(
-              this.settings.editLayerName,
-              {style: new style('ghost', this.settings), 'sphericalMercator': true, displayInLayerSwitcher: this.settings.editLayerInSwitcher}
+            this.settings.editLayerName,
+            { style: new Style('ghost', this.settings), sphericalMercator: true, displayInLayerSwitcher: this.settings.editLayerInSwitcher }
           );
         } else {
           // Add an editable layer to the map
           editLayer = new OpenLayers.Layer.Vector(
-              this.settings.editLayerName,
-              {style: new style('boundary', this.settings), 'sphericalMercator': true, displayInLayerSwitcher: this.settings.editLayerInSwitcher}
+            this.settings.editLayerName,
+            { style: new Style('boundary', this.settings), sphericalMercator: true, displayInLayerSwitcher: this.settings.editLayerInSwitcher }
           );
         }
         div.map.editLayer = editLayer;
         div.map.addLayer(div.map.editLayer);
 
-        if (this.settings.initialFeatureWkt === null && $('#'+this.settings.geomId).length>0) {
+        if (this.settings.initialFeatureWkt === null && $('#' + this.settings.geomId).length > 0) {
           // if no initial feature specified, but there is a populated imp-geom hidden input,
           // use the value from the hidden geom
-          this.settings.initialFeatureWkt = $('#'+this.settings.geomId).val();
+          this.settings.initialFeatureWkt = $('#' + this.settings.geomId).val();
         }
-        if (this.settings.initialBoundaryWkt === null && $('#'+this.settings.boundaryGeomId).length>0) {
+        if (this.settings.initialBoundaryWkt === null && $('#' + this.settings.boundaryGeomId).length > 0) {
           // same again for the boundary
-          added=this.settings.initialBoundaryWkt = $('#'+this.settings.boundaryGeomId).val();
-          added.style = new style('boundary', this.settings);
+          added = this.settings.initialBoundaryWkt = $('#' + this.settings.boundaryGeomId).val();
+          added.style = new Style('boundary', this.settings);
         }
 
         // Draw the feature to be loaded on startup, if present
         var zoomToCentroid = (this.settings.initialBoundaryWkt) ? false : true;
         if (this.settings.initialFeatureWkt) {
-          _showWktFeature(this, this.settings.initialFeatureWkt, div.map.editLayer, null, false, "clickPoint", zoomToCentroid, true);
+          _showWktFeature(this, this.settings.initialFeatureWkt, div.map.editLayer, null, false, 'clickPoint', zoomToCentroid, true);
         }
         if (this.settings.initialBoundaryWkt) {
           var featureType;
-          //If the map is zoomed in add mode, then the featuretype is nothing as the boundary should act as a "ghost" that isn't used for
-          //anything other than zooming.
+          // If the map is zoomed in add mode, then the featuretype is nothing
+          // as the boundary should act as a "ghost" that isn't used for
+          // anything other than zooming.
           if (indiciaData.zoomid) {
-            featureType="";
-          } else if ($('#annotations-mode-on').val()==='yes') {
-            featureType="annotation";
+            featureType = '';
+          } else if ($('#annotations-mode-on').val() === 'yes') {
+            featureType = 'annotation';
           } else {
-            featureType="boundary";
+            featureType = 'boundary';
           }
           _showWktFeature(this, this.settings.initialBoundaryWkt, div.map.editLayer, null, false, featureType, true, true);
         }
 
         if (div.settings.clickForSpatialRef || div.settings.gridRefHint) {
-          div.map.events.register('mousemove', null, function(evt) {
+          div.map.events.register('mousemove', null, function (evt) {
             currentMousePixel = evt.xy;
             showGridRefHints(div);
             if (typeof div.map.editLayer.clickControl!=='undefined' && div.map.editLayer.clickControl.active) {
@@ -2760,14 +2760,14 @@ var destroyAllFeatures;
                     }
                   } else if (parseInt(_getSystem())==_getSystem()) {
                     // also draw a selection ghost if using a point ref system we can simply transform client-side
-                    ll = div.map.getLonLatFromPixel({x: evt.layerX, y: evt.layerY});
-                    ghost=_showWktFeature(div, 'POINT('+ll.lon+' '+ll.lat+')', div.map.editLayer, null, true, 'ghost', false);
+                    ll = div.map.getLonLatFromPixel({ x: evt.layerX, y: evt.layerY });
+                    ghost = _showWktFeature(div, 'POINT(' + ll.lon + ' ' + ll.lat + ')', div.map.editLayer, null, true, 'ghost', false);
                   }
                 }
               }
             }
           });
-          $('#map').mouseleave(function() {
+          $('#map').mouseleave(function () {
             // clear ghost hover markers when mouse leaves the map
             removeAllFeatures(div.map.editLayer, 'ghost');
           });
@@ -2781,11 +2781,11 @@ var destroyAllFeatures;
         div.map.searchLayer = div.map.editLayer;
       }
       // Add any map controls
-      $.each(this.settings.controls, function(i, item) {
+      $.each(this.settings.controls, function (i, item) {
         div.map.addControl(item);
       });
       // specify a class to align edit buttons left if they are on a toolbar somewhere other than the map.
-      var align = (div.settings.toolbarDiv=='map') ? '' : 'left ';
+      var align = (div.settings.toolbarDiv === 'map') ? '' : 'left ';
       var toolbarControls = [];
       var clickInfoCtrl = getClickableLayersControl(div, align);
 
@@ -2794,29 +2794,29 @@ var destroyAllFeatures;
             layers: div.settings.locationLayerName,
             transparent: true
         };
-        if (div.settings.locationLayerFilter!=='') {
-          locLayerSettings.cql_filter=div.settings.locationLayerFilter;
+        if (div.settings.locationLayerFilter !== '') {
+          locLayerSettings.cql_filter = div.settings.locationLayerFilter;
         }
         layer = new OpenLayers.Layer.WMS('Locations', div.settings.indiciaGeoSvc + 'wms', locLayerSettings, {
-            singleTile: true,
-            isBaseLayer: false,
-            sphericalMercator: true,
-            opacity: div.settings.fillOpacity/2
+          singleTile: true,
+          isBaseLayer: false,
+          sphericalMercator: true,
+          opacity: div.settings.fillOpacity / 2
         });
         div.settings.layers.push(layer);
         div.map.addLayers([layer]);
 
         var infoCtrl = new OpenLayers.Control({
-          activate: function() {
+          activate: function () {
             var handlerOptions = {
-              'single': true,
-              'double': false,
-              'pixelTolerance': 0,
-              'stopSingle': false,
-              'stopDouble': false
+              single: true,
+              double: false,
+              pixelTolerance: 0,
+              stopSingle: false,
+              stopDouble: false
             };
             this.handler = new OpenLayers.Handler.Click(this, {
-              'click': this.onClick
+              click: this.onClick
             }, handlerOptions);
             this.protocol = new OpenLayers.Protocol.HTTP({
               url: div.settings.indiciaGeoSvc + 'wms',
@@ -2898,7 +2898,7 @@ var destroyAllFeatures;
         if (div.settings.editLayer && div.settings.allowPolygonRecording) {
           c.events.register('featureadded', c, recordPolygon);
         }
-      }, drawStyle=new style('boundary', div.settings);
+      }, drawStyle=new Style('boundary', div.settings);
       var ctrlObj;
       $.each(div.settings.standardControls, function(i, ctrl) {
         ctrlObj=null;
