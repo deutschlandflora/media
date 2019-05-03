@@ -544,8 +544,9 @@ var destroyAllFeatures;
         } else {
           helptext.push(div.settings.hlpImproveResolution3.replace('{size}', info.display));
         }
-        // switch layer?
-        if (div.settings.helpToPickPrecisionSwitchAt && info.metres <= div.settings.helpToPickPrecisionSwitchAt) {
+        // Switch layer, but not if on a dynamic layer which already handles this.
+        if (div.settings.helpToPickPrecisionSwitchAt && info.metres <= div.settings.helpToPickPrecisionSwitchAt
+            && !div.map.baseLayer.zoomInLayerId) {
           switchToSatelliteBaseLayer(div.map);
           helptext.push(div.settings.hlpImproveResolutionSwitch);
         }
@@ -2034,7 +2035,7 @@ var destroyAllFeatures;
       var sys;
       var currentLayer = div.map.baseLayer.name;
       var name;
-      if (currentLayer.match(/^Ordnance Survey/)) {
+      if (currentLayer.project.getCode() === 'EPSG:27700') {
         // Check that the point is within Britain
         sys = false;
         wmProj = new OpenLayers.Projection('EPSG:3857');
