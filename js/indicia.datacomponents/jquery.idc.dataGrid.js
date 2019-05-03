@@ -77,8 +77,7 @@
     });
 
     $(el).find('.pager .next').click(function clickNext() {
-      var sources = JSON.parse($(el).attr('data-es-source'));
-      $.each(sources, function eachSource(sourceId) {
+      $.each(el.settings.source, function eachSource(sourceId) {
         var source = indiciaData.esSourceObjects[sourceId];
         if (typeof source.settings.from === 'undefined') {
           source.settings.from = 0;
@@ -91,8 +90,7 @@
     });
 
     $(el).find('.pager .prev').click(function clickPrev() {
-      var sources = JSON.parse($(el).attr('data-es-source'));
-      $.each(sources, function eachSource(sourceId) {
+      $.each(el.settings.source, function eachSource(sourceId) {
         var source = indiciaData.esSourceObjects[sourceId];
         if (typeof source.settings.from === 'undefined') {
           source.settings.from = 0;
@@ -106,8 +104,7 @@
     $(el).find('.sort').click(function clickSort() {
       var sortButton = this;
       var row = $(sortButton).closest('tr');
-      var sources = JSON.parse($(el).attr('data-es-source'));
-      $.each(sources, function eachSource(sourceId) {
+      $.each(el.settings.source, function eachSource(sourceId) {
         var source = indiciaData.esSourceObjects[sourceId];
         var idx = $(sortButton).closest('th').attr('data-col');
         var col = $(el)[0].settings.columns[idx];
@@ -137,8 +134,7 @@
     });
 
     $(el).find('.es-filter-row input').change(function changeFilterInput() {
-      var sources = JSON.parse($(el).attr('data-es-source'));
-      $.each(sources, function eachSource(sourceId) {
+      $.each(el.settings.source, function eachSource(sourceId) {
         var source = indiciaData.esSourceObjects[sourceId];
         // Reset to first page.
         source.settings.from = 0;
@@ -480,7 +476,6 @@
       var grid = this;
       var oldSelected = $(grid).find('tr.selected');
       var newSelectedId;
-      var sources;
       var showingLabel = $(grid).find('.showing');
       var blocked = [];
 
@@ -499,8 +494,7 @@
         blocked.push($(oldSelected).attr('data-row-id'));
         $(oldSelected).remove();
       }
-      sources = JSON.parse($(grid).attr('data-es-source'));
-      $.each(sources, function eachSource(sourceId) {
+      $.each(grid.settings.source, function eachSource(sourceId) {
         var source = indiciaData.esSourceObjects[sourceId];
         if ($(grid).find('table tbody tr.data-row').length < source.settings.size * 0.75) {
           $(grid)[0].settings.blockIdsOnNextLoad = blocked;

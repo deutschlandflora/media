@@ -186,7 +186,6 @@
      */
     init: function init(options) {
       var el = this;
-      var source = JSON.parse($(el).attr('data-es-source'));
       var baseMaps;
       var overlays = {};
       var layersControl;
@@ -220,7 +219,7 @@
       };
       // Add the active base layer to the map.
       baseMaps[el.settings.baseLayer].addTo(el.map);
-      $.each(source, function eachSource(id, title) {
+      $.each(el.settings.source, function eachSource(id, title) {
         var group;
         if (el.settings.styles[id].type !== 'undefined' && el.settings.styles[id].type === 'heat') {
           group = L.heatLayer([], { radius: 10 });
@@ -368,7 +367,7 @@
   };
 
   /**
-   * Extend jQuery to declare indiciaMap method.
+   * Extend jQuery to declare leafletMap method.
    */
   $.fn.idcLeafletMap = function buildLeafletMap(methodOrOptions) {
     var passedArgs = arguments;
@@ -381,7 +380,7 @@
         return methods.init.apply(this, passedArgs);
       }
       // If we get here, the wrong method was called.
-      $.error('Method ' + methodOrOptions + ' does not exist on jQuery.indiciaMap');
+      $.error('Method ' + methodOrOptions + ' does not exist on jQuery.idcLeafletMap');
       return true;
     });
     return this;
