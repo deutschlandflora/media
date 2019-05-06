@@ -546,7 +546,7 @@ var destroyAllFeatures;
         }
         // Switch layer, but not if on a dynamic layer which already handles this.
         if (div.settings.helpToPickPrecisionSwitchAt && info.metres <= div.settings.helpToPickPrecisionSwitchAt
-            && !div.map.baseLayer.zoomInLayerId) {
+            && !div.map.baseLayer.dynamicLayerIndex) {
           switchToSatelliteBaseLayer(div.map);
           helptext.push(div.settings.hlpImproveResolutionSwitch);
         }
@@ -1045,6 +1045,13 @@ var destroyAllFeatures;
           { identifier: 'EPSG:27700:9', scaleDenominator: 6250.000000000001 }
         ]
       };
+      // List of available preset layers. A layer can either be defined by a
+      // single function which builds the base layer, or can be an array of
+      // sub-layers that together form a dynamic layer (which auto-switches as)
+      // you zoom in and out. All layers defined have a property layerId, which
+      // is the property name of the item in the list, plus a period then the
+      // index of the layer in the group. This will be 0 for standard layers,
+      // or a sequential number for dynamic layer parts.
       var r = {
         bing_aerial: function bingAerial() {
           return new OpenLayers.Layer.Bing({
@@ -1052,7 +1059,7 @@ var destroyAllFeatures;
             type: 'Aerial',
             key: settings.bing_api_key,
             sphericalMercator: true,
-            layerId: 'bing_aerial'
+            layerId: 'bing_aerial.0'
           });
         },
         bing_hybrid: function bingHybrid() {
@@ -1061,7 +1068,7 @@ var destroyAllFeatures;
             type: 'AerialWithLabels',
             key: settings.bing_api_key,
             sphericalMercator: true,
-            layerId: 'bing_hybrid'
+            layerId: 'bing_hybrid.0'
           });
         },
         bing_shaded: function bingShaded() {
@@ -1070,7 +1077,7 @@ var destroyAllFeatures;
             type: 'road',
             key: settings.bing_api_key,
             sphericalMercator: true,
-            layerId: 'bing_shaded'
+            layerId: 'bing_shaded.0'
           });
         },
         bing_os: function bingOs() {
@@ -1079,7 +1086,7 @@ var destroyAllFeatures;
             type: 'ordnanceSurvey',
             key: settings.bing_api_key,
             sphericalMercator: true,
-            layerId: 'bing_os'
+            layerId: 'bing_os.0'
           });
         },
         osm: function osm() {
@@ -1090,7 +1097,7 @@ var destroyAllFeatures;
               'https://b.tile.openstreetmap.org/${z}/${x}/${y}.png',
               'https://c.tile.openstreetmap.org/${z}/${x}/${y}.png'
             ], {
-              layerId: 'osm'
+              layerId: 'osm.0'
             }
           );
         },
@@ -1104,44 +1111,36 @@ var destroyAllFeatures;
             ],
             {
               tileOptions: { crossOriginKeyword: null },
-              layerId: 'otm'
+              layerId: 'otm.0'
             }
           );
-        },
-        dynamicOSGoogleSat: function dynamicOSGoogleSat() {
-          return new OpenLayers.Layer.WMTS($.extend({}, osLeisureOptions, {
-            name: 'Ordnance Survey Leisure with Google Satellite when zoomed in',
-            zoomInLayerId: 'dynamicOSGoogleSatZoomed',
-            switchAtZoom: 11,
-            layerId: 'dynamicOSGoogleSat'
-          }));
         },
         os_outdoor: function osOutdoor() {
           return new OpenLayers.Layer.WMTS($.extend({
             name: 'Ordnance Survey Outdoor',
             layer: 'Outdoor 3857',
-            layerId: 'os_outdoor'
+            layerId: 'os_outdoor.0'
           }, osOptions));
         },
         os_road: function osRoad() {
           return new OpenLayers.Layer.WMTS($.extend({
             name: 'Ordnance Survey Road',
             layer: 'Road 3857',
-            layerId: 'os_road'
+            layerId: 'os_road.0'
           }, osOptions));
         },
         os_light: function osLight() {
           return new OpenLayers.Layer.WMTS($.extend({
             name: 'Ordnance Survey Light',
             layer: 'Light 3857',
-            layerId: 'os_light'
+            layerId: 'os_light.0'
           }, osOptions));
         },
         os_night: function osNight() {
           return new OpenLayers.Layer.WMTS($.extend({
             name: 'Ordnance Survey Night',
             layer: 'Night 3857',
-            layerId: 'os_night'
+            layerId: 'os_night.0'
           }, osOptions));
         },
         os_leisure: function osLeisure() {
@@ -1155,14 +1154,14 @@ var destroyAllFeatures;
           return new OpenLayers.Layer.Google('Google Physical', {
             type: google.maps.MapTypeId.TERRAIN,
             sphericalMercator: true,
-            layerId: 'google_physical'
+            layerId: 'google_physical.0'
           });
         };
         r.google_streets = function googleStreets() {
           return new OpenLayers.Layer.Google('Google Streets', {
             numZoomLevels: 20,
             sphericalMercator: true,
-            layerId: 'google_streets'
+            layerId: 'google_streets.0'
           });
         };
         r.google_hybrid = function googleHybrid() {
@@ -1170,7 +1169,7 @@ var destroyAllFeatures;
             type: google.maps.MapTypeId.HYBRID,
             numZoomLevels: 20,
             sphericalMercator: true,
-            layerId: 'google_hybrid'
+            layerId: 'google_hybrid.0'
           });
         };
         r.google_satellite = function googleSatellite() {
@@ -1178,19 +1177,45 @@ var destroyAllFeatures;
             type: google.maps.MapTypeId.SATELLITE,
             numZoomLevels: 20,
             sphericalMercator: true,
-            layerId: 'google_satellite'
+            layerId: 'google_satellite.0'
           });
         };
-        r.dynamicOSGoogleSatZoomed = function dynamicOSGoogleSatZoomed() {
-          return new OpenLayers.Layer.Google('Ordnance Survey Leisure with Google Satellite when zoomed in (zoomed)', {
-            type: google.maps.MapTypeId.SATELLITE,
-            numZoomLevels: 20,
-            sphericalMercator: true,
-            zoomOutLayerId: 'dynamicOSGoogleSat',
-            switchAtZoom: 16,
-            layerId: 'dynamicOSGoogleSatZoomed'
-          });
-        };
+        r.dynamicOSGoogleSat = [
+          function dynamicOSGoogleSat0() {
+            // OpenStreetMap standard tile layer
+            return new OpenLayers.Layer.OSM('Dynamic (*OpenStreetMap* > Ordnance Survey Leisure > Google Satellite)',
+              [
+                'https://a.tile.openstreetmap.org/${z}/${x}/${y}.png',
+                'https://b.tile.openstreetmap.org/${z}/${x}/${y}.png',
+                'https://c.tile.openstreetmap.org/${z}/${x}/${y}.png'
+              ], {
+                layerId: 'dynamicOSGoogleSat.0',
+                maxZoom: 5,
+                dynamicLayerIndex: 0
+              }
+            );
+          },
+          function dynamicOSGoogleSat1() {
+            return new OpenLayers.Layer.WMTS($.extend({}, osLeisureOptions, {
+              name: 'Dynamic (OpenStreetMap > *Ordnance Survey Leisure* > Google Satellite)',
+              minZoom: 1,
+              maxZoom: 11,
+              layerId: 'dynamicOSGoogleSat.1',
+              dynamicLayerIndex: 1
+            }));
+          },
+          function dynamicOSGoogleSat3() {
+            return new OpenLayers.Layer.Google('Dynamic (OpenStreetMap > Ordnance Survey Leisure > *Google Satellite*)', {
+              type: google.maps.MapTypeId.SATELLITE,
+              numZoomLevels: 20,
+              sphericalMercator: true,
+              minZoom: 18,
+              layerId: 'dynamicOSGoogleSat.2',
+              dynamicLayerIndex: 2,
+              avoidOnInitialLoad: true
+            });
+          }
+        ];
       }
       return r;
     }
@@ -2033,9 +2058,9 @@ var destroyAllFeatures;
       var wmPoint;
       var testpoint;
       var sys;
-      var currentLayer = div.map.baseLayer.name;
+      var currentLayer = div.map.baseLayer;
       var name;
-      if (currentLayer.project.getCode() === 'EPSG:27700') {
+      if (currentLayer.projection.getCode() === 'EPSG:27700') {
         // Check that the point is within Britain
         sys = false;
         wmProj = new OpenLayers.Projection('EPSG:3857');
@@ -2047,9 +2072,9 @@ var destroyAllFeatures;
           wmPoint.transform(div.map.projection, wmProj);
         }
         // First check out OSIE which overlaps OSGB
-       if (wmPoint.x >= -1196000 && wmPoint.x <= -599200 && wmPoint.y >= 6687800 && wmPoint.y <= 7442470) {
-         // Got a rough match, now transform to the correct system so we can do exact match. Note that we are not testing against
-         // a pure rectangle now.
+        if (wmPoint.x >= -1196000 && wmPoint.x <= -599200 && wmPoint.y >= 6687800 && wmPoint.y <= 7442470) {
+          // Got a rough match, now transform to the correct system so we can do exact match. Note that we are not testing against
+          // a pure rectangle now.
           proj = new OpenLayers.Projection('EPSG:29901');
           testpoint = wmPoint.clone().transform(wmProj, proj);
           if (testpoint.x >= 10000 && testpoint.x <= 367300 && testpoint.y >= 10000 && testpoint.y <= 468100
@@ -2080,6 +2105,7 @@ var destroyAllFeatures;
                 return false;
               }
             }
+            return true;
           });
         }
       }
@@ -2196,6 +2222,10 @@ var destroyAllFeatures;
       var layer = map.baseLayer;
       var newProjection = layer.projection;
       var currentProjection = map.projection;
+      var centre = map.div.settings.lastMapCentreBeforeSwitch
+        ? map.div.settings.lastMapCentreBeforeSwitch : map.getCenter();
+      var zoom = map.getZoom();
+      var editLayer = map.editLayer;
       if (!(currentProjection instanceof OpenLayers.Projection)) {
         // If a projection code, convert to object.
         currentProjection = new OpenLayers.Projection(map.projection);
@@ -2206,35 +2236,32 @@ var destroyAllFeatures;
         map.maxExtent = layer.maxExtent;
         map.resolutions = layer.resolutions;
         map.projection = newProjection;
-
-        // Redraw map based on new projection.
-        var centre = map.getCenter();
-        var zoom = map.getZoom();
-        // Compensate for incorrect choice of zoom level when switching from Web Mercator layer to OS Leisure.
-        if (map.lastLayer && map.lastLayer.projection.getCode() === 'EPSG:27700') {
-          zoom -= (zoom === 0) ? 0 : 1;
-        }
-        if (map.baseLayer.projection.getCode() === 'EPSG:27700') {
-          zoom += 1;
-        }
-        if (centre !== null) {
+        // Redraw map based on new projection. Centre might be null during
+        // initial load.
+        if (centre) {
+          // Compensate for incorrect choice of zoom level when switching from Web Mercator layer to OS Leisure.
+          if (map.lastLayer && map.lastLayer.projection.getCode() === 'EPSG:27700') {
+            zoom -= (zoom === 0) ? 0 : 1;
+          }
+          if (map.baseLayer.projection.getCode() === 'EPSG:27700') {
+            zoom += 1;
+          }
           centre = centre.transform(currentProjection, newProjection);
           map.setCenter(centre, zoom, false, true);
         }
-      }
 
-      // Update edit layer properties to match properties of baseLayer.
-      if (typeof map.editLayer !== 'undefined') {
-        var editLayer = map.editLayer;
-        editLayer.maxExtent = layer.maxExtent;
-        editLayer.resolutions = layer.resolutions;
-        if (!newProjection.equals(currentProjection)) {
-          editLayer.projection = newProjection;
-          // Reproject edit layer
+        // Update edit layer properties to match properties of baseLayer.
+        if (typeof editLayer !== 'undefined') {
+          editLayer.maxExtent = layer.maxExtent;
+          editLayer.resolutions = layer.resolutions;
+          if (!newProjection.equals(currentProjection)) {
+            editLayer.projection = newProjection;
+            // Reproject edit layer
             $.each(map.editLayer.features, function (idx, feature) {
               feature.geometry.transform(currentProjection, newProjection);
             });
-          map.editLayer.redraw();
+            map.editLayer.redraw();
+          }
         }
       }
     }
@@ -2263,9 +2290,11 @@ var destroyAllFeatures;
     /**
      * Switches to a base layer with a given ID.
      */
-    function switchToBaseLayer(div, id) {
+    function switchToBaseLayer(div, id, dynamicLayerIndex) {
       var availableLayers;
-      var lSwitch = div.map.getLayersBy('layerId', id)[0];
+      var layerId = id + '.' + (dynamicLayerIndex || 0);
+      var lSwitch = div.map.getLayersBy('layerId', layerId)[0];
+      div.settings.lastMapCentreBeforeSwitch = div.map.getCenter();
       if (lSwitch) {
         if (!lSwitch.getVisibility()) {
           div.map.setBaseLayer(lSwitch);
@@ -2273,7 +2302,13 @@ var destroyAllFeatures;
       } else {
         availableLayers = _getPresetLayers(div.settings);
         if (availableLayers[id]) {
-          lSwitch = availableLayers[id]();
+          if ($.isArray(availableLayers[id])) {
+            // Dynamic layers defined as an array of sub-layers. If index to
+            // load not specified, load the first.
+            lSwitch = availableLayers[id][dynamicLayerIndex || 0]();
+          } else {
+            lSwitch = availableLayers[id]();
+          }
           div.map.addLayer(lSwitch);
           // Ensure layer inserts at correct position.
           div.map.setLayerIndex(lSwitch, div.map.getLayerIndex(div.map.baseLayer));
@@ -2295,84 +2330,56 @@ var destroyAllFeatures;
       var lyrsForShownInputs = [];
       var lyrsForHiddenInputs = [];
       var switcherChange = false;
-
-      // Careful about recursion.
-      if (indiciaData.settingBaseLayer) {
+      var baseLayer = div.map.baseLayer;
+      // A dynamic layer's sub-layer has a layerId set to layerName.index, e.g.
+      // dynamicOSLeisureGoogleSat.0.
+      var baseLayerIdParts = baseLayer.layerId.split('.');
+      var onLayerIdx;
+      // Careful about recursion. Also don't bother if not on a dynamic layer.
+      if (indiciaData.settingBaseLayer || typeof baseLayer.dynamicLayerIndex === 'undefined') {
         return;
       }
-      indiciaData.settingBaseLayer = true;
-      visLayers.forEach(function (l) {
-        if (l.isBaseLayer) {
-          // Ensure switch is immediate.
-          l.removeBackBufferDelay = 0;
-          if (l.zoomInLayerId && thisZoomLevel >= l.switchAtZoom) {
-            onLayer = switchToBaseLayer(div, l.zoomInLayerId);
-            offLayer = l;
-          } else if (l.zoomOutLayerId && thisZoomLevel <= l.switchAtZoom) {
-            onLayer = switchToBaseLayer(div, l.zoomOutLayerId);
-            offLayer = l;
-          } else if (l.zoomOutLayerId || l.zoomInLayerId) {
-            onLayer = l;
-            offLayer = div.map.getLayersBy('layerId', l.zoomOutLayerId || l.zoomInLayerId)[0];
-          }
-        }
-      });
-      indiciaData.settingBaseLayer = false;
-      if (onLayer && offLayer) {
-        // Adjust layer switcher control layer visibility regardless
-        // of whether or not one of the layers selected.
-        lyrsForShownInputs.push(onLayer.id);
-        lyrsForHiddenInputs.push(offLayer.id);
+      // If we need to switch dynamic layer because of the zoom, find the new
+      // sub-layer's index.
+      if (baseLayer.maxZoom && thisZoomLevel > baseLayer.maxZoom) {
+        onLayerIdx = baseLayer.dynamicLayerIndex + 1;
+      } else if (baseLayer.minZoom && thisZoomLevel < baseLayer.minZoom) {
+        onLayerIdx = baseLayer.dynamicLayerIndex - 1;
+      } else {
+        onLayerIdx = baseLayer.dynamicLayerIndex;
       }
-
-      visLayerIds = visLayers.map(function (l) {
-        return l.id;
-      });
-
-      div.map.layers.forEach(function (l) {
-        var inId;
-        var outId;
-        if (l.zoomOutLayerId && lyrsForShownInputs.concat(lyrsForHiddenInputs).indexOf(l.id) === -1) {
-          // The layer has a corresponding zoomout layer and is not already accounted for
-          inId = l.id;
-          outId = div.map.getLayersBy('layerId', l.zoomOutLayerId)[0].id;
-
-          if (visLayerIds.indexOf(inId) === -1 && visLayerIds.indexOf(outId) === -1) {
-            // Neither in or out layer is displayed, so only display control for out layer.
-            lyrsForShownInputs.push(outId);
-            lyrsForHiddenInputs.push(inId);
-          } else if (visLayerIds.indexOf(inId) > -1) {
-            // In layer is displayed.
-            lyrsForShownInputs.push(inId);
-            lyrsForHiddenInputs.push(outId);
-          } else {
-            // Out layer is displayed.
-            lyrsForShownInputs.push(outId);
-            lyrsForHiddenInputs.push(inId);
-          }
+      if (onLayerIdx !== baseLayer.dynamicLayerIndex) {
+        indiciaData.settingBaseLayer = true;
+        try {
+          // Ensure switch is immediate.
+          baseLayer.removeBackBufferDelay = 0;
+          // Swap the index number of the base layer's ID to the new layer's
+          // index to find the correct layer ID. Then swap to that layer.
+          onLayer = switchToBaseLayer(div, baseLayerIdParts[0], onLayerIdx);
+        } finally {
+          indiciaData.settingBaseLayer = false;
         }
-      });
-      lyrsForShownInputs.forEach(function (id) {
-        switcherChange = switcherChange || div.map.getLayer(id).displayInLayerSwitcher !== true;
-        div.map.getLayer(id).displayInLayerSwitcher = true;
-      });
-      lyrsForHiddenInputs.forEach(function (id) {
-        switcherChange = switcherChange || div.map.getLayer(id).displayInLayerSwitcher !== false;
-        div.map.getLayer(id).displayInLayerSwitcher = false;
+      } else {
+        onLayer = baseLayer;
+      }
+      $.each(div.map.layers, function () {
+        if (this.layerId && this.layerId.indexOf(baseLayerIdParts[0]) === 0) {
+          switcherChange = switcherChange || this !== onLayer;
+          this.displayInLayerSwitcher = this === onLayer;
+        }
       });
       if (switcherChange) {
         // Force the layerSwitcher to update. Unfortunately the OL code to detect
         // whether it needs a redraw doesn't check displayInLayerSwitcher, so we
         // need to force it through.
-        div.map.controls.forEach(function (control) {
-          if (control.CLASS_NAME === 'OpenLayers.Control.LayerSwitcher') {
-            control.layerStates = [];
-            control.redraw();
+        $.each(div.map.controls, function eachControl() {
+          if (this.CLASS_NAME === 'OpenLayers.Control.LayerSwitcher') {
+            this.layerStates = [];
+            this.redraw();
           }
         });
       }
-    }
-
+    };
 
     // Extend our default options with those provided, basing this on an empty object
     // so the defaults don't get changed.
@@ -2553,13 +2560,14 @@ var destroyAllFeatures;
           }
         }
       });
-
       // setup the map to save the last position
       if (div.settings.rememberPos && typeof $.cookie !== 'undefined') {
         div.map.events.register('moveend', null, function () {
           $.cookie('mapzoom', div.map.zoom, { expires: 7 });
           $.cookie('maplon', div.map.center.lon, { expires: 7 });
           $.cookie('maplat', div.map.center.lat, { expires: 7 });
+          // Store the name of the layer or dynamic layer group (the part
+          // before the . in layerId).
           $.cookie('mapbaselayerid', div.map.baseLayer.layerId, { expires: 7 });
         });
       }
@@ -2587,20 +2595,17 @@ var destroyAllFeatures;
         var layer;
         // Check whether this is a defined layer
         if (presetLayers.hasOwnProperty(item)) {
-          // Don't load layers that only appear when zoomed in initially.
-          if (!item.match(/Zoomed$/)) {
-            layer = presetLayers[item]();
-            div.map.addLayer(layer);
-            if (typeof layer.mapObject !== 'undefined') {
-              layer.mapObject.setTilt(0);
-            }
-            if (item.match(/^google/)) {
-              // Workaround.
-              // If there is a Google layer loaded but the initial layer is smaller (e.g. OS Leisure)
-              // then both may appear. This occurs because the Google layer cannot be
-              // hidden until it has been loaded. Therefore, set up a callback to handle this.
-              google.maps.event.addListenerOnce(layer.mapObject, 'tilesloaded', hideGMapCallback);
-            }
+          // Load each predefined layer. If a layer group (i.e. a dynamic
+          // layer) only initially load the first.
+          layer = $.isArray(presetLayers[item]) ? presetLayers[item][0]() : presetLayers[item]()
+          div.map.addLayer(layer);
+          if (typeof layer.mapObject !== 'undefined') {
+            layer.mapObject.setTilt(0);
+            // Workaround.
+            // If there is a Google layer loaded but the initial layer is smaller (e.g. OS Leisure)
+            // then both may appear. This occurs because the Google layer cannot be
+            // hidden until it has been loaded. Therefore, set up a callback to handle this.
+            google.maps.event.addListenerOnce(layer.mapObject, 'tilesloaded', hideGMapCallback);
           }
         } else {
           alert('Requested preset layer ' + item + ' is not recognised.');
@@ -2632,29 +2637,33 @@ var destroyAllFeatures;
       // Centre the map, using cookie if remembering position, otherwise default setting.
       var zoom = null;
       var center = { lat: null, lon: null };
-      var baseLayerName = null;
+      var baseLayerIdParts;
       var added;
       if (typeof $.cookie !== 'undefined' && div.settings.rememberPos !== false) {
         zoom = $.cookie('mapzoom');
         center.lon = $.cookie('maplon');
         center.lat = $.cookie('maplat');
-        baseLayerId = $.cookie('mapbaselayerid');
+        baseLayerIdParts = $.cookie('mapbaselayerid').split('.');
       }
       // Missing cookies result in null or undefined variables
 
       // Set the base layer using cookie if remembering.
       // Do this before centring to ensure lat/long are in correct projection.
-      if (typeof baseLayerId !== 'undefined' && baseLayerId !== null) {
-        switchToBaseLayer(div, baseLayerId);
-        $.each(div.map.layers, function (idx, layer) {
-          if (layer.isBaseLayer && layer.name === baseLayerId && div.map.baseLayer !== layer) {
-            div.map.setBaseLayer(layer);
-          }
-        });
+      if (baseLayerIdParts) {
+        // Note the stored mapbaselayerid should include both the stem of the
+        // base layer name, then a dot, then the sub-layer index (zero unless
+        // a dynamic layer). But, if the cookie saved via older version of the
+        // code the layer index will be missing.
+        switchToBaseLayer(div, baseLayerIdParts[0], baseLayerIdParts.length > 1 ? baseLayerIdParts[1] : 0);
       }
       // OpenLayers takes the first added base layer as map.baseLayer if not
       // overriden by cookie. Now find the projection for that layer.
       matchMapProjectionToLayer(div.map);
+      // This hack fixes an IE8 bug where it won't display Google layers when switching using the Layer Switcher.
+      div.map.events.register('changebaselayer', null, function () {
+        // New layer may have different projection.
+        matchMapProjectionToLayer(div.map);
+      });
 
       // Set zoom and centre from cookie, if present, else from initial settings.
       if (typeof zoom === 'undefined' || zoom === null) {
@@ -2669,8 +2678,12 @@ var destroyAllFeatures;
       } else {
         center = new OpenLayers.LonLat(center.lon, center.lat);
       }
+      // We need to centre the map properly first before zooming in to ensure
+      // that dynamic layer auto-switching knows exactly where the map is
+      // centred before switching base layer. Important if the projections are
+      // different.
+      div.map.setCenter(center, div.map.getZoom());
       div.map.setCenter(center, zoom);
-
       /**
        * Public function to change selection of features on a layer.
        */
@@ -2684,12 +2697,6 @@ var destroyAllFeatures;
         });
         layer.redraw();
       };
-
-      // This hack fixes an IE8 bug where it won't display Google layers when switching using the Layer Switcher.
-      div.map.events.register('changebaselayer', null, function () {
-        // New layer may have different projection.
-        matchMapProjectionToLayer(div.map);
-      });
 
       if (this.settings.editLayer) {
         var editLayer;
