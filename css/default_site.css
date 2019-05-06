@@ -281,10 +281,6 @@ li.ui-state-error {
   *display:inline;
 }
 
-.olMap img {
-  border: none !important;
-}
-
 .helpText, .helpTextLeft {
   color:gray;
   font-size:80%;
@@ -581,97 +577,6 @@ form #map-toolbar {
   font-weight: bold;
   line-height: 14px;
   padding-bottom: 2px;
-}
-
-div.olControlEditingToolbar div {
-  background-image: url("../images/map-toolbar.png");
-  width: 24px;
-  height: 22px;
-  margin: 5px 2px;
-}
-
-div.olControlEditingToolbar .olControlNavigationItemInactive {
-  background-position: 0px 0px;
-}
-
-div.olControlEditingToolbar .olControlNavigationItemActive {
-  background-position: 0px -23px;
-}
-
-div.olControlEditingToolbar .olControlDrawFeaturePolygonItemInactive {
-    background-position: -25px 0px;
-}
-
-div.olControlEditingToolbar .olControlDrawFeaturePolygonItemActive {
-    background-position: -25px -23px;
-}
-
-div.olControlEditingToolbar .olControlDrawFeaturePathItemInactive {
-    background-position: -50px 0px;
-}
-
-div.olControlEditingToolbar .olControlDrawFeaturePathItemActive {
-    background-position: -50px -23px;
-}
-
-div.olControlEditingToolbar .olControlDrawFeaturePointItemInactive {
-    background-position: -75px 0px;
-}
-
-div.olControlEditingToolbar .olControlDrawFeaturePointItemActive {
-    background-position: -75px -23px;
-}
-
-div.olControlEditingToolbar .olControlSelectFeatureItemInactive {
-    background-position: -100px 0px;
-}
-
-div.olControlEditingToolbar .olControlSelectFeatureItemActive {
-    background-position: -100px -23px;
-}
-
-div.olControlEditingToolbar .olControlModifyFeatureItemInactive {
-    background-position: -125px 0px;
-}
-
-div.olControlEditingToolbar .olControlModifyFeatureItemActive {
-    background-position: -125px -23px;
-}
-
-div.olControlEditingToolbar .olControlClearLayerItemInactive {
-    background-position: -150px 0px;
-}
-
-div.olControlEditingToolbar .olControlClearLayerItemActive {
-    background-position: -150px -23px;
-}
-
-div.olControlEditingToolbar .olControlClickSrefItemInactive {
-    background-position: -175px 0px;
-}
-
-div.olControlEditingToolbar .olControlClickSrefItemActive {
-    background-position: -175px -23px;
-}
-
-div.olControlEditingToolbar .olControlFullscreenItemInactive {
-    background-position: -200px 0px;
-}
-
-div.olControlEditingToolbar .olControlFullscreenItemActive {
-    background-position: -200px -23px;
-}
-
-/* Click tolerance input */
-label#click-buffer {
-  position: absolute;
-  top: 8px;
-  width: auto;
-  margin: 0 4px;
-  background: white;
-  opacity: 0.7;
-  z-index: 9999;
-  float: left !important;
 }
 
 .unlocked-icon {
