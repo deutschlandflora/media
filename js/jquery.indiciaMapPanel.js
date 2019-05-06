@@ -990,7 +990,7 @@ var destroyAllFeatures;
       var osLeisureOptions = {
         name: 'Ordnance Survey Leisure',
         layer: 'Leisure 27700',
-        layerId: 'os_leisure',
+        layerId: 'os_leisure.0',
         url: 'https://api2.ordnancesurvey.co.uk/mapping_api/v1/service/wmts?key=' + settings.os_api_key,
         version: '1.0.0',
         style: true,
