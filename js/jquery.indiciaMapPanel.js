@@ -2637,19 +2637,21 @@ var destroyAllFeatures;
       // Centre the map, using cookie if remembering position, otherwise default setting.
       var zoom = null;
       var center = { lat: null, lon: null };
+      var baseLayerId;
       var baseLayerIdParts;
       var added;
       if (typeof $.cookie !== 'undefined' && div.settings.rememberPos !== false) {
         zoom = $.cookie('mapzoom');
         center.lon = $.cookie('maplon');
         center.lat = $.cookie('maplat');
-        baseLayerIdParts = $.cookie('mapbaselayerid').split('.');
+        baseLayerId = $.cookie('mapbaselayerid');
       }
       // Missing cookies result in null or undefined variables
 
       // Set the base layer using cookie if remembering.
       // Do this before centring to ensure lat/long are in correct projection.
-      if (baseLayerIdParts) {
+      if (baseLayerId) {
+        baseLayerIdParts = baseLayerId.split('.');
         // Note the stored mapbaselayerid should include both the stem of the
         // base layer name, then a dot, then the sub-layer index (zero unless
         // a dynamic layer). But, if the cookie saved via older version of the
