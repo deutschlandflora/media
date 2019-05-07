@@ -18,62 +18,61 @@
  * service at nominatim.openstreetmap.org.
  */
 
-var Georeferencer;
+(function enclose($) {
+  window.Georeferencer = function georeferencer(mapdiv, callback) {
+    var tokens = [];
+    var near;
+    this.mapdiv = mapdiv;
+    // Make the place search near the chosen location.
+    if (this.mapdiv.georefOpts.georefPreferredArea !== '') {
+      tokens.push(this.mapdiv.georefOpts.georefPreferredArea.toLowerCase());
+    }
+    if (this.mapdiv.georefOpts.georefCountry !== '') {
+      tokens.push(this.mapdiv.georefOpts.georefCountry.toLowerCase());
+    }
+    if (tokens.indexOf('gb') > -1 && tokens.indexOf('united kingdom') > -1) {
+      // Nominatim has a quirk whereby if both GB and United Kingdom appear in the
+      // search term, everything is filtered out. If either is used on it's own,
+      // that's fine. If both are present we retain the more specific GB.
+      tokens.splice(tokens.indexOf('united kingdom'), 1);
+    }
+    near = tokens.join(', ');
 
-(function ($) {
-    Georeferencer = function(mapdiv, callback) {
-        var tokens = [];
-        var near;
-        this.mapdiv = mapdiv;
-        // make the place search near the chosen location
-        if (this.mapdiv.georefOpts.georefPreferredArea !== '') {
-            tokens.push(this.mapdiv.georefOpts.georefPreferredArea.toLowerCase());
-        }
-        if (this.mapdiv.georefOpts.georefCountry !== '') {
-            tokens.push(this.mapdiv.georefOpts.georefCountry.toLowerCase());
-        }
-        if (tokens.indexOf("gb") > -1 && tokens.indexOf("united kingdom") > -1) {
-            //Nominatim has a quirk whereby if both GB and United Kingdom appear in the
-            //search term, everything is filtered out. If either is used on it's own,
-            //that's fine. If both are present we retain the more specific GB.
-            tokens.splice(tokens.indexOf("united kingdom"), 1)
-        }
-        near = tokens.join(', ');
-
-        this.georeference = function(searchtext) {
-            var fullsearchtext = near ? searchtext + ', ' + near : searchtext;
-            var request = indiciaData.proxyUrl +
-                '?url=https://nominatim.openstreetmap.org?format=json&q=' + fullsearchtext;
-            $.getJSON(request, function(data) {
-            // an array to store the responses in the required country
-            var places = [], converted={};
-            jQuery.each(data, function(i,place) {
-                    converted = {
-                        name : place.display_name,
-                        display : place.display_name,
-                        centroid: {
-                        x: place.lon,
-                        y: place.lat
-                        },
-                        boundingBox: {
-                        southWest: {
-                            x: place.boundingbox[2],
-                            y: place.boundingbox[1]
-                        },
-                        northEast: {
-                            x: place.boundingbox[3],
-                            y: place.boundingbox[0]
-                        }
-                        },
-                        obj: place
-                    };
-                    places.push(converted);
-            });
-            callback(mapdiv, places);
-            });
-        };
+    this.georeference = function georeference(searchtext) {
+      var fullsearchtext = near ? searchtext + ', ' + near : searchtext;
+      var request = indiciaData.proxyUrl +
+          '?url=https://nominatim.openstreetmap.org?format=json&q=' + fullsearchtext;
+      $.getJSON(request, function handleResponse(data) {
+        // an array to store the responses in the required country
+        var places = [];
+        var converted = {};
+        jQuery.each(data, function eachRow(i, place) {
+          converted = {
+            name: place.display_name,
+            display: place.display_name,
+            centroid: {
+              x: place.lon,
+              y: place.lat
+            },
+            boundingBox: {
+              southWest: {
+                x: place.boundingbox[2],
+                y: place.boundingbox[1]
+              },
+              northEast: {
+                x: place.boundingbox[3],
+                y: place.boundingbox[0]
+              }
+            },
+            obj: place
+          };
+          places.push(converted);
+        });
+        callback(mapdiv, places);
+      });
     };
-  }) (jQuery);
+  };
+}(jQuery));
 
 /**
  * Default this.mapdiv.georefOpts for this driver
