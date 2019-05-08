@@ -76,7 +76,6 @@
     if (config.type === 'circle' && typeof metric !== 'undefined') {
       config.options.radius = metric;
       config.options.fillOpacity = 0.5;
-      config.options.stroke = false;
     }
     switch (config.type) {
       // Circle markers on layer.
@@ -279,7 +278,7 @@
       // Are there document hits to map?
       $.each(response.hits.hits, function eachHit() {
         var latlon = this._source.location.point.split(',');
-        addFeature(el, sourceSettings.id, latlon);
+        addFeature(el, sourceSettings.id, latlon, this._source.location.coordinate_uncertainty_in_meters);
       });
       // Are there aggregations to map?
       if (typeof response.aggregations !== 'undefined') {
