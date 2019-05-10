@@ -1531,16 +1531,18 @@ var destroyAllFeatures;
             //Continue with the deactivation.
             OpenLayers.Control.prototype.deactivate.call(this);
           },
-          activate: function() {
+          activate: function activate() {
             if (div.settings.selectFeatureBufferProjection) {
               if ($('#click-buffer').length === 0) {
                 $('#map-container').append(
                   '<label id="click-buffer" class="olButton">Tolerance:<input type="text" value="1000"/>m</label>');
-                  $('#click-buffer').css('right', $('.olControlEditingToolbar').outerWidth() + 10);
-                $("#click-buffer input").keyup(function () {
-                  $("#click-buffer input").val(this.value.match(/[0-9]*/));
+                $('#click-buffer').css('right', $('.olControlEditingToolbar').outerWidth() + 10);
+                $('#click-buffer input').keypress(function (evt) {
+                  if (evt.which < 48 || evt.which > 57) {
+                    evt.preventDefault();
+                  }
                 });
-                $("#click-buffer input").change(function () {
+                $('#click-buffer input').change(function () {
                   bufferRoundSelectedRecord(div, $('#click-buffer input').val());
                 });
               } else {
