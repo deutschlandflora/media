@@ -38,9 +38,7 @@ jQuery(document).ready(function ($) {
     return origRemove.apply(this, arguments).trigger('remove');
   };
 
-  indiciaData.filter = {def: {}, id: null, title: null};
-
-  indiciaFns.enableBuffering();
+  indiciaData.filter = { def: {}, id: null, title: null };
 
   function removeSite() {
     var idToRemove = $(this).find('input[name="location_list[]"]').val();
@@ -511,14 +509,17 @@ jQuery(document).ready(function ($) {
         }
 
         $.each(indiciaData.mapdiv.map.editLayer.features, function (i, feature) {
+          var thisGeom;
           // ignore features with a special purpose, e.g. the selected record when verifying
           if (typeof feature.tag === 'undefined' &&
-            (typeof feature.attributes.type === 'undefined' ||
-            (feature.attributes.type !== 'boundary' && feature.attributes.type !== 'ghost'))) {
-            if (feature.geometry.CLASS_NAME.indexOf('Multi') !== -1) {
-              geoms = geoms.concat(feature.geometry.components);
+             (typeof feature.attributes.type === 'undefined' ||
+             (feature.attributes.type !== 'boundary' && feature.attributes.type !== 'ghost'))) {
+            // In some cases, custom code adds a buffer to the search area feature.
+            thisGeom = typeof feature.buffer === 'undefined' ? feature.geometry : feature.buffer.geometry;
+            if (thisGeom.CLASS_NAME.indexOf('Multi') !== -1) {
+              geoms = geoms.concat(thisGeom.components);
             } else {
-              geoms.push(feature.geometry);
+              geoms.push(thisGeom);
             }
           }
         });
@@ -829,7 +830,7 @@ jQuery(document).ready(function ($) {
   }
   // Event handler for a draw tool boundary being added which clears the other controls on the map pane.
   function addedFeature() {
-    $('#controls-filter_where').find(':input').not('#imp-sref-system,:checkbox,[type=button],[name="location_list\[\]"]').val('');
+    $('#controls-filter_where').find(':input').not('.locked-value,#imp-sref-system,:checkbox,[type=button],[name="location_list\[\]"]').val('');
     $('#controls-filter_where').find(':checkbox').attr('checked', false);
     // If a selected site but switching to freehand, we need to clear the site boundary.
     if (siteOrGridRefSelected()) {
