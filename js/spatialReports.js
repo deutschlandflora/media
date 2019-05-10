@@ -67,11 +67,13 @@
     });
   }
 
-  indiciaFns.bufferFeature = function bufferFeature(feature, bufferSize) {
+  indiciaFns.bufferFeature = function bufferFeature(feature, bufferSize, segmentsInQuarterCircle, projection) {
     var geom;
     var i;
     var j;
     var objFpt;
+    var segments = typeof segmentsInQuarterCircle === 'undefined' ? 8 : segmentsInQuarterCircle;
+    var prj = typeof projection === 'undefined' ? 3857 : projection;
 
     function storeBuffer(buffer) {
       feature.buffer = buffer;
@@ -107,7 +109,9 @@
           url: indiciaData.mapdiv.settings.indiciaSvc + 'index.php/services/spatial/buffer?callback=?',
           data: {
             wkt: geom.toString(),
-            buffer: bufferSize
+            buffer: bufferSize,
+            segmentsInQuarterCircle: segments,
+            projection: prj
           },
           success: function success(buffered) {
             var buffer = new OpenLayers.Feature.Vector(OpenLayers.Geometry.fromWKT(buffered.response));
