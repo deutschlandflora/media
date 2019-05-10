@@ -40,6 +40,8 @@ jQuery(document).ready(function ($) {
 
   indiciaData.filter = {def: {}, id: null, title: null};
 
+  indiciaFns.enableBuffering();
+
   function removeSite() {
     var idToRemove = $(this).find('input[name="location_list[]"]').val();
     var toRemove = [];
