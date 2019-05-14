@@ -2306,6 +2306,21 @@ var destroyAllFeatures;
       var layerId = id + '.' + (dynamicLayerIndex || 0);
       var lSwitch = div.map.getLayersBy('layerId', layerId)[0];
       var newMapExtent;
+      if (!lSwitch) {
+        availableLayers = _getPresetLayers(div.settings);
+        if (availableLayers[id]) {
+          if ($.isArray(availableLayers[id])) {
+            // Dynamic layers defined as an array of sub-layers. If index to
+            // load not specified, load the first.
+            lSwitch = availableLayers[id][dynamicLayerIndex || 0]();
+          } else {
+            lSwitch = availableLayers[id]();
+          }
+          div.map.addLayer(lSwitch);
+          // Ensure layer inserts at correct position.
+          div.map.setLayerIndex(lSwitch, div.map.getLayerIndex(div.map.baseLayer));
+        }
+      }
       if (lSwitch && div.map.getExtent()) {
         newMapExtent = div.map.getExtent().transform(div.map.projection, lSwitch.projection);
         // Don't switch layer if the new layer can't display the whole
@@ -2324,21 +2339,6 @@ var destroyAllFeatures;
       }
       if (lSwitch) {
         if (!lSwitch.getVisibility()) {
-          div.map.setBaseLayer(lSwitch);
-        }
-      } else {
-        availableLayers = _getPresetLayers(div.settings);
-        if (availableLayers[id]) {
-          if ($.isArray(availableLayers[id])) {
-            // Dynamic layers defined as an array of sub-layers. If index to
-            // load not specified, load the first.
-            lSwitch = availableLayers[id][dynamicLayerIndex || 0]();
-          } else {
-            lSwitch = availableLayers[id]();
-          }
-          div.map.addLayer(lSwitch);
-          // Ensure layer inserts at correct position.
-          div.map.setLayerIndex(lSwitch, div.map.getLayerIndex(div.map.baseLayer));
           div.map.setBaseLayer(lSwitch);
         }
       }
