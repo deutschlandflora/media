@@ -1281,7 +1281,7 @@ var destroyAllFeatures;
       var minTolerance;
       if (geom instanceof OpenLayers.Geometry) {
         minTolerance = getMinTolerance(geom, div);
-        for (var l = 0; l<layers.length; ++l) {
+        for (var l = 0; l < layers.length; ++l) {
           // set defaults
           getRadius = null;
           getStrokeWidth = null;
@@ -1291,14 +1291,14 @@ var destroyAllFeatures;
           // when testing a click point, use a circle drawn around the click point so the
           // click does not have to be exact. At this stage, we just look for the layer default
           // pointRadius and strokeWidth, so we can calculate the geom size to test.
-          if (geom.CLASS_NAME==='OpenLayers.Geometry.Point') {
-            if (typeof layer.styleMap.styles['default'].defaultStyle.pointRadius !== 'undefined') {
-              radius = layer.styleMap.styles['default'].defaultStyle.pointRadius;
-              if (typeof radius === "string") {
+          if (geom.CLASS_NAME === 'OpenLayers.Geometry.Point') {
+            if (typeof layer.styleMap.styles.default.defaultStyle.pointRadius !== 'undefined') {
+              radius = layer.styleMap.styles.default.defaultStyle.pointRadius;
+              if (typeof radius === 'string') {
                 // A setting {n} means we use n to get the pointRadius per feature (either a field or a context func)
                 match = radius.match(/^\${(.+)}/);
                 if (match !== null && match.length > 1) {
-                  getRadius = layer.styleMap.styles['default'].context[match[1]];
+                  getRadius = layer.styleMap.styles.default.context[match[1]];
                   if (getRadius === undefined) {
                     // the context function is missing, so must be a field name
                     getRadius = match[1];
@@ -1306,13 +1306,13 @@ var destroyAllFeatures;
                 }
               }
             }
-            if (typeof layer.styleMap.styles['default'].defaultStyle.strokeWidth !== 'undefined') {
-              strokeWidth = layer.styleMap.styles['default'].defaultStyle.strokeWidth;
+            if (typeof layer.styleMap.styles.default.defaultStyle.strokeWidth !== 'undefined') {
+              strokeWidth = layer.styleMap.styles.default.defaultStyle.strokeWidth;
               if (typeof strokeWidth === 'string') {
                 // A setting {n} means we use n to get the strokeWidth per feature (either a field or a context func)
                 match = strokeWidth.match(/^\${(.+)}/);
                 if (match !== null && match.length > 1) {
-                  getStrokeWidth = layer.styleMap.styles['default'].context[match[1]];
+                  getStrokeWidth = layer.styleMap.styles.default.context[match[1]];
                   if (getStrokeWidth === undefined) {
                     // the context function is missing, so must be a field name
                     getStrokeWidth = match[1];
@@ -1531,16 +1531,19 @@ var destroyAllFeatures;
             //Continue with the deactivation.
             OpenLayers.Control.prototype.deactivate.call(this);
           },
-          activate: function() {
+          activate: function activate() {
             if (div.settings.selectFeatureBufferProjection) {
               if ($('#click-buffer').length === 0) {
                 $('#map-container').append(
                   '<label id="click-buffer" class="olButton">Tolerance:<input type="text" value="1000"/>m</label>');
-                  $('#click-buffer').css('right', $('.olControlEditingToolbar').outerWidth() + 10);
-                $("#click-buffer input").keyup(function () {
-                  $("#click-buffer input").val(this.value.match(/[0-9]*/));
+                $('#click-buffer').css('right', $('.olControlEditingToolbar').outerWidth() + 10);
+                $('#click-buffer input').keypress(function (evt) {
+                  // Only accept numeric input.
+                  if (evt.which < 48 || evt.which > 57) {
+                    evt.preventDefault();
+                  }
                 });
-                $("#click-buffer input").change(function () {
+                $('#click-buffer input').change(function () {
                   bufferRoundSelectedRecord(div, $('#click-buffer input').val());
                 });
               } else {
@@ -2219,13 +2222,19 @@ var destroyAllFeatures;
      *  https://gis.stackexchange.com/questions/24572/how-do-i-use-base-layer-of-two-different-projection-spherical-mercator-and-wgs84
      */
     function matchMapProjectionToLayer(map) {
-      var layer = map.baseLayer;
-      var newProjection = layer.projection;
+      var baseLayer = map.baseLayer;
+      var newProjection = baseLayer.projection;
       var currentProjection = map.projection;
-      var centre = map.div.settings.lastMapCentreBeforeSwitch
-        ? map.div.settings.lastMapCentreBeforeSwitch : map.getCenter();
+      var centre = map.div.settings.lastMapCentreBeforeSwitch;
       var zoom = map.getZoom();
-      var editLayer = map.editLayer;
+      if (!map.div.settings.lastMapCentreBeforeSwitch) {
+        map.div.settings.lastMapCentreBeforeSwitch = map.getCenter();
+        // Always rack the last map centre in 4326 to avoid issues when the map
+        // switches projections.
+        if (map.div.settings.lastMapCentreBeforeSwitch) {
+          map.div.settings.lastMapCentreBeforeSwitch.transform(map.projection, map.displayProjection);
+        }
+      }
       if (!(currentProjection instanceof OpenLayers.Projection)) {
         // If a projection code, convert to object.
         currentProjection = new OpenLayers.Projection(map.projection);
@@ -2233,8 +2242,8 @@ var destroyAllFeatures;
 
       if (!newProjection.equals(currentProjection)) {
         // Update map properties to match properties of baseLayer.
-        map.maxExtent = layer.maxExtent;
-        map.resolutions = layer.resolutions;
+        map.maxExtent = baseLayer.maxExtent;
+        map.resolutions = baseLayer.resolutions;
         map.projection = newProjection;
         // Redraw map based on new projection. Centre might be null during
         // initial load.
@@ -2246,23 +2255,28 @@ var destroyAllFeatures;
           if (map.baseLayer.projection.getCode() === 'EPSG:27700') {
             zoom += 1;
           }
-          centre = centre.transform(currentProjection, newProjection);
+          // Centre in EPSG:4326 so convert back to map projection before
+          // panning.
+          centre = centre.transform(map.displayProjection, newProjection);
           map.setCenter(centre, zoom, false, true);
         }
 
-        // Update edit layer properties to match properties of baseLayer.
-        if (typeof editLayer !== 'undefined') {
-          editLayer.maxExtent = layer.maxExtent;
-          editLayer.resolutions = layer.resolutions;
-          if (!newProjection.equals(currentProjection)) {
-            editLayer.projection = newProjection;
-            // Reproject edit layer
-            $.each(map.editLayer.features, function (idx, feature) {
-              feature.geometry.transform(currentProjection, newProjection);
-            });
-            map.editLayer.redraw();
+        // Update vector layer properties to match properties of baseLayer.
+        $.each(map.layers, function() {
+          var thisLayer = this;
+          if (thisLayer.CLASS_NAME === 'OpenLayers.Layer.Vector') {
+            thisLayer.maxExtent = baseLayer.maxExtent;
+            thisLayer.resolutions = baseLayer.resolutions;
+            if (!newProjection.equals(currentProjection)) {
+              thisLayer.projection = newProjection;
+              // Reproject vector layer features.
+              $.each(thisLayer.features, function (idx, feature) {
+                feature.geometry.transform(currentProjection, newProjection);
+              });
+              thisLayer.redraw();
+            }
           }
-        }
+        });
       }
     }
 
@@ -2294,12 +2308,8 @@ var destroyAllFeatures;
       var availableLayers;
       var layerId = id + '.' + (dynamicLayerIndex || 0);
       var lSwitch = div.map.getLayersBy('layerId', layerId)[0];
-      div.settings.lastMapCentreBeforeSwitch = div.map.getCenter();
-      if (lSwitch) {
-        if (!lSwitch.getVisibility()) {
-          div.map.setBaseLayer(lSwitch);
-        }
-      } else {
+      var newMapExtent;
+      if (!lSwitch) {
         availableLayers = _getPresetLayers(div.settings);
         if (availableLayers[id]) {
           if ($.isArray(availableLayers[id])) {
@@ -2312,6 +2322,26 @@ var destroyAllFeatures;
           div.map.addLayer(lSwitch);
           // Ensure layer inserts at correct position.
           div.map.setLayerIndex(lSwitch, div.map.getLayerIndex(div.map.baseLayer));
+        }
+      }
+      if (lSwitch && div.map.getExtent()) {
+        newMapExtent = div.map.getExtent().transform(div.map.projection, lSwitch.projection);
+        // Don't switch layer if the new layer can't display the whole
+        // viewport.
+        if (!lSwitch.maxExtent.containsBounds(newMapExtent)) {
+          if (dynamicLayerIndex > 0) {
+            return switchToBaseLayer(div, id, dynamicLayerIndex - 1);
+          }
+        }
+      }
+      // Track where we are centred, in case projection change moves the map
+      // so it needs recentering.
+      div.settings.lastMapCentreBeforeSwitch = div.map.getCenter();
+      if (div.settings.lastMapCentreBeforeSwitch) {
+        div.settings.lastMapCentreBeforeSwitch.transform(div.map.projection, div.map.displayProjection);
+      }
+      if (lSwitch) {
+        if (!lSwitch.getVisibility()) {
           div.map.setBaseLayer(lSwitch);
         }
       }
@@ -2323,12 +2353,7 @@ var destroyAllFeatures;
      */
     function handleDynamicLayerSwitching(div) {
       var thisZoomLevel = div.map.getZoom();
-      var visLayers = div.map.getLayersBy('visibility', true);
-      var visLayerIds;
-      var offLayer;
       var onLayer;
-      var lyrsForShownInputs = [];
-      var lyrsForHiddenInputs = [];
       var switcherChange = false;
       var baseLayer = div.map.baseLayer;
       // A dynamic layer's sub-layer has a layerId set to layerName.index, e.g.
@@ -2348,19 +2373,15 @@ var destroyAllFeatures;
       } else {
         onLayerIdx = baseLayer.dynamicLayerIndex;
       }
-      if (onLayerIdx !== baseLayer.dynamicLayerIndex) {
-        indiciaData.settingBaseLayer = true;
-        try {
-          // Ensure switch is immediate.
-          baseLayer.removeBackBufferDelay = 0;
-          // Swap the index number of the base layer's ID to the new layer's
-          // index to find the correct layer ID. Then swap to that layer.
-          onLayer = switchToBaseLayer(div, baseLayerIdParts[0], onLayerIdx);
-        } finally {
-          indiciaData.settingBaseLayer = false;
-        }
-      } else {
-        onLayer = baseLayer;
+      indiciaData.settingBaseLayer = true;
+      try {
+        // Ensure switch is immediate.
+        baseLayer.removeBackBufferDelay = 0;
+        // Swap the index number of the base layer's ID to the new layer's
+        // index to find the correct layer ID. Then swap to that layer.
+        onLayer = switchToBaseLayer(div, baseLayerIdParts[0], onLayerIdx);
+      } finally {
+        indiciaData.settingBaseLayer = false;
       }
       $.each(div.map.layers, function () {
         if (this.layerId && this.layerId.indexOf(baseLayerIdParts[0]) === 0) {
@@ -2379,7 +2400,7 @@ var destroyAllFeatures;
           }
         });
       }
-    };
+    }
 
     // Extend our default options with those provided, basing this on an empty object
     // so the defaults don't get changed.
@@ -2560,21 +2581,6 @@ var destroyAllFeatures;
           }
         }
       });
-      // setup the map to save the last position
-      if (div.settings.rememberPos && typeof $.cookie !== 'undefined') {
-        div.map.events.register('moveend', null, function () {
-          $.cookie('mapzoom', div.map.zoom, { expires: 7 });
-          $.cookie('maplon', div.map.center.lon, { expires: 7 });
-          $.cookie('maplat', div.map.center.lat, { expires: 7 });
-          // Store the name of the layer or dynamic layer group (the part
-          // before the . in layerId).
-          $.cookie('mapbaselayerid', div.map.baseLayer.layerId, { expires: 7 });
-        });
-      }
-
-      div.map.events.register('zoomend', null, function () {
-        handleDynamicLayerSwitching(div);
-      });
 
       // and prepare a georeferencer
       div.georefOpts = $.extend({}, $.fn.indiciaMapPanel.georeferenceDriverSettings, $.fn.indiciaMapPanel.georeferenceLookupSettings);
@@ -2637,19 +2643,21 @@ var destroyAllFeatures;
       // Centre the map, using cookie if remembering position, otherwise default setting.
       var zoom = null;
       var center = { lat: null, lon: null };
+      var baseLayerId;
       var baseLayerIdParts;
       var added;
       if (typeof $.cookie !== 'undefined' && div.settings.rememberPos !== false) {
         zoom = $.cookie('mapzoom');
-        center.lon = $.cookie('maplon');
-        center.lat = $.cookie('maplat');
-        baseLayerIdParts = $.cookie('mapbaselayerid').split('.');
+        center.lon = $.cookie('maplongitude');
+        center.lat = $.cookie('maplatitude');
+        baseLayerId = $.cookie('mapbaselayerid');
       }
       // Missing cookies result in null or undefined variables
 
       // Set the base layer using cookie if remembering.
       // Do this before centring to ensure lat/long are in correct projection.
-      if (baseLayerIdParts) {
+      if (baseLayerId) {
+        baseLayerIdParts = baseLayerId.split('.');
         // Note the stored mapbaselayerid should include both the stem of the
         // base layer name, then a dot, then the sub-layer index (zero unless
         // a dynamic layer). But, if the cookie saved via older version of the
@@ -2663,6 +2671,7 @@ var destroyAllFeatures;
       div.map.events.register('changebaselayer', null, function () {
         // New layer may have different projection.
         matchMapProjectionToLayer(div.map);
+
       });
 
       // Set zoom and centre from cookie, if present, else from initial settings.
@@ -2672,18 +2681,30 @@ var destroyAllFeatures;
       if (typeof center.lat === 'undefined' || center.lat === null
           || typeof center.lon === 'undefined' || center.lon === null) {
         center = new OpenLayers.LonLat(this.settings.initial_long, this.settings.initial_lat);
-        if (div.map.displayProjection.getCode() !== div.map.projection.getCode()) {
-          center.transform(div.map.displayProjection, div.map.projection);
-        }
       } else {
         center = new OpenLayers.LonLat(center.lon, center.lat);
       }
-      // We need to centre the map properly first before zooming in to ensure
-      // that dynamic layer auto-switching knows exactly where the map is
-      // centred before switching base layer. Important if the projections are
-      // different.
-      div.map.setCenter(center, div.map.getZoom());
+      if (div.map.displayProjection.getCode() !== div.map.projection.getCode()) {
+        center.transform(div.map.displayProjection, div.map.projection);
+      }
       div.map.setCenter(center, zoom);
+      // Register moveend must come after panning and zooming the initial map
+      // so the dynamic layer switcher does not mess up the centering code.
+      div.map.events.register('moveend', null, function () {
+        var centreLatLon = div.map.getCenter();
+        centreLatLon.transform(div.map.projection, div.map.displayProjection);
+        handleDynamicLayerSwitching(div);
+        // setup the map to save the last position
+        if (div.settings.rememberPos && typeof $.cookie !== 'undefined') {
+          $.cookie('mapzoom', div.map.zoom, { expires: 7 });
+          $.cookie('maplongitude', centreLatLon.lon, { expires: 7 });
+          $.cookie('maplatitude', centreLatLon.lat, { expires: 7 });
+          // Store the name of the layer or dynamic layer group (the part
+          // before the . in layerId).
+          $.cookie('mapbaselayerid', div.map.baseLayer.layerId, { expires: 7 });
+        }
+      });
+      handleDynamicLayerSwitching(div);
       /**
        * Public function to change selection of features on a layer.
        */
