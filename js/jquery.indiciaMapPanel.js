@@ -1281,7 +1281,7 @@ var destroyAllFeatures;
       var minTolerance;
       if (geom instanceof OpenLayers.Geometry) {
         minTolerance = getMinTolerance(geom, div);
-        for (var l = 0; l<layers.length; ++l) {
+        for (var l = 0; l < layers.length; ++l) {
           // set defaults
           getRadius = null;
           getStrokeWidth = null;
@@ -1291,14 +1291,14 @@ var destroyAllFeatures;
           // when testing a click point, use a circle drawn around the click point so the
           // click does not have to be exact. At this stage, we just look for the layer default
           // pointRadius and strokeWidth, so we can calculate the geom size to test.
-          if (geom.CLASS_NAME==='OpenLayers.Geometry.Point') {
-            if (typeof layer.styleMap.styles['default'].defaultStyle.pointRadius !== 'undefined') {
-              radius = layer.styleMap.styles['default'].defaultStyle.pointRadius;
-              if (typeof radius === "string") {
+          if (geom.CLASS_NAME === 'OpenLayers.Geometry.Point') {
+            if (typeof layer.styleMap.styles.default.defaultStyle.pointRadius !== 'undefined') {
+              radius = layer.styleMap.styles.default.defaultStyle.pointRadius;
+              if (typeof radius === 'string') {
                 // A setting {n} means we use n to get the pointRadius per feature (either a field or a context func)
                 match = radius.match(/^\${(.+)}/);
                 if (match !== null && match.length > 1) {
-                  getRadius = layer.styleMap.styles['default'].context[match[1]];
+                  getRadius = layer.styleMap.styles.default.context[match[1]];
                   if (getRadius === undefined) {
                     // the context function is missing, so must be a field name
                     getRadius = match[1];
@@ -1306,13 +1306,13 @@ var destroyAllFeatures;
                 }
               }
             }
-            if (typeof layer.styleMap.styles['default'].defaultStyle.strokeWidth !== 'undefined') {
-              strokeWidth = layer.styleMap.styles['default'].defaultStyle.strokeWidth;
+            if (typeof layer.styleMap.styles.default.defaultStyle.strokeWidth !== 'undefined') {
+              strokeWidth = layer.styleMap.styles.default.defaultStyle.strokeWidth;
               if (typeof strokeWidth === 'string') {
                 // A setting {n} means we use n to get the strokeWidth per feature (either a field or a context func)
                 match = strokeWidth.match(/^\${(.+)}/);
                 if (match !== null && match.length > 1) {
-                  getStrokeWidth = layer.styleMap.styles['default'].context[match[1]];
+                  getStrokeWidth = layer.styleMap.styles.default.context[match[1]];
                   if (getStrokeWidth === undefined) {
                     // the context function is missing, so must be a field name
                     getStrokeWidth = match[1];
@@ -1531,16 +1531,19 @@ var destroyAllFeatures;
             //Continue with the deactivation.
             OpenLayers.Control.prototype.deactivate.call(this);
           },
-          activate: function() {
+          activate: function activate() {
             if (div.settings.selectFeatureBufferProjection) {
               if ($('#click-buffer').length === 0) {
                 $('#map-container').append(
                   '<label id="click-buffer" class="olButton">Tolerance:<input type="text" value="1000"/>m</label>');
-                  $('#click-buffer').css('right', $('.olControlEditingToolbar').outerWidth() + 10);
-                $("#click-buffer input").keyup(function () {
-                  $("#click-buffer input").val(this.value.match(/[0-9]*/));
+                $('#click-buffer').css('right', $('.olControlEditingToolbar').outerWidth() + 10);
+                $('#click-buffer input').keypress(function (evt) {
+                  // Only accept numeric input.
+                  if (evt.which < 48 || evt.which > 57) {
+                    evt.preventDefault();
+                  }
                 });
-                $("#click-buffer input").change(function () {
+                $('#click-buffer input').change(function () {
                   bufferRoundSelectedRecord(div, $('#click-buffer input').val());
                 });
               } else {
