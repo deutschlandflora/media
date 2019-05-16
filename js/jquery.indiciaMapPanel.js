@@ -2321,7 +2321,13 @@ var destroyAllFeatures;
           }
           div.map.addLayer(lSwitch);
           // Ensure layer inserts at correct position.
-          div.map.setLayerIndex(lSwitch, div.map.getLayerIndex(div.map.baseLayer));
+          if ($.isArray(availableLayers[id])) {
+            //For dynamic layers, search for the default layer - index 0 - and use that
+            //for the insertion position
+            div.map.setLayerIndex(lSwitch, div.map.getLayerIndex(div.map.getLayersBy('layerId', availableLayers[id][0]().layerId)[0]));
+          } else {
+            div.map.setLayerIndex(lSwitch, div.map.getLayerIndex(div.map.baseLayer));
+          }
         }
       }
       if (lSwitch && div.map.getExtent()) {
