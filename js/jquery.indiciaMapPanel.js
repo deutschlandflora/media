@@ -2230,10 +2230,12 @@ var destroyAllFeatures;
       var baseLayer = map.baseLayer;
       var newProjection = baseLayer.projection;
       var currentProjection = map.projection;
-      var centre = map.div.settings.lastMapCentre;
+      var centre;
       var zoom = map.getZoom();
-      if (centre) {
-        centre = centre.transform(map.displayProjection, newProjection);
+      if (map.div.settings.lastMapCentre) {
+        // Clone the stored lastMapCentre so the transform only affects the copy.
+        centre = new OpenLayers.LonLat(map.div.settings.lastMapCentre.lon, map.div.settings.lastMapCentre.lat);
+        centre.transform(map.displayProjection, newProjection);
       } else {
         centre = map.getCenter();
       }
@@ -2688,14 +2690,18 @@ var destroyAllFeatures;
       // Register moveend must come after panning and zooming the initial map
       // so the dynamic layer switcher does not mess up the centering code.
       div.map.events.register('moveend', null, function () {
-        div.settings.lastMapCentre = div.map.getCenter();
-        div.settings.lastMapCentre.transform(div.map.projection, div.map.displayProjection);
+        if (!indiciaData.settingBaseLayer) {
+          div.settings.lastMapCentre = div.map.getCenter();
+          div.settings.lastMapCentre.transform(div.map.baseLayer.projection, div.map.displayProjection);
+        }
         handleDynamicLayerSwitching(div);
         // setup the map to save the last position
         if (div.settings.rememberPos && typeof $.cookie !== 'undefined') {
           $.cookie('mapzoom', div.map.zoom, { expires: 7 });
-          $.cookie('maplongitude', div.settings.lastMapCentre.lon, { expires: 7 });
-          $.cookie('maplatitude', div.settings.lastMapCentre.lat, { expires: 7 });
+          if (!indiciaData.settingBaseLayer) {
+            $.cookie('maplongitude', div.settings.lastMapCentre.lon, { expires: 7 });
+            $.cookie('maplatitude', div.settings.lastMapCentre.lat, { expires: 7 });
+          }
           // Store the name of the layer or dynamic layer group (the part
           // before the . in layerId).
           $.cookie('mapbaselayerid', div.map.baseLayer.layerId, { expires: 7 });
