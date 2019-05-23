@@ -2692,7 +2692,7 @@ var destroyAllFeatures;
       div.map.events.register('moveend', null, function () {
         if (!indiciaData.settingBaseLayer) {
           div.settings.lastMapCentre = div.map.getCenter();
-          div.settings.lastMapCentre.transform(div.map.baseLayer.projection, div.map.displayProjection);
+          div.settings.lastMapCentre.transform(div.map.projection, div.map.displayProjection);
         }
         handleDynamicLayerSwitching(div);
         // setup the map to save the last position
