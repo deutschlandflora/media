@@ -1203,9 +1203,15 @@ var destroyAllFeatures;
               layerId: 'dynamicOSGoogleSat.1',
               dynamicLayerIndex: 1,
               explicitlyDisallowed: [
+                // This MBR covers the island of Ireland where OS Leisure
+                // only has the most basic of OS mapping - country outline -
+                // at smaller scales and nothing all all as you zoom in.
                 new OpenLayers.Bounds([-210000, 190000, 180000, 630000])
               ],
               explicitlyAllowed: [
+                // This MBR covers the southern end of the Kintyre peninsula
+                // in Scotland which falls within the large NBR for all of the
+                // island of Ireland.
                 new OpenLayers.Bounds([145000, 600000, 193000, 640000])
               ]
             }));
@@ -2343,20 +2349,20 @@ var destroyAllFeatures;
             return switchToBaseLayer(div, id, dynamicLayerIndex - 1);
           }
         }
-        //Don't switch layer if the viewport is contained by any 'explicitlyDisallowed'
-        //specified for the layer, *unless* it is also contained by any 'permittedDisplayAreas'
-        var allowed = true;
+        //Don't switch layer if the viewport is contained by any 'explicitlyDisallowed' MBRs
+        //specified for the layer, *unless* it is also contained by any 'explicitlyAllowed' MBRs
+        var inAllowed, inDisallowed;
+        if (lSwitch.explicitlyDisallowed) {
+          inDisallowed = lSwitch.explicitlyDisallowed.some(function(mbr){
+            return mbr.containsBounds(newMapExtent);
+          });
+        }
         if (lSwitch.explicitlyAllowed){
-          allowed = lSwitch.explicitlyAllowed.some(function(mbr){
+          inAllowed = lSwitch.explicitlyAllowed.some(function(mbr){
             return mbr.containsBounds(newMapExtent);
           });
         }
-        if (!allowed && lSwitch.explicitlyDisallowed) {
-          allowed = !lSwitch.explicitlyDisallowed.some(function(mbr){
-            return mbr.containsBounds(newMapExtent);
-          });
-        }
-        if (!allowed) {
+        if (inDisallowed && !inAllowed) {
           if (dynamicLayerIndex > 0) {
             return switchToBaseLayer(div, id, dynamicLayerIndex - 1);
           }
