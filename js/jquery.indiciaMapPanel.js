@@ -1201,7 +1201,13 @@ var destroyAllFeatures;
               minZoom: 1,
               maxZoom: 11,
               layerId: 'dynamicOSGoogleSat.1',
-              dynamicLayerIndex: 1
+              dynamicLayerIndex: 1,
+              explicitlyDisallowed: [
+                new OpenLayers.Bounds([-210000, 190000, 180000, 630000])
+              ],
+              explicitlyAllowed: [
+                new OpenLayers.Bounds([145000, 600000, 193000, 640000])
+              ]
             }));
           },
           function dynamicOSGoogleSat3() {
@@ -2333,6 +2339,24 @@ var destroyAllFeatures;
         // Don't switch layer if the new layer can't display the whole
         // viewport.
         if (!lSwitch.maxExtent.containsBounds(newMapExtent)) {
+          if (dynamicLayerIndex > 0) {
+            return switchToBaseLayer(div, id, dynamicLayerIndex - 1);
+          }
+        }
+        //Don't switch layer if the viewport is contained by any 'explicitlyDisallowed'
+        //specified for the layer, *unless* it is also contained by any 'permittedDisplayAreas'
+        var allowed = true;
+        if (lSwitch.explicitlyAllowed){
+          allowed = lSwitch.explicitlyAllowed.some(function(mbr){
+            return mbr.containsBounds(newMapExtent);
+          });
+        }
+        if (!allowed && lSwitch.explicitlyDisallowed) {
+          allowed = !lSwitch.explicitlyDisallowed.some(function(mbr){
+            return mbr.containsBounds(newMapExtent);
+          });
+        }
+        if (!allowed) {
           if (dynamicLayerIndex > 0) {
             return switchToBaseLayer(div, id, dynamicLayerIndex - 1);
           }
