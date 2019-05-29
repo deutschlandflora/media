@@ -198,6 +198,77 @@ var resetSpeciesTextOnEscape;
     }
   };
 
+  /**
+   * Function to get settings to setup for a species autocomplete.
+   */
+  function getAutocompleteSettings(extraParams, gridId) {
+    var autocompleterSettingsToReturn = {
+      extraParams: extraParams,
+      continueOnBlur: true,
+      max: indiciaData.speciesGrid[gridId].numValues,
+      selectMode: indiciaData.speciesGrid[gridId].selectMode,
+      matchContains: indiciaData.speciesGrid[gridId].matchContains,
+      parse: function resultsParse(data) {
+        var results = [];
+        var done = {};
+        var checkUnique;
+        var taxon;
+        jQuery.each(data, function taxonParse(i, item) {
+          if (typeof indiciaData.hiddenTaxonNames !== 'undefined'
+              && jQuery.inArray(item.taxon.toLowerCase(), indiciaData.hiddenTaxonNames) > -1) {
+            // Skip name.
+            return true;
+          }
+          // note we track the distinct meaning id and display term, so we don't output duplicates
+          // display field does not seem to be available, though there may be some form somewhere which uses it.
+          taxon = typeof indiciaFns.uniqueTaxonSimplify === 'undefined' ?
+            item.taxon.replace(/\W+/g, '').toLowerCase() : indiciaFns.uniqueTaxonSimplify(item.taxon);
+          checkUnique = item.taxon_meaning_id + '_' + taxon;
+          if (!done.hasOwnProperty(checkUnique)) {
+            results[results.length] = {
+              data: item,
+              result: item.searchterm,
+              value: item.taxa_taxon_list_id
+            };
+            done[checkUnique] = true;
+          }
+          return true;
+        });
+        return results;
+      },
+      formatItem: formatter
+    };
+    return autocompleterSettingsToReturn;
+  }
+
+  function enableAutocomplete(selector, lookupListId) {
+    var ctrl;
+    var extraParams = {
+      mode: 'json',
+      qfield: 'searchQuery',
+      auth_token: indiciaData.read.auth_token,
+      nonce: indiciaData.read.nonce,
+      taxon_list_id: lookupListId
+    };
+    var autocompleteSettings;
+    var gridId = $(selector).closest('table').attr('id');
+    if (typeof indiciaData['taxonExtraParams-' + gridId] !== 'undefined') {
+      $.extend(extraParams, indiciaData['taxonExtraParams-' + gridId]);
+      // a custom query on the list id overrides the standard filter..
+      if (typeof extraParams.query !== 'undefined' && extraParams.query.indexOf('taxon_list_id') !== -1) {
+        delete extraParams.taxon_list_id;
+      }
+    }
+    autocompleteSettings = getAutocompleteSettings(extraParams, gridId);
+    if ($(selector).width() < 200) {
+      autocompleteSettings.width = 200;
+    }
+    ctrl = $(selector).autocomplete(indiciaData.read.url + '/index.php/services/data/taxa_search', autocompleteSettings);
+    ctrl.bind('result', handleSelectedTaxon);
+    ctrl.bind('return', returnPressedInAutocomplete);
+    return ctrl;
+  }
+
   // Create an inner function for adding blank rows to the bottom of the grid
   var makeSpareRow = function(gridId, readAuth, lookupListId, url, evt, scroll, keycode, force) {
 
@@ -402,29 +473,8 @@ var resetSpeciesTextOnEscape;
     });
     // add the row to the bottom of the grid
     newRow.appendTo('table#' + gridId + ' > tbody').removeAttr('id');
-    extraParams = {
-      mode: 'json',
-      qfield: 'searchQuery',
-      auth_token: readAuth.auth_token,
-      nonce: readAuth.nonce,
-      taxon_list_id: lookupListId
-    };
-    if (typeof indiciaData['taxonExtraParams-' + gridId]!=='undefined') {
-      $.extend(extraParams, indiciaData['taxonExtraParams-' + gridId]);
-      // a custom query on the list id overrides the standard filter..
-      if (typeof extraParams.query!=='undefined' && extraParams.query.indexOf('taxon_list_id')!==-1) {
-        delete extraParams.taxon_list_id;
-      }
-    }
+    ctrl = enableAutocomplete('#' + selectorId, lookupListId);
     $(newRow).find('input,select').keydown(keyHandler);
-    var autocompleteSettings = getAutocompleteSettings(extraParams, gridId);
-    if ($('#' + selectorId).width() < 200) {
-      autocompleteSettings.width = 200;
-    }
-    // Attach auto-complete code to the input
-    ctrl = $('#' + selectorId).autocomplete(url+'/taxa_search', autocompleteSettings);
-    ctrl.bind('result', handleSelectedTaxon);
-    ctrl.bind('return', returnPressedInAutocomplete);
     // Check that the new entry control for taxa will remain in view with enough space for the autocomplete drop down
     if (scroll && ctrl.offset().top > $(window).scrollTop() + $(window).height() - 180) {
       var newTop = ctrl.offset().top - $(window).height() + 180;
@@ -443,13 +493,10 @@ var resetSpeciesTextOnEscape;
       var row = $($(e.target).parents('tr:first'));
       var taxonCell = $(row).children('.scTaxonCell');
       var subspSelect = $(row).find('.scSubSpecies');
-      var gridId = $(taxonCell).closest('table').attr('id');
       var selectorId = gridId + '-' + indiciaData['gridCounter-' + gridId];
       var taxonTextBeforeUserEdit;
       // When moving into edit mode we need to create an autocomplete box for the user to fill in
       var speciesAutocomplete = '<input type="text" id="' + selectorId + '" class="grid-required ac_input {speciesMustBeFilled:true}" />';
-      var extraParams;
-      var autocompleteSettings;
       var ctrl;
       if ($('.ac_results:visible').length > 0 || !$(e.target).is(':visible')) {
         // Don't go into edit mode if they are picking a species name already.
@@ -460,8 +507,6 @@ var resetSpeciesTextOnEscape;
       taxonNameBeforeUserEdit = $(taxonCell).html();
       // first span should contain the name as it was entered
       taxonTextBeforeUserEdit = $(taxonCell).find('.taxon-name').text();
-      // Add the autocomplete cell
-      $(taxonCell).append(speciesAutocomplete);
       // Adjust the size of the taxon cell to take up its full allocation of space
       $(taxonCell).attr('colSpan', 2);
       // If we have a subspecies select, enable it
@@ -471,16 +516,9 @@ var resetSpeciesTextOnEscape;
       // Moving into edit mode, we need to clear the static taxon label otherwise
       // the name is shown twice (it is also shown in the autocomplete)
       $(taxonCell).text('');
+      // Add the autocomplete cell
       $(taxonCell).append(speciesAutocomplete);
-      extraParams = {
-        mode: 'json',
-        qfield: 'searchQuery',
-        auth_token: readAuth.auth_token,
-        nonce: readAuth.nonce,
-        taxon_list_id: lookupListId
-      };
-      autocompleteSettings = getAutocompleteSettings(extraParams, gridId);
-      ctrl = $(taxonCell).children(':input').autocomplete(url + '/taxa_search', autocompleteSettings);
+      ctrl = enableAutocomplete($(taxonCell).children(':input'), lookupListId);
       // Put the taxon name into the autocomplete ready for editing
       $('#' + selectorId).val(taxonTextBeforeUserEdit);
       $('#' + selectorId).focus();
@@ -488,8 +526,6 @@ var resetSpeciesTextOnEscape;
       // After we set focus, we add a space to the end of the string to force focus to end, then remove the space
       $('#' + selectorId).val($('#' + selectorId).val() + ' ');
       $('#' + selectorId).val($('#' + selectorId).val().slice(0, -1));
-      ctrl.bind('result', handleSelectedTaxon);
-      ctrl.bind('return', returnPressedInAutocomplete);
       // Bind function so that when user loses focus on the taxon cell immediately after clicking edit, we can reset
       // the cell back to read-only label
       //ctrl.bind('blur', resetSpeciesText);
@@ -955,45 +991,4 @@ function species_checklist_add_another_row(gridId) {
 
   });
 
-}
-
-//function to get settings to setup for an autocomplete cell
-function getAutocompleteSettings(extraParams, gridId) {
-
-  var autocompleterSettingsToReturn = {
-    extraParams: extraParams,
-    continueOnBlur: true,
-    max: indiciaData.speciesGrid[gridId].numValues,
-    selectMode: indiciaData.speciesGrid[gridId].selectMode,
-    matchContains: indiciaData.speciesGrid[gridId].matchContains,
-    parse: function resultsParse(data) {
-      var results = [];
-      var done = {};
-      var checkUnique;
-      var taxon;
-      jQuery.each(data, function taxonParse(i, item) {
-        if (typeof indiciaData.hiddenTaxonNames !== 'undefined'
-            && jQuery.inArray(item.taxon.toLowerCase(), indiciaData.hiddenTaxonNames) > -1) {
-          // Skip name.
-          return true;
-        }
-        // note we track the distinct meaning id and display term, so we don't output duplicates
-        // display field does not seem to be available, though there may be some form somewhere which uses it.
-        taxon = typeof indiciaFns.uniqueTaxonSimplify === 'undefined' ?
-          item.taxon.replace(/\W+/g, '').toLowerCase() : indiciaFns.uniqueTaxonSimplify(item.taxon);
-        checkUnique = item.taxon_meaning_id + '_' + taxon;
-        if (!done.hasOwnProperty(checkUnique)) {
-          results[results.length] = {
-            data: item,
-            result: item.searchterm,
-            value: item.taxa_taxon_list_id
-          };
-          done[checkUnique] = true;
-        }
-      });
-      return results;
-    },
-    formatItem: formatter
-  };
-  return autocompleterSettingsToReturn;
 }
