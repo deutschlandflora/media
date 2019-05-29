@@ -520,9 +520,6 @@ do need to do something.
     -ms-transform: rotate(360deg);
     -o-transform: rotate(360deg);
     transform: rotate(360deg); } }
-.olMap .olForeignContainer {
-  top: 0;
-  position: absolute; }
 .olMap img {
   border: none !important; }
 .olMap .layersDiv {

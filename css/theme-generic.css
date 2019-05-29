@@ -576,9 +576,6 @@ input.findme {
     -ms-transform: rotate(360deg);
     -o-transform: rotate(360deg);
     transform: rotate(360deg); } }
-.olMap .olForeignContainer {
-  top: 0;
-  position: absolute; }
 .olMap img {
   border: none !important; }
 .olMap .layersDiv {
@@ -681,5 +678,21 @@ label#click-buffer {
     border-color: #ff7777; }
     .panel.panel-danger .panel-heading {
       background-color: white; }
+
+/* Data value lists */
+@media (min-width: 768px) {
+  .dl-horizontal dt, .dl-horizontal dd {
+    line-height: 1.42; }
+  .dl-horizontal dt {
+    font-weight: bold;
+    float: left;
+    width: 160px;
+    clear: left;
+    text-align: right;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap; }
+  .dl-horizontal dd {
+    margin: 4px 0 4px 180px; } }
 
 /*# sourceMappingURL=theme-generic.css.map */
