@@ -2692,10 +2692,10 @@ var destroyAllFeatures;
 
       // Loop through layers and if it is an Indicia WMS layer, then set its
       // visibility according to next value in array derived from cookie.
-      wmsvisibility = wmsvisibility ? wmsvisibility.split("").map(function(i){return parseInt(i)}) : [];
+      wmsvisibility = wmsvisibility ? JSON.parse(wmsvisibility) : {};
       div.map.layers.forEach(function(l){
         if (l.isIndiciaWMSLayer) {
-          l.setVisibility(wmsvisibility.shift());
+          l.setVisibility(wmsvisibility[l.name]);
         }
       });
       // Register moveend must come after panning and zooming the initial map
@@ -2725,16 +2725,17 @@ var destroyAllFeatures;
       // function because that is called multiple times during page intialisation
       // resulting in incorrect setting.
       div.map.events.register('changelayer', null, function () { 
-        // Store display status of Indicia WMS layers as string 
-        // of 1s (displayed) and 0s (not displayed)
         if (typeof $.cookie !== 'undefined') {
-          var wms = div.map.layers.reduce(function(c, l){
+          // Need to init cookie here to currrent value in case different layers are used on different
+          // pages - doing from scratch would loose settings for other layers not set for this one.
+          var init = $.cookie('mapwmsvisibility') ? JSON.parse($.cookie('mapwmsvisibility')) : {};
+          var json = div.map.layers.reduce(function(j, l){
             if (l.isIndiciaWMSLayer) {
-              c += l.visibility ? "1" : "0";
+              j[l.name] = l.visibility ? 1 : 0;
             }
-            return c;
-          }, "");
-          $.cookie('mapwmsvisibility', wms, { expires: 7 });
+            return j;
+          }, init);
+          $.cookie('mapwmsvisibility', JSON.stringify(json), { expires: 7 });
         } 
       })
 
