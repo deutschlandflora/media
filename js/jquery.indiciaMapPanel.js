@@ -2624,7 +2624,7 @@ var destroyAllFeatures;
           layerTitle,
           div.settings.indiciaGeoSvc + 'wms',
           { layers: value, transparent: true },
-          { singleTile: true, isBaseLayer: false, sphericalMercator: true }
+          { singleTile: true, isBaseLayer: false, sphericalMercator: true, isIndiciaWMSLayer: true }
         ));
       });
       $.each(this.settings.indiciaWFSLayers, function (key, value) {
@@ -2643,12 +2643,14 @@ var destroyAllFeatures;
       var centre = { lat: null, lon: null };
       var baseLayerId;
       var baseLayerIdParts;
+      var wmsvisibility;
       var added;
       if (typeof $.cookie !== 'undefined' && div.settings.rememberPos !== false) {
         zoom = $.cookie('mapzoom');
         centre.lon = $.cookie('maplongitude');
         centre.lat = $.cookie('maplatitude');
         baseLayerId = $.cookie('mapbaselayerid');
+        wmsvisibility = $.cookie('mapwmsvisibility');
       }
       // Missing cookies result in null or undefined variables
 
@@ -2687,6 +2689,15 @@ var destroyAllFeatures;
         centre.transform(div.map.displayProjection, div.map.projection);
       }
       div.map.setCenter(centre, zoom);
+
+      // Loop through layers and if it is an Indicia WMS layer, then set its
+      // visibility according to next value in array derived from cookie.
+      wmsvisibility = wmsvisibility ? wmsvisibility.split("").map(function(i){return parseInt(i)}) : [];
+      div.map.layers.forEach(function(l){
+        if (l.isIndiciaWMSLayer) {
+          l.setVisibility(wmsvisibility.shift());
+        }
+      });
       // Register moveend must come after panning and zooming the initial map
       // so the dynamic layer switcher does not mess up the centering code.
       div.map.events.register('moveend', null, function () {
@@ -2708,6 +2719,25 @@ var destroyAllFeatures;
         }
       });
       handleDynamicLayerSwitching(div);
+
+      // Register function on changelayer event to record the display status
+      // of Indicia WMS layers. Note this code cannot go in mapLayerChanged
+      // function because that is called multiple times during page intialisation
+      // resulting in incorrect setting.
+      div.map.events.register('changelayer', null, function () { 
+        // Store display status of Indicia WMS layers as string 
+        // of 1s (displayed) and 0s (not displayed)
+        if (typeof $.cookie !== 'undefined') {
+          var wms = div.map.layers.reduce(function(c, l){
+            if (l.isIndiciaWMSLayer) {
+              c += l.visibility ? "1" : "0";
+            }
+            return c;
+          }, "");
+          $.cookie('mapwmsvisibility', wms, { expires: 7 });
+        } 
+      })
+
       /**
        * Public function to change selection of features on a layer.
        */
