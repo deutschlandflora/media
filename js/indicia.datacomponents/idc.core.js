@@ -683,12 +683,12 @@
             ignore_unmapped: true,
             'location.point': {
               top_left: {
-                lat: bounds.getNorth(),
-                lon: bounds.getWest()
+                lat: Math.max(-90, Math.min(90, bounds.getNorth())),
+                lon: Math.max(-180, Math.min(180, bounds.getWest()))
               },
               bottom_right: {
-                lat: bounds.getSouth(),
-                lon: bounds.getEast()
+                lat: Math.max(-90, Math.min(90, bounds.getSouth())),
+                lon: Math.max(-180, Math.min(180, bounds.getEast()))
               }
             }
           });
