@@ -70,12 +70,27 @@
    */
   function addFeature(el, sourceId, location, metric) {
     var config = { type: 'marker', options: {} };
+    var circle;
     if (typeof $(el)[0].settings.styles[sourceId] !== 'undefined') {
       $.extend(config, $(el)[0].settings.styles[sourceId]);
     }
-    if (config.type === 'circle' && typeof metric !== 'undefined') {
-      config.options.radius = metric;
-      config.options.fillOpacity = 0.5;
+    if (config.type === 'circle' || config.type === 'square') {
+      config.options = $.extend({ radius: 'metric', fillOpacity: 0.5 }, config.options);
+      // Apply metric to any options that are supposed to use it.
+      $.each(config.options, function eachOption(key, value) {
+        if (value === 'metric') {
+          if (key === 'fillOpacity') {
+            // Set a fill opacity - 20000 is max metric.
+            config.options.fillOpacity = metric / 20000;
+          } else {
+            config.options[key] = metric;
+          }
+        }
+      });
+      if (config.options.size) {
+        config.options.radius = config.options.size / 2;
+        delete config.options.size;
+      }
     }
     switch (config.type) {
       // Circle markers on layer.
@@ -85,6 +100,13 @@
       // Leaflet.heat powered heat maps.
       case 'heat':
         el.outputLayers[sourceId].addLatLng([location.lat, location.lon, metric]);
+        break;
+      case 'square':
+        // @todo - properly projected squares. These are just the bounding box of circles.
+        // Use a temporary circle to get correct size.
+        circle = L.circle(location, config.options).addTo(el.map);
+        el.outputLayers[sourceId].addLayer(L.rectangle(circle.getBounds(), config.options));
+        circle.removeFrom(el.map);
         break;
       // Default layer type is markers.
       default:
@@ -172,6 +194,66 @@
       });
     }
     return settings;
+  }
+
+  /**
+   * Adds features to the map where using a geo_hash aggregation.
+   */
+  function mapGeoHashAggregation(el, response, sourceSettings) {
+    var buckets = indiciaFns.findValue(response.aggregations, 'buckets');
+    var maxMetric = 10;
+    if (typeof buckets !== 'undefined') {
+      $.each(buckets, function eachBucket() {
+        var count = indiciaFns.findValue(this, 'count');
+        maxMetric = Math.max(Math.sqrt(count), maxMetric);
+      });
+      $.each(buckets, function eachBucket() {
+        var location = indiciaFns.findValue(this, 'location');
+        var count = indiciaFns.findValue(this, 'count');
+        var metric = Math.round((Math.sqrt(count) / maxMetric) * 20000);
+        if (typeof location !== 'undefined') {
+          addFeature(el, sourceSettings.id, location, metric);
+        }
+      });
+    }
+  }
+
+  /**
+   * Adds features to the map where using a grid square aggregation.
+   *
+   * Grid square aggregations must aggregate on srid then one of the grid
+   * square centre field values.
+   */
+  function mapGridSquareAggregation(el, response, sourceSettings) {
+    var buckets = indiciaFns.findValue(response.aggregations, 'buckets');
+    var subBuckets;
+    var maxMetric = 10;
+    if (typeof buckets !== 'undefined') {
+      $.each(buckets, function eachBucket() {
+        subBuckets = indiciaFns.findValue(this, 'buckets');
+        if (typeof subBuckets !== 'undefined') {
+          $.each(subBuckets, function eachSubBucket() {
+            maxMetric = Math.max(Math.sqrt(this.doc_count), maxMetric);
+          });
+        }
+      });
+      $.each(buckets, function eachBucket() {
+        subBuckets = indiciaFns.findValue(this, 'buckets');
+        if (typeof subBuckets !== 'undefined') {
+          $.each(subBuckets, function eachSubBucket() {
+            var coords;
+            var metric;
+            if (this.key && this.key.match(/\-?\d+\.\d+ \d+\.\d+/)) {
+              coords = this.key.split(' ');
+              metric = Math.round((Math.sqrt(this.doc_count) / maxMetric) * 20000);
+              if (typeof location !== 'undefined') {
+                addFeature(el, sourceSettings.id, { lat: coords[1], lon: coords[0] }, metric);
+              }
+            }
+          });
+        }
+      });
+    }
   }
 
   /**
@@ -268,8 +350,6 @@
      */
     populate: function populate(sourceSettings, response) {
       var el = this;
-      var buckets;
-      var maxMetric = 10;
       if (typeof el.outputLayers[sourceSettings.id].clearLayers !== 'undefined') {
         el.outputLayers[sourceSettings.id].clearLayers();
       } else {
@@ -282,20 +362,10 @@
       });
       // Are there aggregations to map?
       if (typeof response.aggregations !== 'undefined') {
-        buckets = indiciaFns.findValue(response.aggregations, 'buckets');
-        if (typeof buckets !== 'undefined') {
-          $.each(buckets, function eachBucket() {
-            var count = indiciaFns.findValue(this, 'count');
-            maxMetric = Math.max(Math.sqrt(count), maxMetric);
-          });
-          $.each(buckets, function eachBucket() {
-            var location = indiciaFns.findValue(this, 'location');
-            var count = indiciaFns.findValue(this, 'count');
-            var metric = Math.round((Math.sqrt(count) / maxMetric) * 20000);
-            if (typeof location !== 'undefined') {
-              addFeature(el, sourceSettings.id, location, metric);
-            }
-          });
+        if (sourceSettings.aggregationMapMode === 'geoHash') {
+          mapGeoHashAggregation(el, response, sourceSettings);
+        } else if (sourceSettings.aggregationMapMode === 'gridSquare') {
+          mapGridSquareAggregation(el, response, sourceSettings);
         }
       }
       if (sourceSettings.initialMapBounds && !$(el)[0].settings.initialBoundsSet) {
