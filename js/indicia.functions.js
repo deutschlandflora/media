@@ -77,7 +77,9 @@ if (typeof window.indiciaData === 'undefined') {
           indiciaData.mapdiv.map.getProjectionObject()
         );
       indiciaData.mapdiv.map.setCenter(lonLat, 17);
-      indiciaData.mapdiv.processLonLatPositionOnMap(lonLat, indiciaData.mapdiv);
+      // Use the new map centre for processing, as dynamic layers mean the
+      // projection might switch so lonLat cannot be trusted.
+      indiciaData.mapdiv.processLonLatPositionOnMap(indiciaData.mapdiv.map.getCenter(), indiciaData.mapdiv);
     };
     var onFail = function () {
       $('#findme-icon').removeClass('spinning');
