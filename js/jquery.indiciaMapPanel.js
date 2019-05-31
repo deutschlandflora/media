@@ -2257,7 +2257,11 @@ var destroyAllFeatures;
             zoom--;
           }
         }
+        // Recentre due to base layer projection change. Don't allow this to
+        // fire the code which looks for base layer changes again.
+        indiciaData.recenteringAfterBaseLayerSwitch = true;
         map.setCenter(centre, zoom, false, true);
+        indiciaData.recenteringAfterBaseLayerSwitch = false;
 
         // Update vector layer properties to match properties of baseLayer.
         $.each(map.layers, function eachLayer() {
@@ -2690,6 +2694,9 @@ var destroyAllFeatures;
       // Register moveend must come after panning and zooming the initial map
       // so the dynamic layer switcher does not mess up the centering code.
       div.map.events.register('moveend', null, function () {
+        if (indiciaData.recenteringAfterBaseLayerSwitch) {
+          return;
+        }
         if (!indiciaData.settingBaseLayer) {
           div.settings.lastMapCentre = div.map.getCenter();
           div.settings.lastMapCentre.transform(div.map.projection, div.map.displayProjection);
