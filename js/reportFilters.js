@@ -769,7 +769,7 @@ jQuery(document).ready(function ($) {
         } else if (indiciaData.filter.def.website_list) {
           paramValue = typeof indiciaData.filter.def.website_list === 'string'
             ? indiciaData.filter.def.website_list.split(',') : [indiciaData.filter.def.survey_list ];
-          $.each(indiciaData.filter.def.website_list.split(','), function (idx, id) {
+          $.each(indiciaData.filter.def.website_list.toString().split(','), function (idx, id) {
             list.push($('#check-website-' + id).next('label').html());
           });
           r.push((indiciaData.filter.def.website_list_op === 'not in' ? 'Exclude ' : '') + list.join(', '));
