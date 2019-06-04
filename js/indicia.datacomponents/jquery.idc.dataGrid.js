@@ -353,12 +353,6 @@
         var media;
         var selectedClass;
         var doc = hit._source ? hit._source : hit;
-        if (el.settings.blockIdsOnNextLoad && $.inArray(hit._id, el.settings.blockIdsOnNextLoad) !== -1) {
-          // Skip the row if blocked. This is required because ES is only
-          // near-instantaneous, so if we take an action on a record then
-          // reload the grid, it is quite likely to re-appear.
-          return true;
-        }
         if ($(el).find('table.multiselect-mode').length) {
           cells.push('<td class="multiselect-cell"><input type="checkbox" class="multiselect" /></td>');
         }
@@ -421,8 +415,6 @@
         $(row).attr('data-doc-source', JSON.stringify(hit._source));
         return true;
       });
-      // Discard the list of IDs to block during this population as now done.
-      el.settings.blockIdsOnNextLoad = false;
       // Set up the count info in the footer.
       if (response.hits.hits.length > 0) {
         $(el).find('tfoot .showing').html('Showing ' + fromRowIndex +
@@ -477,12 +469,12 @@
       var oldSelected = $(grid).find('tr.selected');
       var newSelectedId;
       var showingLabel = $(grid).find('.showing');
-      var blocked = [];
+      var selectedIds = [];
 
       if ($(grid).find('table.multiselect-mode').length > 0) {
         $.each($(grid).find('input.multiselect:checked'), function eachRow() {
           var tr = $(this).closest('tr');
-          blocked.push($(tr).attr('data-row-id'));
+          selectedIds.push($(tr).attr('data-row-id'));
           tr.remove();
         });
       } else {
@@ -491,15 +483,34 @@
         } else if ($(oldSelected).prev('tr').length > 0) {
           newSelectedId = $(oldSelected).prev('tr').attr('data-row-id');
         }
-        blocked.push($(oldSelected).attr('data-row-id'));
+        selectedIds.push($(oldSelected).attr('data-row-id'));
         $(oldSelected).remove();
       }
       $.each(grid.settings.source, function eachSource(sourceId) {
         var source = indiciaData.esSourceObjects[sourceId];
+        // If the number of rows below 75% of page size, reresh the grid.
         if ($(grid).find('table tbody tr.data-row').length < source.settings.size * 0.75) {
-          $(grid)[0].settings.blockIdsOnNextLoad = blocked;
+          // As ES updates are not instant, we need a temporary must_not match
+          // filter to prevent the verified records reappearing.
+          if (!source.settings.filterBoolClauses) {
+            source.settings.filterBoolClauses = {};
+          }
+          if (!source.settings.filterBoolClauses.must_not) {
+            source.settings.filterBoolClauses.must_not = [];
+          }
+          source.settings.filterBoolClauses.must_not.push({
+            query_type: 'terms',
+            field: '_id',
+            value: JSON.stringify(selectedIds)
+          });
           $(grid)[0].settings.selectIdsOnNextLoad = [newSelectedId];
+          // Reload the grid page.
           source.populate(true);
+          // Clean up the temporary exclusion filter.
+          source.settings.filterBoolClauses.must_not.pop();
+          if (!source.settings.filterBoolClauses.must_not.length) {
+            delete source.settings.filterBoolClauses.must_not;
+          }
         } else {
           // Update the paging info if some rows left.
           showingLabel.html(showingLabel.html().replace(/\d+ of /, $(grid).find('tbody tr.data-row').length + ' of '));

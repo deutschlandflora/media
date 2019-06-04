@@ -312,10 +312,12 @@
      * Output the event date or date range.
      */
     event_date: function eventDate(doc) {
-      if (doc.event.date_start !== doc.event.date_end) {
-        return indiciaFns.formatDate(doc.event.date_start) + ' - ' + indiciaFns.formatDate(doc.event.date_end);
+      var start = doc.event.date_start ? indiciaFns.formatDate(doc.event.date_start) : '';
+      var end = doc.event.date_end ? indiciaFns.formatDate(doc.event.date_end) : '';
+      if (start !== end) {
+        return start + ' - ' + end;
       }
-      return indiciaFns.formatDate(doc.event.date_start);
+      return start;
     },
 
     /**
@@ -330,7 +332,9 @@
       var output = '';
       if (doc.location.higher_geography) {
         $.each(doc.location.higher_geography, function eachGeography() {
-          if (this.type === params[0]) {
+          // If the correct type and not a combined geo-area (indicated by + in the code).
+          // See https://github.com/BiologicalRecordsCentre/iRecord/issues/606
+          if (this.type === params[0] && !this.code.match(/\+/)) {
             output = this[params[1]];
           }
         });
