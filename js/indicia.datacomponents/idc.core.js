@@ -312,10 +312,12 @@
      * Output the event date or date range.
      */
     event_date: function eventDate(doc) {
-      if (doc.event.date_start !== doc.event.date_end) {
-        return indiciaFns.formatDate(doc.event.date_start) + ' - ' + indiciaFns.formatDate(doc.event.date_end);
+      var start = doc.event.date_start ? indiciaFns.formatDate(doc.event.date_start) : '';
+      var end = doc.event.date_end ? indiciaFns.formatDate(doc.event.date_end) : '';
+      if (start !== end) {
+        return start + ' - ' + end;
       }
-      return indiciaFns.formatDate(doc.event.date_start);
+      return start;
     },
 
     /**
