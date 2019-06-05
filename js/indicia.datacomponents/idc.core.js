@@ -607,7 +607,9 @@
     } else {
       // Using filter paremeter controls.
       $.each($('.es-filter-param'), function eachParam() {
-        if ($(this).val().trim() !== '') {
+        var val = $(this).val().trim();
+        if (val !== '') {
+          val = val.replace(/{{ indicia_user_id }}/g, indiciaData.user_id);
           data.bool_queries.push({
             bool_clause: $(this).attr('data-es-bool-clause'),
             field: $(this).attr('data-es-field') ? $(this).attr('data-es-field') : null,
