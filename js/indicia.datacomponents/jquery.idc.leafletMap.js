@@ -69,10 +69,13 @@
    * Add a feature to the map (marker, circle etc).
    */
   function addFeature(el, sourceId, location, metric) {
-    var config = { type: 'marker', options: {} };
+    var config = {
+      type: typeof $(el)[0].settings.layerConfig[sourceId].type === 'undefined' ? 'marker' : $(el)[0].settings.layerConfig[sourceId].type,
+      options: {}
+    };
     var circle;
-    if (typeof $(el)[0].settings.styles[sourceId] !== 'undefined') {
-      $.extend(config, $(el)[0].settings.styles[sourceId]);
+    if (typeof $(el)[0].settings.layerConfig[sourceId].style !== 'undefined') {
+      $.extend(config.options, $(el)[0].settings.layerConfig[sourceId].style);
     }
     if (config.type === 'circle' || config.type === 'square') {
       config.options = $.extend({ radius: 'metric', fillOpacity: 0.5 }, config.options);
@@ -294,7 +297,14 @@
       if (typeof $(el).attr('data-idc-config') !== 'undefined') {
         $.extend(el.settings, JSON.parse($(el).attr('data-idc-config')));
       }
-      // Apply settings passed to the constructor.
+      // Map embeds linked sources in layerConfig. Need to add them to settings
+      // in their own right so that maps can be treated same as other data
+      // consumers.
+      el.settings.source = {};
+      $.each(el.settings.layerConfig, function eachLayer() {
+        el.settings.source[this.source] = typeof this.title === 'undefined' ? this.source : this.title;
+      })
+;      // Apply settings passed to the constructor.
       if (typeof options !== 'undefined') {
         $.extend(el.settings, options);
       }
@@ -316,15 +326,15 @@
       };
       // Add the active base layer to the map.
       baseMaps[el.settings.baseLayer].addTo(el.map);
-      $.each(el.settings.source, function eachSource(id, title) {
+      $.each(el.settings.layerConfig, function eachSource(id, layer) {
         var group;
-        if (el.settings.styles[id].type !== 'undefined' && el.settings.styles[id].type === 'heat') {
+        if (layer.type !== 'undefined' && layer.type === 'heat') {
           group = L.heatLayer([], { radius: 10 });
         } else {
           group = L.featureGroup();
         }
         // Leaflet wants layers keyed by title.
-        overlays[title] = group;
+        overlays[typeof layer.title === 'undefined' ? id : layer.title] = group;
         // Plugin wants them keyed by source ID.
         el.outputLayers[id] = group;
         // Add the group to the map
