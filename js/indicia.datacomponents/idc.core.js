@@ -615,7 +615,7 @@
             field: $(this).attr('data-es-field') ? $(this).attr('data-es-field') : null,
             query_type: $(this).attr('data-es-query-type'),
             query: $(this).attr('data-es-query') ? $(this).attr('data-es-query') : null,
-            value: $(this).val().trim()
+            value: val
           });
         }
       });
