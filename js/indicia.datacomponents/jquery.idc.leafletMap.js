@@ -275,6 +275,15 @@
     return 10;
   }
 
+  function layerEnabled(el, id, layerConfig) {
+    if (el.settings.disabledLayers) {
+      // Cookie set to disable this layer.
+      return $.inArray(id, el.settings.disabledLayers) === -1;
+    } else {
+    // Revert to default in layer config.
+    return typeof layerConfig.enabled === 'undefined' ? true : layerConfig.enabled;
+  }
+
   /**
    * Declare public methods.
    */
@@ -310,7 +319,13 @@
       }
       // Apply settings stored in cookies.
       if (el.settings.cookies) {
-        $.extend(el.settings, loadSettingsFromCookies(['initialLat', 'initialLong', 'initialZoom', 'baseLayer']));
+        $.extend(el.settings, loadSettingsFromCookies([
+          'initialLat',
+          'initialLong',
+          'initialZoom',
+          'baseLayer',
+          'disabledLayers'
+        ]));
       }
       el.map = L.map(el.id).setView([el.settings.initialLat, el.settings.initialLng], el.settings.initialZoom);
       baseMaps = {
@@ -338,7 +353,9 @@
         // Plugin wants them keyed by source ID.
         el.outputLayers[id] = group;
         // Add the group to the map
-        group.addTo(el.map);
+        if (layerEnabled(el, id, this)) {
+          group.addTo(el.map);
+        }
       });
       layersControl = L.control.layers(baseMaps, overlays);
       layersControl.addTo(el.map);
