@@ -42,7 +42,7 @@
     var commentToSave;
     var data = {
       website_id: indiciaData.website_id,
-      user_id: indiciaData.userId
+      user_id: indiciaData.user_id
     };
     var doc = {
       identification: {}

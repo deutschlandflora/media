@@ -392,7 +392,7 @@
         website_id: indiciaData.website_id,
         'occurrence:id': occurrenceId,
         'occurrence:taxa_taxon_list_id': $('#redet-species').val(),
-        user_id: indiciaData.userId
+        user_id: indiciaData.user_id
       };
       if ($('#redet-comment').val()) {
         data['occurrence_comment:comment'] = $('#redet-comment').val();
