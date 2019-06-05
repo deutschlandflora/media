@@ -241,18 +241,27 @@
   /**
    * Searches an object for a nested property and sets its value.
    *
+   * @param object object
+   *   Object whose value is to be changed.
+   * @param string key
+   *   Name of the property to change.
+   * @param mixed updateTo
+   *   Value to update to.
+   * @param mixed updateFrom
+   *   Optional. If set, then value only changed if originally equal to this.
+   *
    * @return mixed
    *   Property value.
    */
-  indiciaFns.findAndSetValue = function findAndSetValue(object, key, updateValue) {
+  indiciaFns.findAndSetValue = function findAndSetValue(object, key, updateTo, updateFrom) {
     var value;
     Object.keys(object).some(function eachKey(k) {
-      if (k === key) {
-        object[k] = updateValue;
+      if (k === key && (typeof updateFrom === 'undefined' || updateFrom === object[k])) {
+        object[k] = updateTo;
         return true;
       }
       if (object[k] && typeof object[k] === 'object') {
-        value = indiciaFns.findAndSetValue(object[k], key, updateValue);
+        value = indiciaFns.findAndSetValue(object[k], key, updateTo, updateFrom);
         return value !== undefined;
       }
       return false;
@@ -558,6 +567,7 @@
     var filterSourceGrid;
     var filterSourceRow;
     var thisDoc;
+    var agg = {};
     if (source.settings.size) {
       data.size = source.settings.size;
     }
@@ -678,6 +688,8 @@
       }
     }
     if (source.settings.aggregation) {
+      // Copy to avoid changing original.
+      $.extend(true, agg, source.settings.aggregation);
       // Find the map bounds if limited to the viewport of a map.
       if (source.settings.filterBoundsUsingMap) {
         mapToFilterTo = $('#' + source.settings.filterBoundsUsingMap);
@@ -685,7 +697,7 @@
           alert('Data source incorrectly configured. @filterBoundsUsingMap does not point to a valid map.');
         } else {
           bounds = mapToFilterTo[0].map.getBounds();
-          indiciaFns.findAndSetValue(source.settings.aggregation, 'geo_bounding_box', {
+          indiciaFns.findAndSetValue(agg, 'geo_bounding_box', {
             ignore_unmapped: true,
             'location.point': {
               top_left: {
@@ -698,13 +710,14 @@
               }
             }
           });
-          indiciaFns.findAndSetValue(source.settings.aggregation, 'geohash_grid', {
+          indiciaFns.findAndSetValue(agg, 'geohash_grid', {
             field: 'location.point',
             precision: Math.min(Math.max(mapToFilterTo[0].map.getZoom() - 3, 4), 10)
           });
+          indiciaFns.findAndSetValue(agg, 'field', $(mapToFilterTo).idcLeafletMap('getAutoSquareField'), 'autoGridSquareField');
         }
       }
-      data.aggs = source.settings.aggregation;
+      data.aggs = agg;
     }
     return data;
   };

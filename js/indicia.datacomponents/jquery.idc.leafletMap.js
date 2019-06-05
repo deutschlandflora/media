@@ -76,6 +76,7 @@
     }
     if (config.type === 'circle' || config.type === 'square') {
       config.options = $.extend({ radius: 'metric', fillOpacity: 0.5 }, config.options);
+      indiciaFns.findAndSetValue(config.options, 'size', $(el).idcLeafletMap('getAutoSquareSize'), 'autoGridSquareSize');
       // Apply metric to any options that are supposed to use it.
       $.each(config.options, function eachOption(key, value) {
         if (value === 'metric') {
@@ -257,6 +258,21 @@
   }
 
   /**
+   * If using auto-sized grids, size of the grid recommended for current map zoom.
+   *
+   * Value in km.
+   */
+  function autoGridSquareKms(el) {
+    var zoom = el.map.getZoom();
+    if (zoom > 10) {
+      return 1;
+    } else if (zoom > 8) {
+      return 2;
+    }
+    return 10;
+  }
+
+  /**
    * Declare public methods.
    */
   methods = {
@@ -432,6 +448,26 @@
         indiciaFns.controlFail(this, 'Invalid event handler requested for ' + event);
       }
       callbacks[event].push(handler);
+    },
+
+    /**
+     * If using auto-sized grids, size of the grid recommended for current map zoom.
+     *
+     * Value in m.
+     */
+    getAutoSquareSize: function getAutoSquareSize() {
+      var kms = autoGridSquareKms(this);
+      return kms * 1000;
+    },
+
+    /**
+     * If using auto-sized grids, name of the field holding the grid coordinates appropriate to current map zoom.
+     *
+     * Value in km.
+     */
+    getAutoSquareField: function getAutoSquareField() {
+      var kms = autoGridSquareKms(this);
+      return 'location.grid_square.' + kms + 'km.centre';
     }
   };
 
@@ -440,10 +476,12 @@
    */
   $.fn.idcLeafletMap = function buildLeafletMap(methodOrOptions) {
     var passedArgs = arguments;
+    var result;
     $.each(this, function callOnEachOutput() {
       if (methods[methodOrOptions]) {
         // Call a declared method.
-        return methods[methodOrOptions].apply(this, Array.prototype.slice.call(passedArgs, 1));
+        result = methods[methodOrOptions].apply(this, Array.prototype.slice.call(passedArgs, 1));
+        return true;
       } else if (typeof methodOrOptions === 'object' || !methodOrOptions) {
         // Default to "init".
         return methods.init.apply(this, passedArgs);
@@ -452,6 +490,7 @@
       $.error('Method ' + methodOrOptions + ' does not exist on jQuery.idcLeafletMap');
       return true;
     });
-    return this;
+    // If the method has no explicit response, return this to allow chaining.
+    return typeof result === 'undefined' ? this : result;
   };
 }());
