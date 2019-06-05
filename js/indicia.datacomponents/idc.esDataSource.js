@@ -83,7 +83,7 @@ var IdcEsDataSource;
     // Check we have an output other than the download plugin, which only
     // outputs when you click Download.
     $.each(this.outputs, function eachOutput(name) {
-      needsPopulation = needsPopulation || name !== 'download';
+      needsPopulation = needsPopulation || (name !== 'idcEsDownload');
     });
     if (needsPopulation) {
       request = indiciaFns.getFormQueryData(source);
