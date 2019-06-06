@@ -187,6 +187,13 @@
      */
     populate: function populate() {
       // Nothing to do.
+    },
+
+    /**
+     * Downloads don't need to refresh until explicitly actioned.
+     */
+    getNeedsPopulation: function getNeedsPopulation() {
+      return false;
     }
   };
 

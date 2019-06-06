@@ -555,6 +555,9 @@
    *
    * Builds the data to post to the Elasticsearch search proxy to represent
    * the current state of the form inputs on the page.
+   *
+   * Returns false if the query is linked to a grid selection but there is no
+   * selected row.
    */
   indiciaFns.getFormQueryData = function getFormQueryData(source) {
     var data = {
@@ -601,19 +604,15 @@
       filterSourceRow = $(filterSourceGrid).find('tbody tr.selected');
       if (filterSourceRow.length === 0) {
         // Don't populate until a row selected.
-        data.bool_queries.push({
-          bool_clause: 'must',
-          query_type: 'match_none'
-        });
-      } else {
-        thisDoc = JSON.parse($(filterSourceRow).attr('data-doc-source'));
-        data.bool_queries.push({
-          bool_clause: 'must',
-          field: source.settings.filterField,
-          query_type: 'term',
-          value: indiciaFns.getValueForField(thisDoc, source.settings.filterField)
-        });
+        return false;
       }
+      thisDoc = JSON.parse($(filterSourceRow).attr('data-doc-source'));
+      data.bool_queries.push({
+        bool_clause: 'must',
+        field: source.settings.filterField,
+        query_type: 'term',
+        value: indiciaFns.getValueForField(thisDoc, source.settings.filterField)
+      });
     } else {
       // Using filter paremeter controls.
       $.each($('.es-filter-param'), function eachParam() {

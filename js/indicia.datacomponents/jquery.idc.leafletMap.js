@@ -66,56 +66,88 @@
   var selectedFeature = null;
 
   /**
+   * Finds the list of layer IDs that use a given source id for population.
+   */
+  function getLayerIdsForSource(el, sourceId) {
+    var layerIds = [];
+    $.each(el.settings.layerConfig, function eachLayer(layerId, cfg) {
+      if (cfg.source === sourceId) {
+        layerIds.push(layerId);
+      }
+    });
+    return layerIds;
+  }
+
+  /**
+   * Finds the list of layers that use a given source id for population.
+   */
+  function getLayersForSource(el, sourceId) {
+    var layers = [];
+    $.each(el.settings.layerConfig, function eachLayer(layerId, cfg) {
+      if (cfg.source === sourceId) {
+        layers.push(el.outputLayers[layerId]);
+      }
+    });
+    return layers;
+  }
+
+  /**
    * Add a feature to the map (marker, circle etc).
    */
   function addFeature(el, sourceId, location, metric) {
-    var config = {
-      type: typeof $(el)[0].settings.layerConfig[sourceId].type === 'undefined' ? 'marker' : $(el)[0].settings.layerConfig[sourceId].type,
-      options: {}
-    };
+    var layerIds = getLayerIdsForSource(el, sourceId);
     var circle;
-    if (typeof $(el)[0].settings.layerConfig[sourceId].style !== 'undefined') {
-      $.extend(config.options, $(el)[0].settings.layerConfig[sourceId].style);
-    }
-    if (config.type === 'circle' || config.type === 'square') {
-      config.options = $.extend({ radius: 'metric', fillOpacity: 0.5 }, config.options);
-      indiciaFns.findAndSetValue(config.options, 'size', $(el).idcLeafletMap('getAutoSquareSize'), 'autoGridSquareSize');
-      // Apply metric to any options that are supposed to use it.
-      $.each(config.options, function eachOption(key, value) {
-        if (value === 'metric') {
-          if (key === 'fillOpacity') {
-            // Set a fill opacity - 20000 is max metric.
-            config.options.fillOpacity = metric / 20000;
-          } else {
-            config.options[key] = metric;
-          }
-        }
-      });
-      if (config.options.size) {
-        config.options.radius = config.options.size / 2;
-        delete config.options.size;
+    var config;
+    $.each(layerIds, function eachLayer() {
+      var layerConfig = el.settings.layerConfig[this];
+      config = {
+        type: typeof layerConfig.type === 'undefined' ? 'marker' : layerConfig.type,
+        options: {}
+      };
+
+      if (typeof layerConfig.style !== 'undefined') {
+        $.extend(config.options, layerConfig.style);
       }
-    }
-    switch (config.type) {
-      // Circle markers on layer.
-      case 'circle':
-        el.outputLayers[sourceId].addLayer(L.circle(location, config.options));
-        break;
-      // Leaflet.heat powered heat maps.
-      case 'heat':
-        el.outputLayers[sourceId].addLatLng([location.lat, location.lon, metric]);
-        break;
-      case 'square':
-        // @todo - properly projected squares. These are just the bounding box of circles.
-        // Use a temporary circle to get correct size.
-        circle = L.circle(location, config.options).addTo(el.map);
-        el.outputLayers[sourceId].addLayer(L.rectangle(circle.getBounds(), config.options));
-        circle.removeFrom(el.map);
-        break;
-      // Default layer type is markers.
-      default:
-        el.outputLayers[sourceId].addLayer(L.marker(location, config.options));
-    }
+      if (config.type === 'circle' || config.type === 'square') {
+        config.options = $.extend({ radius: 'metric', fillOpacity: 0.5 }, config.options);
+        indiciaFns.findAndSetValue(config.options, 'size', $(el).idcLeafletMap('getAutoSquareSize'), 'autoGridSquareSize');
+        // Apply metric to any options that are supposed to use it.
+        $.each(config.options, function eachOption(key, value) {
+          if (value === 'metric') {
+            if (key === 'fillOpacity') {
+              // Set a fill opacity - 20000 is max metric.
+              config.options.fillOpacity = metric / 20000;
+            } else {
+              config.options[key] = metric;
+            }
+          }
+        });
+        if (config.options.size) {
+          config.options.radius = config.options.size / 2;
+          delete config.options.size;
+        }
+      }
+      switch (config.type) {
+        // Circle markers on layer.
+        case 'circle':
+          el.outputLayers[this].addLayer(L.circle(location, config.options));
+          break;
+        // Leaflet.heat powered heat maps.
+        case 'heat':
+          el.outputLayers[this].addLatLng([location.lat, location.lon, metric]);
+          break;
+        case 'square':
+          // @todo - properly projected squares. These are just the bounding box of circles.
+          // Use a temporary circle to get correct size.
+          circle = L.circle(location, config.options).addTo(el.map);
+          el.outputLayers[this].addLayer(L.rectangle(circle.getBounds(), config.options));
+          circle.removeFrom(el.map);
+          break;
+        // Default layer type is markers.
+        default:
+          el.outputLayers[this].addLayer(L.marker(location, config.options));
+      }
+    });
   }
 
   /**
@@ -275,13 +307,62 @@
     return 10;
   }
 
+  /**
+   * Returns true if a layer should be enabled when the page loads.
+   */
   function layerEnabled(el, id, layerConfig) {
-    if (el.settings.disabledLayers) {
-      // Cookie set to disable this layer.
-      return $.inArray(id, el.settings.disabledLayers) === -1;
-    } else {
+    var layerState;
+    if (el.settings.layerState) {
+      layerState = JSON.parse(el.settings.layerState);
+      if (layerState[id]) {
+        return layerState[id].enabled;
+      }
+    }
     // Revert to default in layer config.
     return typeof layerConfig.enabled === 'undefined' ? true : layerConfig.enabled;
+  }
+
+  /**
+   * Event handler for layer enabling.
+   *
+   * * Populates the associated datasource.
+   * * Ensures new state reflected in cookie.
+   */
+  function onAddLayer(el, layer, id) {
+    var layerState;
+    // Enabling a layer - need to repopulate the source so it gets data.
+    if (indiciaData.esSourceObjects[el.settings.layerConfig[id].source]) {
+      indiciaData.esSourceObjects[el.settings.layerConfig[id].source].populate();
+    }
+    if (el.settings.cookies && $.cookie) {
+      layerState = $.cookie('layerState');
+      if (layerState) {
+        layerState = JSON.parse(layerState);
+      } else {
+        layerState = {};
+      }
+      layerState[id] = { enabled: true };
+      $.cookie('layerState', JSON.stringify(layerState));
+    }
+  }
+
+  /**
+   * Event handler for layer disabling.
+   *
+   * Ensures new state reflected in cookie.
+   */
+  function onRemoveLayer(el, id) {
+    var layerState;
+    if (el.settings.cookies && $.cookie) {
+      layerState = $.cookie('layerState');
+      if (layerState) {
+        layerState = JSON.parse(layerState);
+      } else {
+        layerState = {};
+      }
+      layerState[id] = { enabled: false };
+      $.cookie('layerState', JSON.stringify(layerState));
+    }
   }
 
   /**
@@ -324,7 +405,7 @@
           'initialLong',
           'initialZoom',
           'baseLayer',
-          'disabledLayers'
+          'layerState'
         ]));
       }
       el.map = L.map(el.id).setView([el.settings.initialLat, el.settings.initialLng], el.settings.initialZoom);
@@ -341,13 +422,19 @@
       };
       // Add the active base layer to the map.
       baseMaps[el.settings.baseLayer].addTo(el.map);
-      $.each(el.settings.layerConfig, function eachSource(id, layer) {
+      $.each(el.settings.layerConfig, function eachLayer(id, layer) {
         var group;
         if (layer.type !== 'undefined' && layer.type === 'heat') {
           group = L.heatLayer([], { radius: 10 });
         } else {
           group = L.featureGroup();
         }
+        group.on('add', function addEvent() {
+          onAddLayer(el, this, id);
+        });
+        group.on('remove', function removeEvent() {
+          onRemoveLayer(el, id);
+        });
         // Leaflet wants layers keyed by title.
         overlays[typeof layer.title === 'undefined' ? id : layer.title] = group;
         // Plugin wants them keyed by source ID.
@@ -393,11 +480,16 @@
      */
     populate: function populate(sourceSettings, response) {
       var el = this;
-      if (typeof el.outputLayers[sourceSettings.id].clearLayers !== 'undefined') {
-        el.outputLayers[sourceSettings.id].clearLayers();
-      } else {
-        el.outputLayers[sourceSettings.id].setLatLngs([]);
-      }
+      var layers = getLayersForSource(el, sourceSettings.id);
+      var bounds;
+      $.each(layers, function eachLayer() {
+        if (this.clearLayers) {
+          this.clearLayers();
+        } else {
+          this.setLatLngs([]);
+        }
+      });
+
       // Are there document hits to map?
       $.each(response.hits.hits, function eachHit() {
         var latlon = this._source.location.point.split(',');
@@ -411,11 +503,11 @@
           mapGridSquareAggregation(el, response, sourceSettings);
         }
       }
-      if (sourceSettings.initialMapBounds && !$(el)[0].settings.initialBoundsSet) {
-        if (typeof el.outputLayers[sourceSettings.id].getLayers !== 'undefined' &&
-            el.outputLayers[sourceSettings.id].getLayers().length > 0) {
-          el.map.fitBounds(el.outputLayers[sourceSettings.id].getBounds());
-          $(el)[0].settings.initialBoundsSet = true;
+      if (sourceSettings.initialMapBounds && !el.settings.initialBoundsSet && layers.length > 0 && layers[0].getBounds) {
+        bounds = layers[0].getBounds();
+        if (bounds.isValid()) {
+          el.map.fitBounds(layers[0].getBounds());
+          el.settings.initialBoundsSet = true;
         }
       }
     },
@@ -495,6 +587,21 @@
     getAutoSquareField: function getAutoSquareField() {
       var kms = autoGridSquareKms(this);
       return 'location.grid_square.' + kms + 'km.centre';
+    },
+
+    /**
+     * Maps repopulate from a source only if layer enabled.
+     */
+    getNeedsPopulation: function getNeedsPopulation(source) {
+      var needsPopulation = false;
+      var el = this;
+      $.each(getLayersForSource(el, source.settings.id), function eachLayer() {
+        needsPopulation = el.map.hasLayer(this);
+        // can abort loop once we have a hit.
+        return !needsPopulation;
+      });
+      return needsPopulation;
+      // @todo Disable layer if source linked to grid and no row selected.
     }
   };
 

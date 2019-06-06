@@ -572,6 +572,13 @@
         indiciaFns.controlFail(this, 'Invalid event handler requested for ' + event);
       }
       callbacks[event].push(handler);
+    },
+
+    /**
+     * Details pane doesn't repopulate if source changes until row clicked.
+     */
+    getNeedsPopulation: function getNeedsPopulation() {
+      return false;
     }
   };
 

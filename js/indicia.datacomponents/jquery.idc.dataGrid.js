@@ -524,6 +524,13 @@
           });
         }
       });
+    },
+
+    /**
+     * Grids always populate when their source updates.
+     */
+    getNeedsPopulation: function getNeedsPopulation() {
+      return true;
     }
   };
 
