@@ -217,7 +217,7 @@ var control_speciesmap_addcontrols;
       rows.each(function (idx, elem) {
         var cloned = $(elem).clone();
         cloned.addClass('scm-summary-' + sampleIDX).find('*').removeAttr('id');
-        cloned.find('td').filter('[class=],.scSampleCell,.scPresenceCell').remove();
+        cloned.find('td').filter('[class=""],.scSampleCell,.scPresenceCell').remove();
         cloned.find('.deh-required').remove();
         cloned.find('input[type=hidden]').each(function (idx, elem) {
           $(elem).remove();
