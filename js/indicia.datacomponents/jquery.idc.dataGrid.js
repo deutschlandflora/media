@@ -235,14 +235,16 @@
      * @param array options
      */
     init: function init(options) {
+      var el = this;
       var table;
       var header;
       var headerRow;
       var filterRow;
-      var el = this;
+      var tbody;
       var totalCols;
       var showingAggregation;
       var footableSort;
+      var tableClasses = ['table', 'es-data-grid'];
       indiciaFns.registerOutputPluginClass('idcDataGrid');
       el.settings = $.extend({}, defaults);
       // Apply settings passed in the HTML data-* attribute.
@@ -259,8 +261,11 @@
       }
       showingAggregation = el.settings.simpleAggregation || el.settings.sourceTable;
       footableSort = showingAggregation && el.settings.sortable ? 'true' : 'false';
+      if (el.settings.scrollY) {
+        tableClasses.push('fixed-header');
+      }
       // Build the elements required for the table.
-      table = $('<table class="table es-data-grid" data-sort="' + footableSort + '" />').appendTo(el);
+      table = $('<table class="' + tableClasses.join(' ') + '" data-sort="' + footableSort + '" />').appendTo(el);
       // If we need any sort of header, add <thead>.
       if (el.settings.includeColumnHeadings !== false || el.settings.includeFilterRow !== false) {
         header = $('<thead/>').appendTo(table);
@@ -310,7 +315,10 @@
         }
       }
       // We always want a table body for the data.
-      $('<tbody />').appendTo(table);
+      tbody = $('<tbody />').appendTo(table);
+      if (el.settings.scrollY) {
+        $(tbody).css('max-height', el.settings.scrollY);
+      }
       // Output a footer if we want a pager.
       if (el.settings.includePager && !(el.settings.sourceTable || el.settings.simpleAggregation)) {
         totalCols = el.settings.columns.length + (el.settings.actions.length > 0 ? 1 : 0);
@@ -337,6 +345,8 @@
       var el = this;
       var fromRowIndex = typeof data.from === 'undefined' ? 1 : (data.from + 1);
       var dataList;
+      var maxCharsPerCol = {};
+      var maxCharsPerRow = 0;
       $(el).find('tbody tr').remove();
       $(el).find('.multiselect-all').prop('checked', false);
       if ($(el)[0].settings.sourceTable) {
@@ -346,6 +356,14 @@
       } else {
         dataList = response.hits.hits;
       }
+      maxCharsPerCol = {};
+      $.each(el.settings.columns, function eachColumn(idx) {
+        if (this.field === '#status_icons') {
+          maxCharsPerCol['col-' + idx] = Math.max(this.caption.length, 5);
+        } else {
+          maxCharsPerCol['col-' + idx] = Math.max(this.caption.length, 10);
+        }
+      });
       $.each(dataList, function eachHit() {
         var hit = this;
         var cells = [];
@@ -401,6 +419,9 @@
               }
             });
             value = media;
+            maxCharsPerCol['col-' + idx] = 15;
+          } else {
+            maxCharsPerCol['col-' + idx] = Math.max(maxCharsPerCol['col-' + idx], $('<p>' + value + '</p>').text().length);
           }
           cells.push('<td class="col-' + idx + ' ' + fieldClass + '">' + value + '</td>');
         });
@@ -441,6 +462,16 @@
       $.each(callbacks.rowSelect, function eachCallback() {
         this($(el).find('tr.selected').length === 0 ? null : $(el).find('tr.selected')[0]);
       });
+      // Column resizing needs to be done manually when tbody has scroll bar.
+      if (el.settings.scrollY) {
+        $.each(el.settings.columns, function eachColumn(idx) {
+          maxCharsPerRow += Math.min(maxCharsPerCol['col-' + idx], 20);
+        });
+        $.each(el.settings.columns, function eachColumn(idx) {
+          var allowedColWidth = Math.min(maxCharsPerCol['col-' + idx], 20);
+          $(el).find('.col-' + idx).css('width', (100 * (allowedColWidth / maxCharsPerRow)) + '%');
+        });
+      }
     },
 
     /**
