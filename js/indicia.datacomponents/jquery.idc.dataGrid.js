@@ -403,7 +403,6 @@
         $.each(el.settings.columns, function eachColumn(idx) {
           var value;
           var rangeValue;
-          var match;
           var sizeClass;
           var classes = ['col-' + idx];
           var style = '';
@@ -420,28 +419,40 @@
             sizeClass = value.length === 1 ? 'single' : 'multi';
             $.each(value, function eachFile(i, file) {
               // Check if an extenral URL.
-              match = file.match(/^http(s)?:\/\/(www\.)?([a-z(\.kr)]+)/);
+              var match = file.path.match(/^http(s)?:\/\/(www\.)?([a-z(\.kr)]+)/);
+              var captionItems = [];
+              var captionAttr;
+              if (file.caption) {
+                captionItems.push(file.caption);
+              }
+              if (file.licence) {
+                captionItems.push('Licence is ' + file.licence);
+              }
+              captionAttr = captionItems.length ? ' title="' + captionItems.join(' | ').replace('"', '&quot;') + '"' : '';
               if (match !== null) {
                 // If so, is it iNat? We can work out the image file names if so.
                 if (file.match(/^https:\/\/static\.inaturalist\.org/)) {
-                  media += '<a ' +
-                    'href="' + file.replace('/square.', '/large.') + '" ' +
+                  media += '<a ' + captionAttr +
+                    'href="' + file.path.replace('/square.', '/large.') + '" ' +
                     'class="inaturalist fancybox" rel="group-' + doc.id + '">' +
-                    '<img class="' + sizeClass + '" src="' + file + '" /></a>';
+                    '<img class="' + sizeClass + '" src="' + file.path + '" /></a>';
                 } else {
                   media += '<a ' +
-                    'href="' + file + '" class="social-icon ' + match[3].replace('.', '') + '"></a>';
+                    'href="' + file.path + '" class="social-icon ' + match[3].replace('.', '') + '"></a>';
+                  if (captionItems.length) {
+                    media += '<p>' + captionItems.join(' | ').replace('"', '&quot;') + '</p>';
+                  }
                 }
-              } else if ($.inArray(file.split('.').pop(), ['mp3', 'wav']) > -1) {
+              } else if ($.inArray(file.path.split('.').pop(), ['mp3', 'wav']) > -1) {
                 // Audio files can have a player control.
                 media += '<audio controls ' +
-                  'src="' + indiciaData.warehouseUrl + 'upload/' + file + '" type="audio/mpeg"/>';
+                  'src="' + indiciaData.warehouseUrl + 'upload/' + file.path + '" type="audio/mpeg"/>';
               } else {
                 // Standard link to Indicia image.
-                media += '<a ' +
-                  'href="' + indiciaData.warehouseUrl + 'upload/' + file + '" ' +
+                media += '<a ' + captionAttr +
+                  'href="' + indiciaData.warehouseUrl + 'upload/' + file.path + '" ' +
                   'class="fancybox" rel="group-' + doc.id + '">' +
-                  '<img class="' + sizeClass + '" src="' + indiciaData.warehouseUrl + 'upload/thumb-' + file + '" />' +
+                  '<img class="' + sizeClass + '" src="' + indiciaData.warehouseUrl + 'upload/thumb-' + file.path + '" />' +
                   '</a>';
               }
             });
