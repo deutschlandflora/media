@@ -510,7 +510,7 @@ var control_speciesmap_addcontrols;
           var parser = new OpenLayers.Format.WKT();
           var feature;
           feature = parser.read($(block).find('[name$="sample\:geom"]').val()); // style is null
-          // TODO should convert from Indicia internal projection to map projection
+          feature.geometry.transform(div.indiciaProjection, div.map.projection);
           feature.attributes.subSampleIndex = id[1];
           feature.attributes.sRef = $(block).find('[name$="sample\:entered_sref"]').val();
           feature.attributes.count = $('[name$="\:sampleIDX"]')
