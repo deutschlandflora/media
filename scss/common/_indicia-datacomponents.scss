@@ -70,6 +70,10 @@ table.es-data-grid {
     thead {
       width: calc( 100% - 1em )/* scrollbar is average 1em/16px width, remove it from thead width */
     }
+    .multiselect-cell {
+      padding: 0;
+      width: 12px;
+    }
   }
 }
 

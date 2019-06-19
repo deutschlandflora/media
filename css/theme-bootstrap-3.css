@@ -295,6 +295,9 @@ table.es-data-grid.fixed-header thead, table.es-data-grid.fixed-header tbody tr 
   /* even columns width , fix width of table too*/ }
 table.es-data-grid.fixed-header thead {
   width: calc( 100% - 1em ); }
+table.es-data-grid.fixed-header .multiselect-cell {
+  padding: 0;
+  width: 12px; }
 
 /* idcLeafletMap plugin */
 .idc-output-leafletMap {
