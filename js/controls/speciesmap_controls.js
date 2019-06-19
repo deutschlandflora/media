@@ -510,7 +510,9 @@ var control_speciesmap_addcontrols;
           var parser = new OpenLayers.Format.WKT();
           var feature;
           feature = parser.read($(block).find('[name$="sample\:geom"]').val()); // style is null
-          feature.geometry.transform(div.indiciaProjection, div.map.projection);
+          if (!div.indiciaProjection.equals(div.map.projection)) {
+            feature.geometry.transform(div.indiciaProjection, div.map.projection);
+          }
           feature.attributes.subSampleIndex = id[1];
           feature.attributes.sRef = $(block).find('[name$="sample\:entered_sref"]').val();
           feature.attributes.count = $('[name$="\:sampleIDX"]')
