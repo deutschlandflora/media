@@ -507,7 +507,7 @@ var destroyAllFeatures;
     /**
      * After a click on the map, zoom in to the clicked on point.
      */
-    function _zoomInToClickPoint(div) {
+    function zoomInToClickPoint(div) {
       var features = getFeaturesByVal(div.map.editLayer, 'clickPoint', 'type');
       var bounds = features[0].geometry.getBounds();
       var maxZoom = Math.min(div.map.getZoom() + 3, div.settings.maxZoom);
@@ -522,7 +522,7 @@ var destroyAllFeatures;
     }
 
     function switchToSatelliteBaseLayer(map) {
-      $.each(map.layers, function() {
+      $.each(map.layers, function eachLayer() {
         if (this.isBaseLayer
             && (this.name.indexOf('Satellite') !== -1 || this.name.indexOf('Hybrid') !== -1)
             && map.baseLayer !== this) {
@@ -551,7 +551,7 @@ var destroyAllFeatures;
           switchToSatelliteBaseLayer(div.map);
           helptext.push(div.settings.hlpImproveResolutionSwitch);
         }
-        _zoomInToClickPoint(div);
+        zoomInToClickPoint(div);
       }
       return helptext.join(' ');
     }
@@ -687,7 +687,7 @@ var destroyAllFeatures;
       // by a switch in the spatial reference system where we don't want it to suddenly zoom -in without warning.
       if (!indiciaData.skip_zoom || indiciaData.skip_zoom === false) {
         // Optional zoom in after clicking when helpDiv not in use.
-        _zoomInToClickPoint(div);
+        zoomInToClickPoint(div);
         // Optional switch to satellite layer when using click_zoom
         if (div.settings.helpToPickPrecisionSwitchAt && data.sref.length >= div.settings.helpToPickPrecisionSwitchAt) {
           switchToSatelliteBaseLayer(div.map);
@@ -704,7 +704,7 @@ var destroyAllFeatures;
      * add the feature to the map editlayer. If the feature is a plot, enable dragging and
      * rotating. Finally add relevant help.
      */
-    function _setClickPoint(data, div) {
+    function setClickPoint(data, div) {
       // data holds the sref in _getSystem format, wkt in indiciaProjection, optional mapwkt in mapProjection
       var feature;
       var parser = new OpenLayers.Format.WKT();
@@ -2194,14 +2194,14 @@ var destroyAllFeatures;
           if (system.length===1) {
             $('#'+opts.srefSystemId).val('4326');
             pointToSref(div, new OpenLayers.Geometry.Point(lonlat.lon, lonlat.lat), '4326', function (data) {
-              _setClickPoint(data, div); // data sref in 4326, wkt in indiciaProjection, mapwkt in mapProjection
+              setClickPoint(data, div); // data sref in 4326, wkt in indiciaProjection, mapwkt in mapProjection
             });
           } else {
             alert(div.settings.msgSrefOutsideGrid);
           }
         }
       } else {
-        _setClickPoint(data, div); // data sref in _getSystem, wkt in indiciaProjection, mapwkt in mapProjection
+        setClickPoint(data, div); // data sref in _getSystem, wkt in indiciaProjection, mapwkt in mapProjection
         _hideOtherGraticules(div);
       }
       if (typeof indiciaFns.showHideRememberSiteButton !== 'undefined') {
