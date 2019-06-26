@@ -510,10 +510,11 @@ var destroyAllFeatures;
     function _zoomInToClickPoint(div) {
       var features = getFeaturesByVal(div.map.editLayer, 'clickPoint', 'type');
       var bounds = features[0].geometry.getBounds();
+      var maxZoom = Math.min(div.map.getZoom() + 3, div.settings.maxZoom);
       bounds = _extendBounds(bounds, div.settings.maxZoomBuffer);
-      if (div.map.getZoomForExtent(bounds) > div.settings.maxZoom) {
+      if (div.map.getZoomForExtent(bounds) > maxZoom) {
         // if showing something small, don't zoom in too far
-        div.map.setCenter(bounds.getCenterLonLat(), div.settings.maxZoom);
+        div.map.setCenter(bounds.getCenterLonLat(), maxZoom);
       } else {
         // Set the default view to show something triple the size of the grid square
         div.map.zoomToExtent(bounds);
@@ -2761,7 +2762,7 @@ var destroyAllFeatures;
       // of Indicia WMS layers. Note this code cannot go in mapLayerChanged
       // function because that is called multiple times during page intialisation
       // resulting in incorrect setting.
-      div.map.events.register('changelayer', null, function () { 
+      div.map.events.register('changelayer', null, function () {
         if (typeof $.cookie !== 'undefined') {
           // Need to init cookie here to currrent value in case different layers are used on different
           // pages - doing from scratch would loose settings for other layers not set for this one.
@@ -2773,7 +2774,7 @@ var destroyAllFeatures;
             return j;
           }, init);
           $.cookie('mapwmsvisibility', JSON.stringify(json), { expires: 7 });
-        } 
+        }
       })
 
       /**
