@@ -207,9 +207,11 @@
     selectedRowMarker = null;
     if (tr) {
       doc = JSON.parse($(tr).attr('data-doc-source'));
-      obj = showFeatureWkt(el, doc.location.geom, zoom);
-      ensureFeatureClear(el, obj);
-      selectedRowMarker = obj;
+      if (doc.location) {
+        obj = showFeatureWkt(el, doc.location.geom, zoom);
+        ensureFeatureClear(el, obj);
+        selectedRowMarker = obj;
+      }
     }
   }
 
