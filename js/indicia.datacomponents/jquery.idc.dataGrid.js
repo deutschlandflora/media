@@ -20,6 +20,8 @@
  * @link https://github.com/indicia-team/client_helpers
  */
 
+ /* eslint no-underscore-dangle: ["error", { "allow": ["_id", "_source"] }] */
+
 /**
  * Output plugin for data grids.
  */
@@ -37,6 +39,8 @@
    */
   var defaults = {
     actions: [],
+    aggregation: null,
+    cookies: true,
     includeColumnHeadings: true,
     includeFilterRow: true,
     includePager: true,
@@ -49,19 +53,161 @@
         md: 992,
         lg: 1200
       }
+    },
+    /**
+     * Registered callbacks for different events.
+     */
+    callbacks: {
+      rowSelect: [],
+      rowDblClick: [],
+      populate: []
+    },
+    // Page tracking for composite aggregations
+    compositeInfo: {
+      page: 0,
+      pageAfterKeys: {}
     }
   };
 
   /**
-   * Registered callbacks for different events.
+   * Removes the configuration overlay pane.
    */
-  var callbacks = {
-    rowSelect: [],
-    rowDblClick: [],
-    populate: []
-  };
+  function removeConfigPane(el) {
+    var panel = $(el).find('.data-grid-settings');
+    $(panel).fadeOut('fast');
+    // Undo forced minimum height on the container.
+    $(el).css('min-height', '');
+  }
+
+  function appendColumnsToConfigList(el, columns) {
+    var done = [];
+    var ol = $(el).find('.data-grid-settings ol');
+    $.each(columns, function eachColumn() {
+      var colInfo = el.settings.availableColumnInfo[this];
+      var caption = colInfo.caption ? colInfo.caption : '<em>no heading</em>';
+      var description = colInfo.description ? colInfo.description : '';
+      done.push(this);
+      $('<li>' +
+        '<div class="checkbox">' +
+        '<label><input type="checkbox" checked="checked" value="' + this + '">' + caption + '</label>' +
+        '</div>' + description +
+        '</li>').appendTo(ol);
+    });
+    $.each(el.settings.availableColumnInfo, function eachField(key, info) {
+      if ($.inArray(key, done) === -1) {
+        $('<li>' +
+          '<div class="checkbox"><label><input type="checkbox" value="' + key + '">' + info.caption + '</label></div>' +
+          (info.description ? info.description : '') +
+          '</li>').appendTo(ol);
+      }
+    });
+  }
 
   /**
+   * Adds the header cells to the table header.
+   */
+  function addColumnHeadings(el, header) {
+    var headerRow = $('<tr/>').appendTo(header);
+    if (el.settings.responsive) {
+      $('<th class="footable-toggle-col" data-sort-ignore="true"></th>').appendTo(headerRow);
+    }
+    $.each(el.settings.columns, function eachColumn(idx) {
+      var colDef = el.settings.availableColumnInfo[this];
+      var heading = colDef.caption;
+      var footableExtras = '';
+      var sortableField = typeof indiciaData.esMappings[this] !== 'undefined'
+        && indiciaData.esMappings[this].sort_field;
+      sortableField = sortableField
+        || indiciaData.fieldConvertorSortFields[this.simpleFieldName()];
+      if (el.settings.sortable !== false && sortableField) {
+        heading += '<span class="sort fas fa-sort"></span>';
+      }
+      if (colDef.multiselect) {
+        heading += '<span title="Enable multiple selection mode" class="fas fa-list multiselect-switch"></span>';
+      }
+      // Extra data attrs to support footable.
+      if (colDef['hide-breakpoints']) {
+        footableExtras = ' data-hide="' + colDef['hide-breakpoints'] + '"';
+      }
+      if (colDef['data-type']) {
+        footableExtras += ' data-type="' + colDef['data-type'] + '"';
+      }
+      $('<th class="col-' + idx + '" data-field="' + this + '"' + footableExtras + '>' + heading + '</th>')
+        .appendTo(headerRow);
+    });
+    if (el.settings.actions.length) {
+      $('<th class="col-actions">Actions</th>').appendTo(headerRow);
+    }
+  }
+
+  /**
+   * Adds the filter row cells and inputs to the table header.
+   */
+  function addFilterRow(el, header) {
+    var filterRow = $('<tr class="es-filter-row" />').appendTo(header);
+    if (el.settings.responsive) {
+      $('<td class="footable-toggle-col"></td>').appendTo(filterRow);
+    }
+    $.each(el.settings.columns, function eachColumn(idx) {
+      var td = $('<td class="col-' + idx + '" data-field="' + this + '"></td>').appendTo(filterRow);
+      var title;
+      var caption = el.settings.availableColumnInfo[this].caption;
+      // No filter input if this column has no mapping unless there is a
+      // special field function that can work out the query.
+      if (typeof indiciaData.esMappings[this] !== 'undefined'
+          || typeof indiciaFns.fieldConvertorQueryBuilders[this.simpleFieldName()] !== 'undefined') {
+        if (indiciaFns.fieldConvertorQueryBuilders[this.simpleFieldName()]) {
+          title = 'Enter a value to find matches the ' + caption + ' column.';
+        } else if (indiciaData.esMappings[this].type === 'text' || indiciaData.esMappings[this].type === 'keyword') {
+          title = 'Search for words in the  which begin with this text in the ' + caption + ' column. Prefix with ! to exclude rows which contain words beginning with the text you enter.';
+        } else {
+          title = 'Search for a number in the ' + caption + ' column. Prefix with ! to exclude rows which match the number you enter or separate a range with a hyphen (e.g. 123-456).';
+        }
+        $('<input type="text" title="' + title + '">').appendTo(td);
+      }
+    });
+  }
+
+  function applyColumnsList(el, colsList) {
+    el.settings.columns = [];
+    $.each(colsList, function eachCol() {
+      if (el.settings.availableColumnInfo[this]) {
+        el.settings.columns.push(this);
+      }
+    });
+  }
+
+  function movePage(el, forward) {
+    if (el.settings.aggregation === 'composite') {
+      el.settings.compositeInfo.page += (forward ? 1 : -1);
+    }
+    $.each(el.settings.source, function eachSource(sourceId) {
+      var source = indiciaData.esSourceObjects[sourceId];
+      if (el.settings.aggregation === 'composite') {
+        // Composite aggregations use after_key to find next page.
+        if (el.settings.compositeInfo.pageAfterKeys[el.settings.compositeInfo.page]) {
+          source.settings.after_key = el.settings.compositeInfo.pageAfterKeys[el.settings.compositeInfo.page];
+        } else {
+          delete source.settings.after_key;
+        }
+      } else {
+        if (typeof source.settings.from === 'undefined') {
+          source.settings.from = 0;
+        }
+        if (forward) {
+          // Move to next page based on currently visible row count, in case some
+          // have been removed.
+          source.settings.from += $(el).find('tbody tr.data-row').length;
+        } else {
+          source.settings.from -= source.settings.size;
+        }
+        source.settings.from = Math.max(0, source.settings.from);
+      }
+      source.populate();
+    });
+  }
+
+   /**
    * Register the various user interface event handlers.
    */
   function initHandlers(el) {
@@ -69,7 +215,7 @@
       var tr = this;
       $(tr).closest('tbody').find('tr.selected').removeClass('selected');
       $(tr).addClass('selected');
-      $.each(callbacks.rowSelect, function eachCallback() {
+      $.each(el.settings.callbacks.rowSelect, function eachCallback() {
         this(tr);
       });
     });
@@ -80,34 +226,17 @@
         $(tr).closest('tbody').find('tr.selected').removeClass('selected');
         $(tr).addClass('selected');
       }
-      $.each(callbacks.rowDblClick, function eachCallback() {
+      $.each(el.settings.callbacks.rowDblClick, function eachCallback() {
         this(tr);
       });
     });
 
     $(el).find('.pager .next').click(function clickNext() {
-      $.each(el.settings.source, function eachSource(sourceId) {
-        var source = indiciaData.esSourceObjects[sourceId];
-        if (typeof source.settings.from === 'undefined') {
-          source.settings.from = 0;
-        }
-        // Move to next page based on currently visible row count, in case some
-        // have been removed.
-        source.settings.from += $(el).find('tbody tr.data-row').length;
-        source.populate();
-      });
+      movePage(el, true);
     });
 
     $(el).find('.pager .prev').click(function clickPrev() {
-      $.each(el.settings.source, function eachSource(sourceId) {
-        var source = indiciaData.esSourceObjects[sourceId];
-        if (typeof source.settings.from === 'undefined') {
-          source.settings.from = 0;
-        }
-        source.settings.from -= source.settings.size;
-        source.settings.from = Math.max(0, source.settings.from);
-        source.populate();
-      });
+      movePage(el, false);
     });
 
     $(el).find('.sort').click(function clickSort() {
@@ -115,11 +244,10 @@
       var row = $(sortButton).closest('tr');
       $.each(el.settings.source, function eachSource(sourceId) {
         var source = indiciaData.esSourceObjects[sourceId];
-        var idx = $(sortButton).closest('th').attr('data-col');
-        var col = $(el)[0].settings.columns[idx];
+        var field = $(sortButton).closest('th').attr('data-field');
         var sortDesc = $(sortButton).hasClass('fa-sort-up');
         var fields;
-        var fieldName = col.field.simpleFieldName();
+        var fieldName = field.simpleFieldName();
         $(row).find('.sort.fas').removeClass('fa-sort-down');
         $(row).find('.sort.fas').removeClass('fa-sort-up');
         $(row).find('.sort.fas').addClass('fa-sort');
@@ -143,8 +271,12 @@
     });
 
     $(el).find('.es-filter-row input').change(function changeFilterInput() {
-      $.each(el.settings.source, function eachSource(sourceId) {
-        var source = indiciaData.esSourceObjects[sourceId];
+      var sources = Object.keys(el.settings.source);
+      if (el.settings.applyFilterRowToSources) {
+        sources = sources.concat(el.settings.applyFilterRowToSources);
+      }
+      $.each(sources, function eachSource() {
+        var source = indiciaData.esSourceObjects[this];
         // Reset to first page.
         source.settings.from = 0;
         source.populate();
@@ -174,13 +306,146 @@
       }
     });
 
-    indiciaFns.on('click', '.multiselect-all', {}, function onClick(e) {
-      var table = $(e.currentTarget).closest('table');
-      if ($(e.currentTarget).is(':checked')) {
-        table.find('.multiselect').prop('checked', true);
-      } else {
-        $(table).find('.multiselect').prop('checked', false);
+    /**
+     * Select all checkboxes event handler.
+     */
+    indiciaFns.on('click', '#' + el.id + ' .multiselect-all', {}, function onClick(e) {
+      $(e.currentTarget).closest('table')
+        .find('.multiselect')
+        .prop('checked', $(e.currentTarget).is(':checked'));
+    });
+
+    /**
+     * Click handler for the settings icon. Displays the config overlay pane.
+     */
+    $(el).find('.data-grid-show-settings').click(function settingsIconClick() {
+      var $panel = $(el).find('.data-grid-settings').html('');
+      var ol;
+      var maxHeight;
+      // Ensure height available enough for columns config.
+      $(el).css('min-height', '250px');
+      $('<h3>Column configuration</h3>').appendTo($panel);
+      $('<p>The following columns are available for this table. Tick the ones you want to include. Drag and drop the ' +
+        'columns into your preferred order.</p>').appendTo($panel);
+      $('<div><button class="btn btn-default toggle">Tick/untick all</button>' +
+        '<button class="btn btn-default restore">Restore defaults</button> ' +
+        '<button class="btn btn-default cancel">Cancel</button>' +
+        '<button class="btn btn-primary save">Save</button></div>').appendTo($panel);
+      ol = $('<ol/>').appendTo($panel);
+      $panel.fadeIn('fast');
+      maxHeight = $(el).find('table.es-data-grid').height() - ($(ol).offset().top - $panel.offset().top);
+      $(ol).css('max-height', maxHeight + 'px');
+      appendColumnsToConfigList(el, el.settings.columns);
+      $panel.find('ol').sortable();
+    });
+
+    function onFullScreenChange() {
+      var tbody;
+      var fsEl = document.fullscreenElement
+        || document.webkitFullscreenElement
+        || document.mozFullScreenElement;
+      tbody = $(el).find('tbody');
+      if (tbody && el.settings.scrollY) {
+        if (fsEl === el) {
+          // @todo Set max height according to full screen size.
+          tbody.css('max-height', '');
+        } else {
+          tbody.css('max-height', el.settings.scrollY + 'px');
+        }
       }
+    }
+
+    document.addEventListener('fullscreenchange', onFullScreenChange);
+
+    /* Firefox */
+    document.addEventListener('mozfullscreenchange', onFullScreenChange);
+
+    /* Chrome, Safari and Opera */
+    document.addEventListener('webkitfullscreenchange', onFullScreenChange);
+
+    /* IE / Edge */
+    document.addEventListener('msfullscreenchange', onFullScreenChange);
+
+    $(el).find('.data-grid-fullscreen').click(function settingsIconClick() {
+      if (document.fullscreenElement ||
+          document.webkitFullscreenElement ||
+          document.mozFullScreenElement ||
+          document.msFullscreenElement) {
+        if (document.exitFullscreen) {
+          document.exitFullscreen();
+        } else if (document.webkitExitFullscreen) {
+          document.webkitExitFullscreen();
+        } else if (document.mozCancelFullScreen) {
+          document.mozCancelFullScreen();
+        } else if (document.msExitFullscreen) {
+          document.msExitFullscreen();
+        }
+      } else if (el.requestFullscreen) {
+        el.requestFullscreen();
+      } else if (el.webkitRequestFullscreen) {
+        el.webkitRequestFullscreen();
+      } else if (el.mozRequestFullScreen) {
+        el.mozRequestFullScreen();
+      } else if (el.msRequestFullscreen) {
+        el.msRequestFullscreen();
+      }
+    });
+
+    /**
+     * Config save button handler.
+     */
+    indiciaFns.on('click', '.data-grid-settings .save', {}, function onClick() {
+      var header = $(el).find('thead');
+      var showingAggregation = el.settings.aggregation || el.settings.sourceTable;
+      var colsList = [];
+      $.each($(el).find('.data-grid-settings ol :checkbox:checked'), function eachCheckedCol() {
+        colsList.push($(this).val());
+      });
+      applyColumnsList(el, colsList);
+      // Save columns in a cookie.
+      if (el.settings.cookies && $.cookie) {
+        $.cookie('cols-' + el.id, JSON.stringify(colsList));
+      }
+      $(header).find('*').remove();
+      // Output header row for column titles.
+      if (el.settings.includeColumnHeadings !== false) {
+        addColumnHeadings(el, header);
+      }
+      // Disable filter row for aggregations.
+      el.settings.includeFilterRow = el.settings.includeFilterRow && !showingAggregation;
+      // Output header row for filtering.
+      if (el.settings.includeFilterRow !== false) {
+        addFilterRow(el, header);
+      }
+      $.each(el.settings.source, function eachSource(sourceId) {
+        var source = indiciaData.esSourceObjects[sourceId];
+        source.populate(true);
+      });
+      removeConfigPane(el);
+    });
+
+    /**
+     * Config cancel button handler.
+     */
+    indiciaFns.on('click', '.data-grid-settings .cancel', {}, function onClick() {
+      removeConfigPane(el);
+    });
+
+    /**
+     * Config restore button handler.
+     */
+    indiciaFns.on('click', '.data-grid-settings .restore', {}, function onClick() {
+      // Discard current columns and replace with defaults.
+      $(el).find('.data-grid-settings ol li').remove();
+      appendColumnsToConfigList(el, el.settings.defaultColumns);
+    });
+
+    /**
+     * Config toggle button handler.
+     */
+    indiciaFns.on('click', '.data-grid-settings .toggle', {}, function onClick() {
+      var anyUnchecked = $(el).find('.data-grid-settings ol li :checkbox:not(:checked)').length > 0;
+      $(el).find('.data-grid-settings ol li :checkbox').prop('checked', anyUnchecked);
     });
   }
 
@@ -234,52 +499,94 @@
     return html;
   }
 
-  function addColumnHeadings(el, header) {
-    var headerRow = $('<tr/>').appendTo(header);
-    if (el.settings.responsive) {
-      $('<th class="footable-toggle-col"></th>').appendTo(headerRow);
+  /**
+   * Find the data used to populate the table in the response.
+   *
+   * Data can be found in the response hits (i.e. standard occurrence
+   * documents), the buckets of an aggregation, or a custom built source table.
+   */
+  function getSourceDataList(el, response) {
+    if (el.settings.sourceTable) {
+      // A custom table built from an aggregation by the source.
+      return response[$(el)[0].settings.sourceTable];
+    } else if (el.settings.aggregation && typeof response.aggregations !== 'undefined') {
+      // A standard aggregation.
+      return indiciaFns.findValue(response.aggregations, 'buckets');
     }
-    $.each(el.settings.columns, function eachColumn(idx) {
-      var heading = this.caption;
-      var footableExtras = '';
-      var sortableField = typeof indiciaData.esMappings[this.field] !== 'undefined'
-        && indiciaData.esMappings[this.field].sort_field;
-      sortableField = sortableField
-        || indiciaData.fieldConvertorSortFields[this.field.simpleFieldName()];
-      if (el.settings.sortable !== false && sortableField) {
-        heading += '<span class="sort fas fa-sort"></span>';
-      }
-      if (this.multiselect) {
-        heading += '<span title="Enable multiple selection mode" class="fas fa-list multiselect-switch"></span>';
-      }
-      // Extra data attrs to support footable.
-      if (this['hide-breakpoints']) {
-        footableExtras = ' data-hide="' + this['hide-breakpoints'] + '"';
-      }
-      if (this['data-type']) {
-        footableExtras += ' data-type="' + this['data-type'] + '"';
-      }
-      $('<th class="col-' + idx + '" data-col="' + idx + '"' + footableExtras + '>' + heading + '</th>').appendTo(headerRow);
-    });
-    if (el.settings.actions.length) {
-      $('<th class="col-actions">Actions</th>').appendTo(headerRow);
-    }
+    // A standard list of records.
+    return response.hits.hits;
   }
 
-  function addFilterRow(el, header) {
-    var filterRow = $('<tr class="es-filter-row" />').appendTo(header);
-    if (el.settings.responsive) {
-      $('<td class="footable-toggle-col"></td>').appendTo(filterRow);
+  function drawMediaFile(i, doc, file, sizeClass) {
+    // Check if an extenral URL.
+    var match = file.path.match(/^http(s)?:\/\/(www\.)?([a-z(\.kr)]+)/);
+    var captionItems = [];
+    var captionAttr;
+    var html = '';
+    if (file.caption) {
+      captionItems.push(file.caption);
     }
-    $.each(el.settings.columns, function eachColumn(idx) {
-      var td = $('<td class="col-' + idx + '" data-col="' + idx + '"></td>').appendTo(filterRow);
-      // No filter input if this column has no mapping unless there is a
-      // special field function that can work out the query.
-      if (typeof indiciaData.esMappings[this.field] !== 'undefined'
-        || typeof indiciaFns.fieldConvertorQueryBuilders[this.field.simpleFieldName()] !== 'undefined') {
-        $('<input type="text">').appendTo(td);
+    if (file.licence) {
+      captionItems.push('Licence is ' + file.licence);
+    }
+    captionAttr = captionItems.length ? ' title="' + captionItems.join(' | ').replace('"', '&quot;') + '"' : '';
+    if (match !== null) {
+      // If so, is it iNat? We can work out the image file names if so.
+      if (file.path.match(/^https:\/\/static\.inaturalist\.org/)) {
+        html += '<a ' + captionAttr +
+          'href="' + file.path.replace('/square.', '/large.') + '" ' +
+          'class="inaturalist fancybox" rel="group-' + doc.id + '">' +
+          '<img class="' + sizeClass + '" src="' + file.path + '" /></a>';
+      } else {
+        html += '<a ' +
+          'href="' + file.path + '" class="social-icon ' + match[3].replace('.', '') + '"></a>';
+        if (captionItems.length) {
+          html += '<p>' + captionItems.join(' | ').replace('"', '&quot;') + '</p>';
+        }
       }
-    });
+    } else if ($.inArray(file.path.split('.').pop(), ['mp3', 'wav']) > -1) {
+      // Audio files can have a player control.
+      html += '<audio controls ' +
+        'src="' + indiciaData.warehouseUrl + 'upload/' + file.path + '" type="audio/mpeg"/>';
+    } else {
+      // Standard link to Indicia image.
+      html += '<a ' + captionAttr +
+        'href="' + indiciaData.warehouseUrl + 'upload/' + file.path + '" ' +
+        'class="fancybox" rel="group-' + doc.id + '">' +
+        '<img class="' + sizeClass + '" src="' + indiciaData.warehouseUrl + 'upload/thumb-' + file.path + '" />' +
+        '</a>';
+    }
+    return html;
+  }
+
+  /**
+   * Outputs the HTML for the table footer.
+   *
+   * @param obj response
+   *   Elasticsearch response data.
+   * @param obj data
+   *   Data sent in request.
+   */
+  function drawTableFooter(el, response, data, afterKey) {
+    var fromRowIndex = typeof data.from === 'undefined' ? 1 : (data.from + 1);
+    // Set up the count info in the footer.
+    if (!el.settings.aggregation) {
+      if (response.hits.hits.length > 0) {
+        $(el).find('tfoot .showing').html('Showing ' + fromRowIndex +
+          ' to ' + (fromRowIndex + (response.hits.hits.length - 1)) + ' of ' + response.hits.total);
+      } else {
+        $(el).find('tfoot .showing').html('No hits');
+      }
+      // Enable or disable the paging buttons.
+      $(el).find('.pager .prev').prop('disabled', fromRowIndex <= 1);
+      $(el).find('.pager .next').prop('disabled', fromRowIndex + response.hits.hits.length >= response.hits.total);
+    } else if (el.settings.aggregation === 'composite') {
+      if (afterKey) {
+        el.settings.compositeInfo.pageAfterKeys[el.settings.compositeInfo.page + 1] = afterKey;
+      }
+      $(el).find('.pager .next').prop('disabled', !afterKey);
+      $(el).find('.pager .prev').prop('disabled', el.settings.compositeInfo.page === 0);
+    }
   }
 
   /**
@@ -300,6 +607,8 @@
       var showingAggregation;
       var footableSort;
       var tableClasses = ['table', 'es-data-grid'];
+      var savedCols;
+      var tools;
       indiciaFns.registerOutputPluginClass('idcDataGrid');
       el.settings = $.extend(true, {}, defaults);
       // Apply settings passed in the HTML data-* attribute.
@@ -314,7 +623,19 @@
       if (typeof el.settings.columns === 'undefined') {
         indiciaFns.controlFail(el, 'Missing columns config for table.');
       }
-      showingAggregation = el.settings.simpleAggregation || el.settings.sourceTable;
+      // Store original column settings.
+      el.settings.defaultColumns = el.settings.columns.slice();
+      if (el.settings.cookies && $.cookie) {
+        savedCols = $.cookie('cols-' + el.id);
+        // Don't recall cookie if empty, as this is unlikely to be deliberate.
+        if (savedCols && savedCols !== '[]') {
+          applyColumnsList(el, JSON.parse(savedCols));
+        }
+      }
+      if (el.settings.columns.length === 0) {
+        el.settings.columns = el.settings.defaultColumns.slice();
+      }
+      showingAggregation = el.settings.aggregation || el.settings.sourceTable;
       footableSort = showingAggregation && el.settings.sortable ? 'true' : 'false';
       if (el.settings.scrollY) {
         tableClasses.push('fixed-header');
@@ -341,12 +662,23 @@
         $(tbody).css('max-height', el.settings.scrollY);
       }
       // Output a footer if we want a pager.
-      if (el.settings.includePager && !(el.settings.sourceTable || el.settings.simpleAggregation)) {
-        totalCols = el.settings.columns.length + (el.settings.actions.length > 0 ? 1 : 0);
+      if (el.settings.includePager && !(el.settings.sourceTable || el.settings.aggregation === 'simple')) {
+        totalCols = el.settings.columns.length
+          + (el.settings.responsive ? 1 : 0)
+          + (el.settings.actions.length > 0 ? 1 : 0);
         $('<tfoot><tr class="pager"><td colspan="' + totalCols + '"><span class="showing"></span>' +
           '<span class="buttons"><button class="prev">Previous</button><button class="next">Next</button></span>' +
           '</td></tr></tfoot>').appendTo(table);
       }
+      // Add icons for table settings.
+      tools = '<span class="fas fa-wrench data-grid-show-settings" title="Click to show grid column settings"></span>';
+      if (document.fullscreenEnabled || document.mozFullScreenEnabled || document.webkitFullscreenEnabled) {
+        tools += '<br/><span class="far fa-window-maximize data-grid-fullscreen" title="Click to view grid in full screen mode"></span>';
+      }
+      $('<div class="data-grid-tools">' + tools + '</div>').appendTo(el);
+      // Add overlay for settings etc.
+      $('<div class="data-grid-settings" style="display: none"></div>').appendTo(el);
+      $('<div class="loading-spinner" style="display: none"><div>Loading...</div></div>').appendTo(el);
       initHandlers(el);
       if (footableSort === 'true' || el.settings.responsive) {
         // Make grid responsive.
@@ -366,34 +698,39 @@
      */
     populate: function populate(sourceSettings, response, data) {
       var el = this;
-      var fromRowIndex = typeof data.from === 'undefined' ? 1 : (data.from + 1);
-      var dataList;
+      var dataList = getSourceDataList(el, response);
       var maxCharsPerCol = {};
       var maxCharsPerRow = 0;
+      var afterKey = indiciaFns.findValue(response, 'after_key');
+      if (el.settings.aggregation === 'composite' && !afterKey && el.settings.compositeInfo.page > 0) {
+        // Moved past last page, so abort.
+        $(el).find('.next').prop('disabled', true);
+        el.settings.compositeInfo.page--;
+        return;
+      }
+      // Cleanup before repopulating.
       $(el).find('tbody tr').remove();
       $(el).find('.multiselect-all').prop('checked', false);
-      if ($(el)[0].settings.sourceTable) {
-        dataList = response[$(el)[0].settings.sourceTable];
-      } else if ($(el)[0].settings.simpleAggregation === true && typeof response.aggregations !== 'undefined') {
-        dataList = indiciaFns.findValue(response.aggregations, 'buckets');
-      } else {
-        dataList = response.hits.hits;
-      }
+      // In scrollY mode, we have to calculate the column widths ourselves
+      // since putting CSS overflow on tbody requires us to lose table layout.
+      // Start by finding the number of characters in header cells. Later we'll
+      // increase this if  we find cells in a column that contain more
+      // characters.
       maxCharsPerCol = {};
       $.each(el.settings.columns, function eachColumn(idx) {
-        if (this.field === '#status_icons') {
-          maxCharsPerCol['col-' + idx] = Math.max(this.caption.length, 5);
+        if (this === '#status_icons') {
+          maxCharsPerCol['col-' + idx] = Math.max(el.settings.availableColumnInfo[this].caption.length, 5);
         } else {
-          maxCharsPerCol['col-' + idx] = Math.max(this.caption.length, 10);
+          maxCharsPerCol['col-' + idx] = Math.max(el.settings.availableColumnInfo[this].caption.length, 10);
         }
       });
       $.each(dataList, function eachHit() {
         var hit = this;
         var cells = [];
         var row;
-        var media;
         var selectedClass;
         var doc = hit._source ? hit._source : hit;
+        var dataRowId;
         if ($(el).find('table.multiselect-mode').length) {
           cells.push('<td class="multiselect-cell"><input type="checkbox" class="multiselect" /></td>');
         }
@@ -406,106 +743,73 @@
           var sizeClass;
           var classes = ['col-' + idx];
           var style = '';
-          value = indiciaFns.getValueForField(doc, this.field);
-          if (this.range_field) {
-            rangeValue = indiciaFns.getValueForField(doc, this.range_field);
+          var colDef = el.settings.availableColumnInfo[this];
+          var media = '';
+          var date;
+          value = indiciaFns.getValueForField(doc, this);
+          if (colDef.range_field) {
+            rangeValue = indiciaFns.getValueForField(doc, colDef.range_field);
             if (value !== rangeValue) {
               value = value + ' to ' + rangeValue;
             }
           }
-          if (value && this.handler && this.handler === 'media') {
-            media = '';
+          if (value && colDef.handler && colDef.handler === 'date') {
+            date = new Date(value);
+            value = date.toLocaleDateString();
+          } else if (value && colDef.handler && colDef.handler === 'datetime') {
+            date = new Date(value);
+            value = date.toLocaleString();
+          }
+          if (value && colDef.handler && colDef.handler === 'media') {
             // Tweak image sizes if more than 1.
             sizeClass = value.length === 1 ? 'single' : 'multi';
+            // Build media HTML.
             $.each(value, function eachFile(i, file) {
-              // Check if an extenral URL.
-              var match = file.path.match(/^http(s)?:\/\/(www\.)?([a-z(\.kr)]+)/);
-              var captionItems = [];
-              var captionAttr;
-              if (file.caption) {
-                captionItems.push(file.caption);
-              }
-              if (file.licence) {
-                captionItems.push('Licence is ' + file.licence);
-              }
-              captionAttr = captionItems.length ? ' title="' + captionItems.join(' | ').replace('"', '&quot;') + '"' : '';
-              if (match !== null) {
-                // If so, is it iNat? We can work out the image file names if so.
-                if (file.match(/^https:\/\/static\.inaturalist\.org/)) {
-                  media += '<a ' + captionAttr +
-                    'href="' + file.path.replace('/square.', '/large.') + '" ' +
-                    'class="inaturalist fancybox" rel="group-' + doc.id + '">' +
-                    '<img class="' + sizeClass + '" src="' + file.path + '" /></a>';
-                } else {
-                  media += '<a ' +
-                    'href="' + file.path + '" class="social-icon ' + match[3].replace('.', '') + '"></a>';
-                  if (captionItems.length) {
-                    media += '<p>' + captionItems.join(' | ').replace('"', '&quot;') + '</p>';
-                  }
-                }
-              } else if ($.inArray(file.path.split('.').pop(), ['mp3', 'wav']) > -1) {
-                // Audio files can have a player control.
-                media += '<audio controls ' +
-                  'src="' + indiciaData.warehouseUrl + 'upload/' + file.path + '" type="audio/mpeg"/>';
-              } else {
-                // Standard link to Indicia image.
-                media += '<a ' + captionAttr +
-                  'href="' + indiciaData.warehouseUrl + 'upload/' + file.path + '" ' +
-                  'class="fancybox" rel="group-' + doc.id + '">' +
-                  '<img class="' + sizeClass + '" src="' + indiciaData.warehouseUrl + 'upload/thumb-' + file.path + '" />' +
-                  '</a>';
-              }
+              media += drawMediaFile(i, doc, file, sizeClass);
             });
             value = media;
-            maxCharsPerCol['col-' + idx] = 15;
+            // Approximate a column size to accomodate the thumbnails.
+            maxCharsPerCol['col-' + idx] = value.length === 1 ? 10 : 15;
           } else {
             maxCharsPerCol['col-' + idx] = Math.max(maxCharsPerCol['col-' + idx], $('<p>' + value + '</p>').text().length);
           }
-          classes.push('field-' + this.field.replace('.', '--').replace('_', '-'));
+          classes.push('field-' + this.replace('.', '--').replace('_', '-'));
+          // Copy across responsive hidden cols.
           if ($(el).find('table th.col-' + idx).css('display') === 'none') {
             style = ' style="display: none"';
           }
           cells.push('<td class="' + classes.join(' ') + '"' + style + '>' + value + '</td>');
+          // Extra space in last col to account for tool icons.
+          if (idx === el.settings.columns.length - 1 && !el.settings.actions.length) {
+            maxCharsPerCol['col-' + idx] += 1;
+          }
           return true;
         });
         if (el.settings.actions.length) {
           cells.push('<td class="col-actions">' + getActionsForRow(el.settings.actions, doc) + '</td>');
+          maxCharsPerCol['col-actions'] = 7;
         }
+        // Extra char for the last heading as it contains tool icons.
+        maxCharsPerCol['col-' + (maxCharsPerCol.length - 1)] += 1;
         selectedClass = (el.settings.selectIdsOnNextLoad && $.inArray(hit._id, el.settings.selectIdsOnNextLoad) !== -1)
           ? ' selected' : '';
-        row = $('<tr class="data-row' + selectedClass + '" data-row-id="' + hit._id + '">'
+        dataRowId = hit._id ? ' data-row-id="' + hit._id + '"' : '';
+        row = $('<tr class="data-row' + selectedClass + '"' + dataRowId + '>'
            + cells.join('') +
            '</tr>').appendTo($(el).find('tbody'));
-        $(row).attr('data-doc-source', JSON.stringify(hit._source));
+        $(row).attr('data-doc-source', JSON.stringify(doc));
         return true;
       });
       if (el.settings.responsive) {
         $(el).find('table').trigger('footable_redraw');
       }
-      // Set up the count info in the footer.
-      if (response.hits.hits.length > 0) {
-        $(el).find('tfoot .showing').html('Showing ' + fromRowIndex +
-          ' to ' + (fromRowIndex + (response.hits.hits.length - 1)) + ' of ' + response.hits.total);
-      } else {
-        $(el).find('tfoot .showing').html('No hits');
-      }
-      // Enable or disable the paging buttons.
-      if (fromRowIndex > 1) {
-        $(el).find('.pager .prev').removeAttr('disabled');
-      } else {
-        $(el).find('.pager .prev').attr('disabled', 'disabled');
-      }
-      if (fromRowIndex + response.hits.hits.length < response.hits.total) {
-        $(el).find('.pager .next').removeAttr('disabled');
-      } else {
-        $(el).find('.pager .next').attr('disabled', 'disabled');
-      }
+      drawTableFooter(el, response, data, afterKey);
       // Fire any population callbacks.
-      $.each(callbacks.populate, function eachCallback() {
+      $.each(el.settings.callbacks.populate, function eachCallback() {
         this(el);
       });
       // Fire callbacks for selected row if any.
-      $.each(callbacks.rowSelect, function eachCallback() {
+      $.each(el.settings.callbacks.rowSelect, function eachCallback() {
         this($(el).find('tr.selected').length === 0 ? null : $(el).find('tr.selected')[0]);
       });
       // Column resizing needs to be done manually when tbody has scroll bar.
@@ -532,10 +836,10 @@
      *   Callback function called on this event.
      */
     on: function on(event, handler) {
-      if (typeof callbacks[event] === 'undefined') {
+      if (typeof this.settings.callbacks[event] === 'undefined') {
         indiciaFns.controlFail(this, 'Invalid event handler requested for ' + event);
       }
-      callbacks[event].push(handler);
+      this.settings.callbacks[event].push(handler);
     },
 
     /**
@@ -600,7 +904,7 @@
             $(grid).find('table tbody tr.data-row[data-row-id="' + newSelectedId + '"]').addClass('selected');
           }
           // Fire callbacks for selected row.
-          $.each(callbacks.rowSelect, function eachCallback() {
+          $.each(grid.settings.callbacks.rowSelect, function eachCallback() {
             this($(grid).find('tr.selected').length === 0 ? null : $(grid).find('tr.selected')[0]);
           });
         }
@@ -616,14 +920,16 @@
   };
 
   /**
-   * Extend jQuery to declare idcDtaGrid plugin.
+   * Extend jQuery to declare idcDataGrid plugin.
    */
   $.fn.idcDataGrid = function buildDataGrid(methodOrOptions) {
     var passedArgs = arguments;
-    $.each(this, function callOnEachGrid() {
+    var result;
+    $.each(this, function callOnEachOutput() {
       if (methods[methodOrOptions]) {
         // Call a declared method.
-        return methods[methodOrOptions].apply(this, Array.prototype.slice.call(passedArgs, 1));
+        result = methods[methodOrOptions].apply(this, Array.prototype.slice.call(passedArgs, 1));
+        return true;
       } else if (typeof methodOrOptions === 'object' || !methodOrOptions) {
         // Default to "init".
         return methods.init.apply(this, passedArgs);
@@ -632,6 +938,7 @@
       $.error('Method ' + methodOrOptions + ' does not exist on jQuery.idcDataGrid');
       return true;
     });
-    return this;
+    // If the method has no explicit response, return this to allow chaining.
+    return typeof result === 'undefined' ? this : result;
   };
 }());
