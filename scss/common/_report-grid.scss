@@ -1,4 +1,6 @@
 table.report-grid {
+  /* Ensure height enough for spinner. For tables, height acts as min-height. */
+  height: 140px;
   tr {
     /* Odd row colouration */
     &.odd {
