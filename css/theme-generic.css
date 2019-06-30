@@ -280,7 +280,9 @@ table.report-grid {
     bottom: 0;
     padding: 1em;
     opacity: 0.95;
-    background-color: #f0f0f0; }
+    background-color: #f0f0f0;
+    min-height: 500px;
+    border: solid silver 1px; }
     .idc-output-dataGrid .data-grid-settings ol {
       overflow: auto; }
       .idc-output-dataGrid .data-grid-settings ol li {

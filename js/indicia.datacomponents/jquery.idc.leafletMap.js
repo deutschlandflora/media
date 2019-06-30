@@ -555,9 +555,9 @@
         selectedFeature = null;
       }
       selectedFeature = showFeatureWkt(this, geom, zoom, {
-        color: '#7700CC',
-        fillColor: '#7700CC',
-        fillOpacity: 0.1
+        color: '#3333DD',
+        fillColor: '#4444CC',
+        fillOpacity: 0.05
       });
     },
 

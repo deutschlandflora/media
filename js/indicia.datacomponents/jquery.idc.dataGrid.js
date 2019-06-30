@@ -21,6 +21,7 @@
  */
 
  /* eslint no-underscore-dangle: ["error", { "allow": ["_id", "_source"] }] */
+ /* eslint no-param-reassign: ["error", { "props": false }]*/
 
 /**
  * Output plugin for data grids.
@@ -334,7 +335,7 @@
       ol = $('<ol/>').appendTo($panel);
       $panel.fadeIn('fast');
       maxHeight = $(el).find('table.es-data-grid').height() - ($(ol).offset().top - $panel.offset().top);
-      $(ol).css('max-height', maxHeight + 'px');
+      $(ol).css('max-height', Math.max(400, maxHeight) + 'px');
       appendColumnsToConfigList(el, el.settings.columns);
       $panel.find('ol').sortable();
     });
@@ -559,6 +560,21 @@
     return html;
   }
 
+  function addHeader(el, table) {
+    var header;
+    // If we need any sort of header, add <thead>.
+    if (el.settings.includeColumnHeadings !== false || el.settings.includeFilterRow !== false) {
+      header = $('<thead/>').appendTo(table);
+      // Output header row for column titles.
+      if (el.settings.includeColumnHeadings !== false) {
+        addColumnHeadings(el, header);
+      }
+      // Output header row for filtering.
+      if (el.settings.includeFilterRow !== false) {
+        addFilterRow(el, header);
+      }
+    }
+  }
   /**
    * Outputs the HTML for the table footer.
    *
@@ -590,6 +606,120 @@
   }
 
   /**
+   * Return the <td> elements for special behaviours in a row.
+   *
+   * Includes row selection and responsive table toggle cells.
+   */
+  function getRowBehaviourCells(el) {
+    var cells = [];
+    if ($(el).find('table.multiselect-mode').length) {
+      cells.push('<td class="multiselect-cell"><input type="checkbox" class="multiselect" /></td>');
+    }
+    if (el.settings.responsive) {
+      cells.push('<td class="footable-toggle-col"></td>');
+    }
+    return cells;
+  }
+
+  /**
+   * Return the <td> elements for data in a row.
+   */
+  function getDataCells(el, doc, maxCharsPerCol) {
+    var cells = [];
+    $.each(el.settings.columns, function eachColumn(idx) {
+      var value;
+      var rangeValue;
+      var sizeClass;
+      var classes = ['col-' + idx];
+      var style = '';
+      var colDef = el.settings.availableColumnInfo[this];
+      var media = '';
+      var date;
+      value = indiciaFns.getValueForField(doc, this);
+      if (colDef.range_field) {
+        rangeValue = indiciaFns.getValueForField(doc, colDef.range_field);
+        if (value !== rangeValue) {
+          value = value + ' to ' + rangeValue;
+        }
+      }
+      if (value && colDef.handler && colDef.handler === 'date') {
+        date = new Date(value);
+        value = date.toLocaleDateString();
+      } else if (value && colDef.handler && colDef.handler === 'datetime') {
+        date = new Date(value);
+        value = date.toLocaleString();
+      }
+      if (value && colDef.handler && colDef.handler === 'media') {
+        // Tweak image sizes if more than 1.
+        sizeClass = value.length === 1 ? 'single' : 'multi';
+        // Build media HTML.
+        $.each(value, function eachFile(i, file) {
+          media += drawMediaFile(i, doc, file, sizeClass);
+        });
+        value = media;
+        // Approximate a column size to accomodate the thumbnails.
+        maxCharsPerCol['col-' + idx] = value.length === 1 ? 10 : 15;
+      } else {
+        maxCharsPerCol['col-' + idx] = Math.max(maxCharsPerCol['col-' + idx], $('<p>' + value + '</p>').text().length);
+      }
+      classes.push('field-' + this.replace('.', '--').replace('_', '-'));
+      // Copy across responsive hidden cols.
+      if ($(el).find('table th.col-' + idx).css('display') === 'none') {
+        style = ' style="display: none"';
+      }
+      cells.push('<td class="' + classes.join(' ') + '"' + style + '>' + value + '</td>');
+      // Extra space in last col to account for tool icons.
+      if (idx === el.settings.columns.length - 1 && !el.settings.actions.length) {
+        maxCharsPerCol['col-' + idx] += 1;
+      }
+      return true;
+    });
+    return cells;
+  }
+
+  /**
+   * After population of the table, fire callbacks.
+   *
+   * Callbacks may be linked to the populate event or the rowSelect event if
+   * the selected row changes.
+   */
+  function fireAfterPopulationCallbacks(el) {
+    // Fire any population callbacks.
+    $.each(el.settings.callbacks.populate, function eachCallback() {
+      this(el);
+    });
+    // Fire callbacks for selected row if any.
+    $.each(el.settings.callbacks.rowSelect, function eachCallback() {
+      this($(el).find('tr.selected').length === 0 ? null : $(el).find('tr.selected')[0]);
+    });
+  }
+
+  /**
+   * Column resizing needs to be done manually when tbody has scroll bar.
+   *
+   * Tbody can only have scroll bar if not it's normal CSS display setting, so
+   * we lose col auto-resizing. This sets col widths according to the max
+   * amount of data in each.
+   */
+  function setColWidths(el, maxCharsPerCol) {
+    var maxCharsPerRow = 0;
+    // Column resizing needs to be done manually when tbody has scroll bar.
+    if (el.settings.scrollY) {
+      $.each(el.settings.columns, function eachColumn(idx) {
+        maxCharsPerRow += Math.min(maxCharsPerCol['col-' + idx], 20);
+      });
+      if (el.settings.responsive) {
+        maxCharsPerRow += 3;
+        $(el).find('.footable-toggle-col').css('width', (100 * (3 / maxCharsPerRow)) + '%');
+      }
+      $.each(el.settings.columns, function eachColumn(idx) {
+        var allowedColWidth = Math.min(maxCharsPerCol['col-' + idx], 20);
+        $(el).find('.col-' + idx).css('width', (100 * (allowedColWidth / maxCharsPerRow)) + '%');
+      });
+    }
+  }
+
+  /**
    * Declare public methods.
    */
   methods = {
@@ -601,7 +731,6 @@
     init: function init(options) {
       var el = this;
       var table;
-      var header;
       var tbody;
       var totalCols;
       var showingAggregation;
@@ -640,22 +769,11 @@
       if (el.settings.scrollY) {
         tableClasses.push('fixed-header');
       }
+      // Disable filter row for aggregations.
+      el.settings.includeFilterRow = el.settings.includeFilterRow && !showingAggregation;
       // Build the elements required for the table.
       table = $('<table class="' + tableClasses.join(' ') + '" data-sort="' + footableSort + '" />').appendTo(el);
-      // If we need any sort of header, add <thead>.
-      if (el.settings.includeColumnHeadings !== false || el.settings.includeFilterRow !== false) {
-        header = $('<thead/>').appendTo(table);
-        // Output header row for column titles.
-        if (el.settings.includeColumnHeadings !== false) {
-          addColumnHeadings(el, header);
-        }
-        // Disable filter row for aggregations.
-        el.settings.includeFilterRow = el.settings.includeFilterRow && !showingAggregation;
-        // Output header row for filtering.
-        if (el.settings.includeFilterRow !== false) {
-          addFilterRow(el, header);
-        }
-      }
+      addHeader(el, table);
       // We always want a table body for the data.
       tbody = $('<tbody />').appendTo(table);
       if (el.settings.scrollY) {
@@ -700,7 +818,6 @@
       var el = this;
       var dataList = getSourceDataList(el, response);
       var maxCharsPerCol = {};
-      var maxCharsPerRow = 0;
       var afterKey = indiciaFns.findValue(response, 'after_key');
       if (el.settings.aggregation === 'composite' && !afterKey && el.settings.compositeInfo.page > 0) {
         // Moved past last page, so abort.
@@ -718,11 +835,8 @@
       // characters.
       maxCharsPerCol = {};
       $.each(el.settings.columns, function eachColumn(idx) {
-        if (this === '#status_icons') {
-          maxCharsPerCol['col-' + idx] = Math.max(el.settings.availableColumnInfo[this].caption.length, 5);
-        } else {
-          maxCharsPerCol['col-' + idx] = Math.max(el.settings.availableColumnInfo[this].caption.length, 10);
-        }
+        // Status icons allowed to be smaller than a normal col.
+        maxCharsPerCol['col-' + idx] = Math.max(el.settings.availableColumnInfo[this].caption.length, this === '#status_icons#' ? 5 : 10);
       });
       $.each(dataList, function eachHit() {
         var hit = this;
@@ -731,60 +845,8 @@
         var selectedClass;
         var doc = hit._source ? hit._source : hit;
         var dataRowId;
-        if ($(el).find('table.multiselect-mode').length) {
-          cells.push('<td class="multiselect-cell"><input type="checkbox" class="multiselect" /></td>');
-        }
-        if (el.settings.responsive) {
-          cells.push('<td class="footable-toggle-col"></td>');
-        }
-        $.each(el.settings.columns, function eachColumn(idx) {
-          var value;
-          var rangeValue;
-          var sizeClass;
-          var classes = ['col-' + idx];
-          var style = '';
-          var colDef = el.settings.availableColumnInfo[this];
-          var media = '';
-          var date;
-          value = indiciaFns.getValueForField(doc, this);
-          if (colDef.range_field) {
-            rangeValue = indiciaFns.getValueForField(doc, colDef.range_field);
-            if (value !== rangeValue) {
-              value = value + ' to ' + rangeValue;
-            }
-          }
-          if (value && colDef.handler && colDef.handler === 'date') {
-            date = new Date(value);
-            value = date.toLocaleDateString();
-          } else if (value && colDef.handler && colDef.handler === 'datetime') {
-            date = new Date(value);
-            value = date.toLocaleString();
-          }
-          if (value && colDef.handler && colDef.handler === 'media') {
-            // Tweak image sizes if more than 1.
-            sizeClass = value.length === 1 ? 'single' : 'multi';
-            // Build media HTML.
-            $.each(value, function eachFile(i, file) {
-              media += drawMediaFile(i, doc, file, sizeClass);
-            });
-            value = media;
-            // Approximate a column size to accomodate the thumbnails.
-            maxCharsPerCol['col-' + idx] = value.length === 1 ? 10 : 15;
-          } else {
-            maxCharsPerCol['col-' + idx] = Math.max(maxCharsPerCol['col-' + idx], $('<p>' + value + '</p>').text().length);
-          }
-          classes.push('field-' + this.replace('.', '--').replace('_', '-'));
-          // Copy across responsive hidden cols.
-          if ($(el).find('table th.col-' + idx).css('display') === 'none') {
-            style = ' style="display: none"';
-          }
-          cells.push('<td class="' + classes.join(' ') + '"' + style + '>' + value + '</td>');
-          // Extra space in last col to account for tool icons.
-          if (idx === el.settings.columns.length - 1 && !el.settings.actions.length) {
-            maxCharsPerCol['col-' + idx] += 1;
-          }
-          return true;
-        });
+        cells = getRowBehaviourCells(el);
+        cells = cells.concat(getDataCells(el, doc, maxCharsPerCol));
         if (el.settings.actions.length) {
           cells.push('<td class="col-actions">' + getActionsForRow(el.settings.actions, doc) + '</td>');
           maxCharsPerCol['col-actions'] = 7;
@@ -804,28 +866,8 @@
         $(el).find('table').trigger('footable_redraw');
       }
       drawTableFooter(el, response, data, afterKey);
-      // Fire any population callbacks.
-      $.each(el.settings.callbacks.populate, function eachCallback() {
-        this(el);
-      });
-      // Fire callbacks for selected row if any.
-      $.each(el.settings.callbacks.rowSelect, function eachCallback() {
-        this($(el).find('tr.selected').length === 0 ? null : $(el).find('tr.selected')[0]);
-      });
-      // Column resizing needs to be done manually when tbody has scroll bar.
-      if (el.settings.scrollY) {
-        $.each(el.settings.columns, function eachColumn(idx) {
-          maxCharsPerRow += Math.min(maxCharsPerCol['col-' + idx], 20);
-        });
-        if (el.settings.responsive) {
-          maxCharsPerRow += 3;
-          $(el).find('.footable-toggle-col').css('width', (100 * (3 / maxCharsPerRow)) + '%');
-        }
-        $.each(el.settings.columns, function eachColumn(idx) {
-          var allowedColWidth = Math.min(maxCharsPerCol['col-' + idx], 20);
-          $(el).find('.col-' + idx).css('width', (100 * (allowedColWidth / maxCharsPerRow)) + '%');
-        });
-      }
+      fireAfterPopulationCallbacks(el);
+      setColWidths(el, maxCharsPerCol);
     },
 
     /**

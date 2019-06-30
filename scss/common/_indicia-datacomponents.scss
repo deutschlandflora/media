@@ -35,6 +35,8 @@ $colour-select-row-bg: #3333ee;
     padding: 1em;
     opacity: 0.95;
     background-color: #f0f0f0;
+    min-height: 500px;
+    border: solid silver 1px;
     ol {
       overflow: auto;
       li {
