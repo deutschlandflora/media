@@ -502,7 +502,7 @@
    */
   indiciaData.fieldConvertorSortFields = {
     // Unsupported possibilities are commented out.
-    // status_icons: []
+    status_icons: ['identification.verification_status', 'identification.verification_substatus', 'metadata.sensitive'],
     // data_cleaner_icons: [],
     event_date: ['event.date_start'],
     // higher_geography: [],
