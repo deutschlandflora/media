@@ -769,7 +769,7 @@ jQuery(document).ready(function ($) {
         } else if (indiciaData.filter.def.website_list) {
           paramValue = typeof indiciaData.filter.def.website_list === 'string'
             ? indiciaData.filter.def.website_list.split(',') : [indiciaData.filter.def.survey_list ];
-          $.each(indiciaData.filter.def.website_list.split(','), function (idx, id) {
+          $.each(indiciaData.filter.def.website_list.toString().split(','), function (idx, id) {
             list.push($('#check-website-' + id).next('label').html());
           });
           r.push((indiciaData.filter.def.website_list_op === 'not in' ? 'Exclude ' : '') + list.join(', '));
@@ -1287,7 +1287,6 @@ jQuery(document).ready(function ($) {
 
   loadFilterUser = function (fu, getParams) {
     filterOverride = getParams;
-    indiciaData.filter.filters_user_id = fu.id;
     $('#filter\\:description').val(fu.filter_description);
     $('#filter\\:sharing').val(fu.filter_sharing);
     $('#sharing-type-label').html(codeToSharingTerm(fu.filter_sharing));
@@ -1299,6 +1298,8 @@ jQuery(document).ready(function ($) {
       definition: fu.filter_definition,
       created_by_id: fu.filter_created_by_id
     }]);
+    // Remember the ID so saves don't duplicate.
+    indiciaData.filter.filters_user_id = fu.id;
   };
 
   function filterParamsChanged() {

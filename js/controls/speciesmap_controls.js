@@ -217,7 +217,7 @@ var control_speciesmap_addcontrols;
       rows.each(function (idx, elem) {
         var cloned = $(elem).clone();
         cloned.addClass('scm-summary-' + sampleIDX).find('*').removeAttr('id');
-        cloned.find('td').filter('[class=],.scSampleCell,.scPresenceCell').remove();
+        cloned.find('td').filter('[class=""],.scSampleCell,.scPresenceCell').remove();
         cloned.find('.deh-required').remove();
         cloned.find('input[type=hidden]').each(function (idx, elem) {
           $(elem).remove();
@@ -443,17 +443,17 @@ var control_speciesmap_addcontrols;
     indiciaData.control_speciesmap_opts = opts;
     indiciaData.control_speciesmap_translatedStrings = translatedStrings;
     container = $('<div id="' + opts.buttonsId + '" class="' + opts.panelClasses + '">').insertBefore(opts.mapDiv);
-    $('<button id="' + opts.addButtonId + '" class="indicia-button" type="button">' + translatedStrings.AddLabel +
+    $('<button id="' + opts.addButtonId + '" class="' + indiciaData.buttonDefaultClass + '" type="button">' + translatedStrings.AddLabel +
         '</button>').click(controlSpeciesmapAddbutton).appendTo(container);
-    $('<button id="' + opts.modButtonId + '" class="indicia-button" type="button">' + translatedStrings.ModifyLabel +
+    $('<button id="' + opts.modButtonId + '" class="' + indiciaData.buttonDefaultClass + '" type="button">' + translatedStrings.ModifyLabel +
         '</button>').click(controlSpeciesmapModifybutton).appendTo(container);
-    $('<button id="' + opts.moveButtonId + '" class="indicia-button" type="button">' + translatedStrings.MoveLabel +
+    $('<button id="' + opts.moveButtonId + '" class="' + indiciaData.buttonDefaultClass + '" type="button">' + translatedStrings.MoveLabel +
         '</button>').click(controlSpeciesmapMovebutton).appendTo(container);
-    $('<button id="' + opts.delButtonId + '" class="indicia-button" type="button">' + translatedStrings.DeleteLabel +
+    $('<button id="' + opts.delButtonId + '" class="' + indiciaData.buttonDefaultClass + '" type="button">' + translatedStrings.DeleteLabel +
         '</button>').click(controlSpeciesmapDeletebutton).appendTo(container);
-    $('<button id="' + opts.cancelButtonId + '" class="indicia-button" type="button">' + translatedStrings.CancelLabel +
+    $('<button id="' + opts.cancelButtonId + '" class="' + indiciaData.buttonDefaultClass + '" type="button">' + translatedStrings.CancelLabel +
         '</button>').click(controlSpeciesmapCancelbutton).appendTo(container).hide();
-    $('<button id="' + opts.finishButtonId + '" class="indicia-button" type="button">' + translatedStrings.FinishLabel +
+    $('<button id="' + opts.finishButtonId + '" class="' + indiciaData.buttonDefaultClass + '" type="button">' + translatedStrings.FinishLabel +
         '</button>').click(controlSpeciesmapFinishbutton).appendTo(container).hide();
     $('<div id="' + opts.messageId + '" class="' + opts.messageClasses + '"></div>').appendTo(container);
     buildDeleteDialog();
@@ -510,7 +510,9 @@ var control_speciesmap_addcontrols;
           var parser = new OpenLayers.Format.WKT();
           var feature;
           feature = parser.read($(block).find('[name$="sample\:geom"]').val()); // style is null
-          // TODO should convert from Indicia internal projection to map projection
+          if (!div.indiciaProjection.equals(div.map.projection)) {
+            feature.geometry.transform(div.indiciaProjection, div.map.projection);
+          }
           feature.attributes.subSampleIndex = id[1];
           feature.attributes.sRef = $(block).find('[name$="sample\:entered_sref"]').val();
           feature.attributes.count = $('[name$="\:sampleIDX"]')

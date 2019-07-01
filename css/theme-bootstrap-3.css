@@ -297,6 +297,16 @@ table.es-data-grid tbody tr img {
   box-shadow: #aaa 0px 2px 4px 0px; }
   table.es-data-grid tbody tr img.multi {
     max-height: 45px; }
+table.es-data-grid.fixed-header tbody {
+  display: block;
+  overflow-y: auto; }
+table.es-data-grid.fixed-header thead, table.es-data-grid.fixed-header tbody tr {
+  display: table;
+  width: 100%;
+  table-layout: fixed;
+  /* even columns width , fix width of table too*/ }
+table.es-data-grid.fixed-header thead {
+  width: calc( 100% - 1em ); }
 
 /* idcLeafletMap plugin */
 .idc-output-leafletMap {
@@ -509,9 +519,6 @@ table.es-data-grid tbody tr img {
     -ms-transform: rotate(360deg);
     -o-transform: rotate(360deg);
     transform: rotate(360deg); } }
-.olMap .olForeignContainer {
-  top: 0;
-  position: absolute; }
 .olMap img {
   border: none !important; }
 .olMap .layersDiv {

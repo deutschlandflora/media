@@ -82,13 +82,15 @@ var IdcEsDataSource;
     var url;
     // Check we have an output other than the download plugin, which only
     // outputs when you click Download.
-    $.each(this.outputs, function eachOutput(name) {
-      needsPopulation = needsPopulation || name !== 'download';
+    $.each(indiciaData.outputPluginClasses, function eachPluginClass(i, pluginClass) {
+      $.each(source.outputs[pluginClass], function eachOutput() {
+        needsPopulation = needsPopulation || $(this)[pluginClass]('getNeedsPopulation', source);
+      });
     });
     if (needsPopulation) {
       request = indiciaFns.getFormQueryData(source);
       // Don't repopulate if exactly the same request as already loaded.
-      if (JSON.stringify(request) !== this.lastRequestStr || force) {
+      if (request && (JSON.stringify(request) !== this.lastRequestStr || force)) {
         this.lastRequestStr = JSON.stringify(request);
         url = indiciaData.esProxyAjaxUrl + '/searchbyparams/' + indiciaData.nid;
         // Pass through additional parameters to the request.

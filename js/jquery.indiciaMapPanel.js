@@ -1201,7 +1201,19 @@ var destroyAllFeatures;
               minZoom: 1,
               maxZoom: 11,
               layerId: 'dynamicOSGoogleSat.1',
-              dynamicLayerIndex: 1
+              dynamicLayerIndex: 1,
+              explicitlyDisallowed: [
+                // This MBR covers the island of Ireland where OS Leisure
+                // only has the most basic of OS mapping - country outline -
+                // at smaller scales and nothing all all as you zoom in.
+                new OpenLayers.Bounds([-210000, 190000, 180000, 630000])
+              ],
+              explicitlyAllowed: [
+                // This MBR covers the southern end of the Kintyre peninsula
+                // in Scotland which falls within the large NBR for all of the
+                // island of Ireland.
+                new OpenLayers.Bounds([145000, 600000, 193000, 640000])
+              ]
             }));
           },
           function dynamicOSGoogleSat3() {
@@ -2215,25 +2227,29 @@ var destroyAllFeatures;
     }
 
     /**
-     *  OpenLayers 2 is not designed to handle switching between base layers with different projections. However,
-     *  Ordnance Survey Leisure Maps are only available in EPSG:27700 so to be able to have them as an option alongside
-     *  maps in the usual Web Mercator projection we trigger this function on changebaselayer.
-     *  Ref:
-     *  https://gis.stackexchange.com/questions/24572/how-do-i-use-base-layer-of-two-different-projection-spherical-mercator-and-wgs84
+     * Manage projections after a base layer switch.
+     *
+     * OpenLayers 2 is not designed to handle switching between base layers
+     * with different projections. However, Ordnance Survey Leisure Maps are
+     * only available in EPSG:27700 so to be able to have them as an option
+     * longside maps in the usual Web Mercator projection we trigger this
+     * function on changebaselayer.
+     *
+     * Ref:
+     * https://gis.stackexchange.com/questions/24572/how-do-i-use-base-layer-of-two-different-projection-spherical-mercator-and-wgs84
      */
     function matchMapProjectionToLayer(map) {
       var baseLayer = map.baseLayer;
       var newProjection = baseLayer.projection;
       var currentProjection = map.projection;
-      var centre = map.div.settings.lastMapCentreBeforeSwitch;
+      var centre;
       var zoom = map.getZoom();
-      if (!map.div.settings.lastMapCentreBeforeSwitch) {
-        map.div.settings.lastMapCentreBeforeSwitch = map.getCenter();
-        // Always rack the last map centre in 4326 to avoid issues when the map
-        // switches projections.
-        if (map.div.settings.lastMapCentreBeforeSwitch) {
-          map.div.settings.lastMapCentreBeforeSwitch.transform(map.projection, map.displayProjection);
-        }
+      if (map.div.settings.lastMapCentre) {
+        // Clone the stored lastMapCentre so the transform only affects the copy.
+        centre = new OpenLayers.LonLat(map.div.settings.lastMapCentre.lon, map.div.settings.lastMapCentre.lat);
+        centre.transform(map.displayProjection, newProjection);
+      } else {
+        centre = map.getCenter();
       }
       if (!(currentProjection instanceof OpenLayers.Projection)) {
         // If a projection code, convert to object.
@@ -2245,24 +2261,22 @@ var destroyAllFeatures;
         map.maxExtent = baseLayer.maxExtent;
         map.resolutions = baseLayer.resolutions;
         map.projection = newProjection;
-        // Redraw map based on new projection. Centre might be null during
-        // initial load.
-        if (centre) {
-          // Compensate for incorrect choice of zoom level when switching from Web Mercator layer to OS Leisure.
-          if (map.lastLayer && map.lastLayer.projection.getCode() === 'EPSG:27700') {
-            zoom -= (zoom === 0) ? 0 : 1;
+        // Switching to and from OS Leisure requires a correction in zoom amount.
+        if (!currentProjection.equals(newProjection)) {
+          if (newProjection.getCode() === 'EPSG:27700') {
+            zoom++;
+          } else if (currentProjection.getCode() === 'EPSG:27700' && zoom !== 0) {
+            zoom--;
           }
-          if (map.baseLayer.projection.getCode() === 'EPSG:27700') {
-            zoom += 1;
-          }
-          // Centre in EPSG:4326 so convert back to map projection before
-          // panning.
-          centre = centre.transform(map.displayProjection, newProjection);
-          map.setCenter(centre, zoom, false, true);
         }
+        // Recentre due to base layer projection change. Don't allow this to
+        // fire the code which looks for base layer changes again.
+        indiciaData.recenteringAfterBaseLayerSwitch = true;
+        map.setCenter(centre, zoom, false, true);
+        indiciaData.recenteringAfterBaseLayerSwitch = false;
 
         // Update vector layer properties to match properties of baseLayer.
-        $.each(map.layers, function() {
+        $.each(map.layers, function eachLayer() {
           var thisLayer = this;
           if (thisLayer.CLASS_NAME === 'OpenLayers.Layer.Vector') {
             thisLayer.maxExtent = baseLayer.maxExtent;
@@ -2321,7 +2335,13 @@ var destroyAllFeatures;
           }
           div.map.addLayer(lSwitch);
           // Ensure layer inserts at correct position.
-          div.map.setLayerIndex(lSwitch, div.map.getLayerIndex(div.map.baseLayer));
+          if ($.isArray(availableLayers[id])) {
+            //For dynamic layers, search for the default layer - index 0 - and use that
+            //for the insertion position
+            div.map.setLayerIndex(lSwitch, div.map.getLayerIndex(div.map.getLayersBy('layerId', availableLayers[id][0]().layerId)[0]));
+          } else {
+            div.map.setLayerIndex(lSwitch, div.map.getLayerIndex(div.map.baseLayer));
+          }
         }
       }
       if (lSwitch && div.map.getExtent()) {
@@ -2333,12 +2353,24 @@ var destroyAllFeatures;
             return switchToBaseLayer(div, id, dynamicLayerIndex - 1);
           }
         }
-      }
-      // Track where we are centred, in case projection change moves the map
-      // so it needs recentering.
-      div.settings.lastMapCentreBeforeSwitch = div.map.getCenter();
-      if (div.settings.lastMapCentreBeforeSwitch) {
-        div.settings.lastMapCentreBeforeSwitch.transform(div.map.projection, div.map.displayProjection);
+        //Don't switch layer if the viewport is contained by any 'explicitlyDisallowed' MBRs
+        //specified for the layer, *unless* it is also contained by any 'explicitlyAllowed' MBRs
+        var inAllowed, inDisallowed;
+        if (lSwitch.explicitlyDisallowed) {
+          inDisallowed = lSwitch.explicitlyDisallowed.some(function(mbr){
+            return mbr.containsBounds(newMapExtent);
+          });
+        }
+        if (lSwitch.explicitlyAllowed){
+          inAllowed = lSwitch.explicitlyAllowed.some(function(mbr){
+            return mbr.containsBounds(newMapExtent);
+          });
+        }
+        if (inDisallowed && !inAllowed) {
+          if (dynamicLayerIndex > 0) {
+            return switchToBaseLayer(div, id, dynamicLayerIndex - 1);
+          }
+        }
       }
       if (lSwitch) {
         if (!lSwitch.getVisibility()) {
@@ -2626,7 +2658,7 @@ var destroyAllFeatures;
           layerTitle,
           div.settings.indiciaGeoSvc + 'wms',
           { layers: value, transparent: true },
-          { singleTile: true, isBaseLayer: false, sphericalMercator: true }
+          { singleTile: true, isBaseLayer: false, sphericalMercator: true, isIndiciaWMSLayer: true }
         ));
       });
       $.each(this.settings.indiciaWFSLayers, function (key, value) {
@@ -2642,15 +2674,17 @@ var destroyAllFeatures;
 
       // Centre the map, using cookie if remembering position, otherwise default setting.
       var zoom = null;
-      var center = { lat: null, lon: null };
+      var centre = { lat: null, lon: null };
       var baseLayerId;
       var baseLayerIdParts;
+      var wmsvisibility;
       var added;
       if (typeof $.cookie !== 'undefined' && div.settings.rememberPos !== false) {
         zoom = $.cookie('mapzoom');
-        center.lon = $.cookie('maplongitude');
-        center.lat = $.cookie('maplatitude');
+        centre.lon = $.cookie('maplongitude');
+        centre.lat = $.cookie('maplatitude');
         baseLayerId = $.cookie('mapbaselayerid');
+        wmsvisibility = $.cookie('mapwmsvisibility');
       }
       // Missing cookies result in null or undefined variables
 
@@ -2678,33 +2712,70 @@ var destroyAllFeatures;
       if (typeof zoom === 'undefined' || zoom === null) {
         zoom = this.settings.initial_zoom;
       }
-      if (typeof center.lat === 'undefined' || center.lat === null
-          || typeof center.lon === 'undefined' || center.lon === null) {
-        center = new OpenLayers.LonLat(this.settings.initial_long, this.settings.initial_lat);
+      if (typeof centre.lat === 'undefined' || centre.lat === null
+          || typeof centre.lon === 'undefined' || centre.lon === null) {
+        centre = new OpenLayers.LonLat(this.settings.initial_long, this.settings.initial_lat);
       } else {
-        center = new OpenLayers.LonLat(center.lon, center.lat);
+        centre = new OpenLayers.LonLat(centre.lon, centre.lat);
       }
+      div.settings.lastMapCentre = centre;
       if (div.map.displayProjection.getCode() !== div.map.projection.getCode()) {
-        center.transform(div.map.displayProjection, div.map.projection);
+        centre.transform(div.map.displayProjection, div.map.projection);
       }
-      div.map.setCenter(center, zoom);
+      div.map.setCenter(centre, zoom);
+
+      // Loop through layers and if it is an Indicia WMS layer, then set its
+      // visibility according to next value in array derived from cookie.
+      wmsvisibility = wmsvisibility ? JSON.parse(wmsvisibility) : {};
+      div.map.layers.forEach(function(l){
+        if (l.isIndiciaWMSLayer) {
+          l.setVisibility(wmsvisibility[l.name]);
+        }
+      });
       // Register moveend must come after panning and zooming the initial map
       // so the dynamic layer switcher does not mess up the centering code.
       div.map.events.register('moveend', null, function () {
-        var centreLatLon = div.map.getCenter();
-        centreLatLon.transform(div.map.projection, div.map.displayProjection);
+        if (indiciaData.recenteringAfterBaseLayerSwitch) {
+          return;
+        }
+        if (!indiciaData.settingBaseLayer) {
+          div.settings.lastMapCentre = div.map.getCenter();
+          div.settings.lastMapCentre.transform(div.map.projection, div.map.displayProjection);
+        }
         handleDynamicLayerSwitching(div);
         // setup the map to save the last position
         if (div.settings.rememberPos && typeof $.cookie !== 'undefined') {
           $.cookie('mapzoom', div.map.zoom, { expires: 7 });
-          $.cookie('maplongitude', centreLatLon.lon, { expires: 7 });
-          $.cookie('maplatitude', centreLatLon.lat, { expires: 7 });
+          if (!indiciaData.settingBaseLayer) {
+            $.cookie('maplongitude', div.settings.lastMapCentre.lon, { expires: 7 });
+            $.cookie('maplatitude', div.settings.lastMapCentre.lat, { expires: 7 });
+          }
           // Store the name of the layer or dynamic layer group (the part
           // before the . in layerId).
           $.cookie('mapbaselayerid', div.map.baseLayer.layerId, { expires: 7 });
         }
       });
       handleDynamicLayerSwitching(div);
+
+      // Register function on changelayer event to record the display status
+      // of Indicia WMS layers. Note this code cannot go in mapLayerChanged
+      // function because that is called multiple times during page intialisation
+      // resulting in incorrect setting.
+      div.map.events.register('changelayer', null, function () { 
+        if (typeof $.cookie !== 'undefined') {
+          // Need to init cookie here to currrent value in case different layers are used on different
+          // pages - doing from scratch would loose settings for other layers not set for this one.
+          var init = $.cookie('mapwmsvisibility') ? JSON.parse($.cookie('mapwmsvisibility')) : {};
+          var json = div.map.layers.reduce(function(j, l){
+            if (l.isIndiciaWMSLayer) {
+              j[l.name] = l.visibility ? 1 : 0;
+            }
+            return j;
+          }, init);
+          $.cookie('mapwmsvisibility', JSON.stringify(json), { expires: 7 });
+        } 
+      })
+
       /**
        * Public function to change selection of features on a layer.
        */

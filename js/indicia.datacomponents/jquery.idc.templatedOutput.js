@@ -102,6 +102,13 @@
       if (el.settings.footer) {
         $('<div class="idcTemplatedOutput-footer">' + el.settings.footer + '</div>').appendTo(el);
       }
+    },
+
+    /**
+     * Templated outputs always re-populate when their source updates.
+     */
+    getNeedsPopulation: function getNeedsPopulation() {
+      return true;
     }
   };
 

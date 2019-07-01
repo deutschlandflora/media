@@ -241,18 +241,27 @@
   /**
    * Searches an object for a nested property and sets its value.
    *
+   * @param object object
+   *   Object whose value is to be changed.
+   * @param string key
+   *   Name of the property to change.
+   * @param mixed updateTo
+   *   Value to update to.
+   * @param mixed updateFrom
+   *   Optional. If set, then value only changed if originally equal to this.
+   *
    * @return mixed
    *   Property value.
    */
-  indiciaFns.findAndSetValue = function findAndSetValue(object, key, updateValue) {
+  indiciaFns.findAndSetValue = function findAndSetValue(object, key, updateTo, updateFrom) {
     var value;
     Object.keys(object).some(function eachKey(k) {
-      if (k === key) {
-        object[k] = updateValue;
+      if (k === key && (typeof updateFrom === 'undefined' || updateFrom === object[k])) {
+        object[k] = updateTo;
         return true;
       }
       if (object[k] && typeof object[k] === 'object') {
-        value = indiciaFns.findAndSetValue(object[k], key, updateValue);
+        value = indiciaFns.findAndSetValue(object[k], key, updateTo, updateFrom);
         return value !== undefined;
       }
       return false;
@@ -312,10 +321,12 @@
      * Output the event date or date range.
      */
     event_date: function eventDate(doc) {
-      if (doc.event.date_start !== doc.event.date_end) {
-        return indiciaFns.formatDate(doc.event.date_start) + ' - ' + indiciaFns.formatDate(doc.event.date_end);
+      var start = doc.event.date_start ? indiciaFns.formatDate(doc.event.date_start) : '';
+      var end = doc.event.date_end ? indiciaFns.formatDate(doc.event.date_end) : '';
+      if (start !== end) {
+        return start + ' - ' + end;
       }
-      return indiciaFns.formatDate(doc.event.date_start);
+      return start;
     },
 
     /**
@@ -330,7 +341,9 @@
       var output = '';
       if (doc.location.higher_geography) {
         $.each(doc.location.higher_geography, function eachGeography() {
-          if (this.type === params[0]) {
+          // If the correct type and not a combined geo-area (indicated by + in the code).
+          // See https://github.com/BiologicalRecordsCentre/iRecord/issues/606
+          if (this.type === params[0] && !this.code.match(/\+/)) {
             output = this[params[1]];
           }
         });
@@ -542,6 +555,9 @@
    *
    * Builds the data to post to the Elasticsearch search proxy to represent
    * the current state of the form inputs on the page.
+   *
+   * Returns false if the query is linked to a grid selection but there is no
+   * selected row.
    */
   indiciaFns.getFormQueryData = function getFormQueryData(source) {
     var data = {
@@ -554,6 +570,7 @@
     var filterSourceGrid;
     var filterSourceRow;
     var thisDoc;
+    var agg = {};
     if (source.settings.size) {
       data.size = source.settings.size;
     }
@@ -587,29 +604,27 @@
       filterSourceRow = $(filterSourceGrid).find('tbody tr.selected');
       if (filterSourceRow.length === 0) {
         // Don't populate until a row selected.
-        data.bool_queries.push({
-          bool_clause: 'must',
-          query_type: 'match_none'
-        });
-      } else {
-        thisDoc = JSON.parse($(filterSourceRow).attr('data-doc-source'));
-        data.bool_queries.push({
-          bool_clause: 'must',
-          field: source.settings.filterField,
-          query_type: 'term',
-          value: indiciaFns.getValueForField(thisDoc, source.settings.filterField)
-        });
+        return false;
       }
+      thisDoc = JSON.parse($(filterSourceRow).attr('data-doc-source'));
+      data.bool_queries.push({
+        bool_clause: 'must',
+        field: source.settings.filterField,
+        query_type: 'term',
+        value: indiciaFns.getValueForField(thisDoc, source.settings.filterField)
+      });
     } else {
       // Using filter paremeter controls.
       $.each($('.es-filter-param'), function eachParam() {
-        if ($(this).val().trim() !== '') {
+        var val = $(this).val().trim();
+        if (val !== '') {
+          val = val.replace(/{{ indicia_user_id }}/g, indiciaData.user_id);
           data.bool_queries.push({
             bool_clause: $(this).attr('data-es-bool-clause'),
             field: $(this).attr('data-es-field') ? $(this).attr('data-es-field') : null,
             query_type: $(this).attr('data-es-query-type'),
             query: $(this).attr('data-es-query') ? $(this).attr('data-es-query') : null,
-            value: $(this).val().trim()
+            value: val
           });
         }
       });
@@ -672,6 +687,8 @@
       }
     }
     if (source.settings.aggregation) {
+      // Copy to avoid changing original.
+      $.extend(true, agg, source.settings.aggregation);
       // Find the map bounds if limited to the viewport of a map.
       if (source.settings.filterBoundsUsingMap) {
         mapToFilterTo = $('#' + source.settings.filterBoundsUsingMap);
@@ -679,26 +696,27 @@
           alert('Data source incorrectly configured. @filterBoundsUsingMap does not point to a valid map.');
         } else {
           bounds = mapToFilterTo[0].map.getBounds();
-          indiciaFns.findAndSetValue(source.settings.aggregation, 'geo_bounding_box', {
+          indiciaFns.findAndSetValue(agg, 'geo_bounding_box', {
             ignore_unmapped: true,
             'location.point': {
               top_left: {
-                lat: bounds.getNorth(),
-                lon: bounds.getWest()
+                lat: Math.max(-90, Math.min(90, bounds.getNorth())),
+                lon: Math.max(-180, Math.min(180, bounds.getWest()))
               },
               bottom_right: {
-                lat: bounds.getSouth(),
-                lon: bounds.getEast()
+                lat: Math.max(-90, Math.min(90, bounds.getSouth())),
+                lon: Math.max(-180, Math.min(180, bounds.getEast()))
               }
             }
           });
-          indiciaFns.findAndSetValue(source.settings.aggregation, 'geohash_grid', {
+          indiciaFns.findAndSetValue(agg, 'geohash_grid', {
             field: 'location.point',
             precision: Math.min(Math.max(mapToFilterTo[0].map.getZoom() - 3, 4), 10)
           });
+          indiciaFns.findAndSetValue(agg, 'field', $(mapToFilterTo).idcLeafletMap('getAutoSquareField'), 'autoGridSquareField');
         }
       }
-      data.aggs = source.settings.aggregation;
+      data.aggs = agg;
     }
     return data;
   };

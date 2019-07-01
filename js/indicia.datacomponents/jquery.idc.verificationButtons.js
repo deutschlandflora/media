@@ -42,7 +42,7 @@
     var commentToSave;
     var data = {
       website_id: indiciaData.website_id,
-      user_id: indiciaData.userId
+      user_id: indiciaData.user_id
     };
     var doc = {
       identification: {}
@@ -262,11 +262,19 @@
         }
       });
     },
+
     on: function on(event, handler) {
       if (typeof callbacks[event] === 'undefined') {
         indiciaFns.controlFail(this, 'Invalid event handler requested for ' + event);
       }
       callbacks[event].push(handler);
+    },
+
+    /**
+     * No need to re-populate if source updates.
+     */
+    getNeedsPopulation: function getNeedsPopulation() {
+      return false;
     }
   };
 
