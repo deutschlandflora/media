@@ -507,13 +507,14 @@ var destroyAllFeatures;
     /**
      * After a click on the map, zoom in to the clicked on point.
      */
-    function _zoomInToClickPoint(div) {
+    function zoomInToClickPoint(div) {
       var features = getFeaturesByVal(div.map.editLayer, 'clickPoint', 'type');
       var bounds = features[0].geometry.getBounds();
+      var maxZoom = Math.min(div.map.getZoom() + 3, div.settings.maxZoom);
       bounds = _extendBounds(bounds, div.settings.maxZoomBuffer);
-      if (div.map.getZoomForExtent(bounds) > div.settings.maxZoom) {
+      if (div.map.getZoomForExtent(bounds) > maxZoom) {
         // if showing something small, don't zoom in too far
-        div.map.setCenter(bounds.getCenterLonLat(), div.settings.maxZoom);
+        div.map.setCenter(bounds.getCenterLonLat(), maxZoom);
       } else {
         // Set the default view to show something triple the size of the grid square
         div.map.zoomToExtent(bounds);
@@ -521,7 +522,7 @@ var destroyAllFeatures;
     }
 
     function switchToSatelliteBaseLayer(map) {
-      $.each(map.layers, function() {
+      $.each(map.layers, function eachLayer() {
         if (this.isBaseLayer
             && (this.name.indexOf('Satellite') !== -1 || this.name.indexOf('Hybrid') !== -1)
             && map.baseLayer !== this) {
@@ -550,7 +551,7 @@ var destroyAllFeatures;
           switchToSatelliteBaseLayer(div.map);
           helptext.push(div.settings.hlpImproveResolutionSwitch);
         }
-        _zoomInToClickPoint(div);
+        zoomInToClickPoint(div);
       }
       return helptext.join(' ');
     }
@@ -686,7 +687,7 @@ var destroyAllFeatures;
       // by a switch in the spatial reference system where we don't want it to suddenly zoom -in without warning.
       if (!indiciaData.skip_zoom || indiciaData.skip_zoom === false) {
         // Optional zoom in after clicking when helpDiv not in use.
-        _zoomInToClickPoint(div);
+        zoomInToClickPoint(div);
         // Optional switch to satellite layer when using click_zoom
         if (div.settings.helpToPickPrecisionSwitchAt && data.sref.length >= div.settings.helpToPickPrecisionSwitchAt) {
           switchToSatelliteBaseLayer(div.map);
@@ -703,7 +704,7 @@ var destroyAllFeatures;
      * add the feature to the map editlayer. If the feature is a plot, enable dragging and
      * rotating. Finally add relevant help.
      */
-    function _setClickPoint(data, div) {
+    function setClickPoint(data, div) {
       // data holds the sref in _getSystem format, wkt in indiciaProjection, optional mapwkt in mapProjection
       var feature;
       var parser = new OpenLayers.Format.WKT();
@@ -1201,7 +1202,19 @@ var destroyAllFeatures;
               minZoom: 1,
               maxZoom: 11,
               layerId: 'dynamicOSGoogleSat.1',
-              dynamicLayerIndex: 1
+              dynamicLayerIndex: 1,
+              explicitlyDisallowed: [
+                // This MBR covers the island of Ireland where OS Leisure
+                // only has the most basic of OS mapping - country outline -
+                // at smaller scales and nothing all all as you zoom in.
+                new OpenLayers.Bounds([-210000, 190000, 180000, 630000])
+              ],
+              explicitlyAllowed: [
+                // This MBR covers the southern end of the Kintyre peninsula
+                // in Scotland which falls within the large NBR for all of the
+                // island of Ireland.
+                new OpenLayers.Bounds([145000, 600000, 193000, 640000])
+              ]
             }));
           },
           function dynamicOSGoogleSat3() {
@@ -2181,14 +2194,14 @@ var destroyAllFeatures;
           if (system.length===1) {
             $('#'+opts.srefSystemId).val('4326');
             pointToSref(div, new OpenLayers.Geometry.Point(lonlat.lon, lonlat.lat), '4326', function (data) {
-              _setClickPoint(data, div); // data sref in 4326, wkt in indiciaProjection, mapwkt in mapProjection
+              setClickPoint(data, div); // data sref in 4326, wkt in indiciaProjection, mapwkt in mapProjection
             });
           } else {
             alert(div.settings.msgSrefOutsideGrid);
           }
         }
       } else {
-        _setClickPoint(data, div); // data sref in _getSystem, wkt in indiciaProjection, mapwkt in mapProjection
+        setClickPoint(data, div); // data sref in _getSystem, wkt in indiciaProjection, mapwkt in mapProjection
         _hideOtherGraticules(div);
       }
       if (typeof indiciaFns.showHideRememberSiteButton !== 'undefined') {
@@ -2337,6 +2350,24 @@ var destroyAllFeatures;
         // Don't switch layer if the new layer can't display the whole
         // viewport.
         if (!lSwitch.maxExtent.containsBounds(newMapExtent)) {
+          if (dynamicLayerIndex > 0) {
+            return switchToBaseLayer(div, id, dynamicLayerIndex - 1);
+          }
+        }
+        //Don't switch layer if the viewport is contained by any 'explicitlyDisallowed' MBRs
+        //specified for the layer, *unless* it is also contained by any 'explicitlyAllowed' MBRs
+        var inAllowed, inDisallowed;
+        if (lSwitch.explicitlyDisallowed) {
+          inDisallowed = lSwitch.explicitlyDisallowed.some(function(mbr){
+            return mbr.containsBounds(newMapExtent);
+          });
+        }
+        if (lSwitch.explicitlyAllowed){
+          inAllowed = lSwitch.explicitlyAllowed.some(function(mbr){
+            return mbr.containsBounds(newMapExtent);
+          });
+        }
+        if (inDisallowed && !inAllowed) {
           if (dynamicLayerIndex > 0) {
             return switchToBaseLayer(div, id, dynamicLayerIndex - 1);
           }
@@ -2628,7 +2659,7 @@ var destroyAllFeatures;
           layerTitle,
           div.settings.indiciaGeoSvc + 'wms',
           { layers: value, transparent: true },
-          { singleTile: true, isBaseLayer: false, sphericalMercator: true }
+          { singleTile: true, isBaseLayer: false, sphericalMercator: true, isIndiciaWMSLayer: true }
         ));
       });
       $.each(this.settings.indiciaWFSLayers, function (key, value) {
@@ -2647,12 +2678,14 @@ var destroyAllFeatures;
       var centre = { lat: null, lon: null };
       var baseLayerId;
       var baseLayerIdParts;
+      var wmsvisibility;
       var added;
       if (typeof $.cookie !== 'undefined' && div.settings.rememberPos !== false) {
         zoom = $.cookie('mapzoom');
         centre.lon = $.cookie('maplongitude');
         centre.lat = $.cookie('maplatitude');
         baseLayerId = $.cookie('mapbaselayerid');
+        wmsvisibility = $.cookie('mapwmsvisibility');
       }
       // Missing cookies result in null or undefined variables
 
@@ -2691,6 +2724,15 @@ var destroyAllFeatures;
         centre.transform(div.map.displayProjection, div.map.projection);
       }
       div.map.setCenter(centre, zoom);
+
+      // Loop through layers and if it is an Indicia WMS layer, then set its
+      // visibility according to next value in array derived from cookie.
+      wmsvisibility = wmsvisibility ? JSON.parse(wmsvisibility) : {};
+      div.map.layers.forEach(function(l){
+        if (l.isIndiciaWMSLayer) {
+          l.setVisibility(wmsvisibility[l.name]);
+        }
+      });
       // Register moveend must come after panning and zooming the initial map
       // so the dynamic layer switcher does not mess up the centering code.
       div.map.events.register('moveend', null, function () {
@@ -2715,6 +2757,26 @@ var destroyAllFeatures;
         }
       });
       handleDynamicLayerSwitching(div);
+
+      // Register function on changelayer event to record the display status
+      // of Indicia WMS layers. Note this code cannot go in mapLayerChanged
+      // function because that is called multiple times during page intialisation
+      // resulting in incorrect setting.
+      div.map.events.register('changelayer', null, function () {
+        if (typeof $.cookie !== 'undefined') {
+          // Need to init cookie here to currrent value in case different layers are used on different
+          // pages - doing from scratch would loose settings for other layers not set for this one.
+          var init = $.cookie('mapwmsvisibility') ? JSON.parse($.cookie('mapwmsvisibility')) : {};
+          var json = div.map.layers.reduce(function(j, l){
+            if (l.isIndiciaWMSLayer) {
+              j[l.name] = l.visibility ? 1 : 0;
+            }
+            return j;
+          }, init);
+          $.cookie('mapwmsvisibility', JSON.stringify(json), { expires: 7 });
+        }
+      })
+
       /**
        * Public function to change selection of features on a layer.
        */

@@ -40,6 +40,7 @@ var IdcEsDataSource;
     $.each(indiciaData.outputPluginClasses, function eachPluginClass() {
       ds.outputs[this] = [];
     });
+    // Make a collection of the output controls linked to this data source.
     $.each($('.idc-output'), function eachOutput() {
       var el = this;
       if (Object.prototype.hasOwnProperty.call(el.settings.source, ds.settings.id)) {
@@ -52,12 +53,31 @@ var IdcEsDataSource;
         });
       }
     });
-    if (ds.settings.filterSourceGrid && ds.settings.filterField) {
-      $('#' + ds.settings.filterSourceGrid).idcDataGrid('on', 'rowSelect', function onRowSelect(tr) {
-        if (tr) {
-          ds.populate();
-        }
+    // Does this datasource get a filter setting from a selected row in any grid(s)?
+    if (ds.settings.filterSourceGrid && ds.settings.filterSourceField && ds.settings.filterField) {
+      // Can be a single string or an array if several grids.
+      if (typeof ds.settings.filterSourceGrid === 'string') {
+        ds.settings.filterSourceGrid = [ds.settings.filterSourceGrid];
+      }
+      if (typeof ds.settings.filterSourceField === 'string') {
+        ds.settings.filterSourceField = [ds.settings.filterSourceField];
+      }
+      if (typeof ds.settings.filterField === 'string') {
+        ds.settings.filterField = [ds.settings.filterField];
+      }
+      // Hook up row select event handlers to filter the source.
+      $.each(ds.settings.filterSourceGrid, function eachGrid(idx) {
+        $('#' + this).idcDataGrid('on', 'rowSelect', function onRowSelect(tr) {
+          var thisDoc;
+          if (tr) {
+            thisDoc = JSON.parse($(tr).attr('data-doc-source'));
+            ds.settings.rowFilterField = ds.settings.filterField[idx];
+            ds.settings.rowFilterValue = indiciaFns.getValueForField(thisDoc, ds.settings.filterSourceField[idx]);
+            ds.populate();
+          }
+        });
       });
+
     }
     // If limited to a map's bounds, redraw when the map is zoomed or panned.
     if (ds.settings.filterBoundsUsingMap) {
@@ -73,54 +93,108 @@ var IdcEsDataSource;
   IdcEsDataSource.prototype.lastRequestStr = '';
 
   /**
+   * If any source's outputs are on a hidden tab, the population may be delayed.
+   */
+  IdcEsDataSource.prototype.hiddenTabDelayedSources = [];
+
+  /**
+   * Hides spinners for all outputs associated with this source.
+   *
+   * @param IdcEsDataSource source
+   *   Source object to hide spinners for.
+   */
+  IdcEsDataSource.prototype.hideAllSpinners = function hideAllSpinners(source) {
+    $.each(indiciaData.outputPluginClasses, function eachPluginClass(i, pluginClass) {
+      $.each(source.outputs[pluginClass], function eachOutput() {
+        $(this).find('.loading-spinner').hide();
+      });
+    });
+  };
+
+  IdcEsDataSource.prototype.doPopulation = function doPopulation(force) {
+    var source = this;
+    var request = indiciaFns.getFormQueryData(source);
+    var url;
+    // Pagination support for composite aggregations.
+    if (source.settings.after_key) {
+      indiciaFns.findValue(request, 'composite').after = source.settings.after_key;
+    }
+    // Don't repopulate if exactly the same request as already loaded.
+    if (request && (JSON.stringify(request) !== this.lastRequestStr || force)) {
+      this.lastRequestStr = JSON.stringify(request);
+      url = indiciaData.esProxyAjaxUrl + '/searchbyparams/' + indiciaData.nid;
+      // Pass through additional parameters to the request.
+      if (source.settings.filterPath) {
+        // Filter path allows limiting of content in the response.
+        url += url.indexOf('?') === false ? '?' : '&';
+        url += 'filter_path=' + source.settings.filterPath;
+      }
+      $.ajax({
+        url: url,
+        type: 'post',
+        data: request,
+        success: function success(response) {
+          if (response.error || (response.code && response.code !== 200)) {
+            source.hideAllSpinners(source);
+            alert('Elasticsearch query failed');
+          } else {
+            // Build any configured output tables.
+            source.buildTableXY(response);
+            $.each(indiciaData.outputPluginClasses, function eachPluginClass(i, pluginClass) {
+              $.each(source.outputs[pluginClass], function eachOutput() {
+                $(this)[pluginClass]('populate', source.settings, response, request);
+              });
+            });
+            source.hideAllSpinners(source);
+          }
+        },
+        error: function error() {
+          source.hideAllSpinners(source);
+          alert('Elasticsearch query failed');
+        },
+        dataType: 'json'
+      });
+    } else {
+      source.hideAllSpinners(source);
+    }
+  }
+
+  /**
    * Request a datasource to repopulate from current parameters.
    */
   IdcEsDataSource.prototype.populate = function datasourcePopulate(force) {
     var source = this;
     var needsPopulation = false;
-    var request;
-    var url;
+
     // Check we have an output other than the download plugin, which only
     // outputs when you click Download.
-    $.each(this.outputs, function eachOutput(name) {
-      needsPopulation = needsPopulation || name !== 'download';
+    $.each(indiciaData.outputPluginClasses, function eachPluginClass(i, pluginClass) {
+      $.each(source.outputs[pluginClass], function eachOutput() {
+        var output = this;
+        var populateThis = $(output)[pluginClass]('getNeedsPopulation', source);
+        if ($(output).parents('.ui-tabs-panel:hidden').length > 0) {
+          // Don't bother if on a hidden tab.
+          populateThis = false;
+          $.each($(output).parents('.ui-tabs-panel:hidden'), function eachHiddenTab() {
+            var tab = this;
+            var tabSelectFn = function eachTabSet() {
+              if ($(tab).filter(':visible').length > 0) {
+                $(output).find('.loading-spinner').show();
+                source.doPopulation(force);
+                indiciaFns.unbindTabsActivate($(tab).closest('.ui-tabs'), tabSelectFn);
+              }
+            };
+            indiciaFns.bindTabsActivate($(tab).closest('.ui-tabs'), tabSelectFn);
+          });
+        }
+        needsPopulation = needsPopulation || populateThis;
+        if (populateThis) {
+          $(output).find('.loading-spinner').show();
+        }
+      });
     });
     if (needsPopulation) {
-      request = indiciaFns.getFormQueryData(source);
-      // Don't repopulate if exactly the same request as already loaded.
-      if (JSON.stringify(request) !== this.lastRequestStr || force) {
-        this.lastRequestStr = JSON.stringify(request);
-        url = indiciaData.esProxyAjaxUrl + '/searchbyparams/' + indiciaData.nid;
-        // Pass through additional parameters to the request.
-        if (source.settings.filterPath) {
-          // Filter path allows limiting of content in the response.
-          url += url.indexOf('?') === false ? '?' : '&';
-          url += 'filter_path=' + source.settings.filterPath;
-        }
-        $.ajax({
-          url: url,
-          type: 'post',
-          data: request,
-          success: function success(response) {
-            if (response.error || (response.code && response.code !== 200)) {
-              alert('Elasticsearch query failed');
-            } else {
-              // Build any configured output tables.
-              source.buildTableXY(response);
-              $.each(indiciaData.outputPluginClasses, function eachPluginClass(i, pluginClass) {
-                $.each(source.outputs[pluginClass], function eachOutput() {
-                  $(this)[pluginClass]('populate', source.settings, response, request);
-                });
-              });
-            }
-          },
-          error: function error(jqXHR, textStatus, errorThrown) {
-            console.log(errorThrown);
-            alert('Elasticsearch query failed');
-          },
-          dataType: 'json'
-        });
-      }
+      source.doPopulation(force);
     }
   };
 

@@ -18,6 +18,8 @@ table.species-grid {
   display: initial; }
 
 table.report-grid {
+  /* Ensure height enough for spinner. For tables, height acts as min-height. */
+  height: 140px;
   /* Sizing of thumbnails in image columns */ }
   table.report-grid tr {
     /* Odd row colouration */
@@ -256,35 +258,91 @@ table.report-grid {
     background-position-y: -54px; }
 
 /* idcDataGrid plugin */
-table.es-data-grid thead .fa-sort {
-  opacity: 0.3; }
-  table.es-data-grid thead .fa-sort:hover {
-    opacity: 1; }
-table.es-data-grid thead .es-filter-row {
-  /* Position search value warning icon over input. */ }
-  table.es-data-grid thead .es-filter-row input {
+.idc-output-dataGrid {
+  position: relative;
+  /* Ensure height enough for spinner. */
+  min-height: 140px; }
+  .idc-output-dataGrid .data-grid-tools {
+    position: absolute;
+    top: 0;
+    right: 0; }
+    .idc-output-dataGrid .data-grid-tools span {
+      width: 16px;
+      height: 16px;
+      padding: 0;
+      margin: 0 2px;
+      color: #999; }
+  .idc-output-dataGrid .data-grid-settings {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    padding: 1em;
+    opacity: 0.95;
+    background-color: #f0f0f0;
+    min-height: 500px;
+    border: solid silver 1px; }
+    .idc-output-dataGrid .data-grid-settings ol {
+      overflow: auto; }
+      .idc-output-dataGrid .data-grid-settings ol li {
+        background: #e7e7e7;
+        border: solid #777 1px;
+        padding: 4px;
+        margin: 4px;
+        list-style-position: inside; }
+        .idc-output-dataGrid .data-grid-settings ol li input[type="checkbox"] {
+          margin: 4px;
+          font-size: 200%; }
+
+table.es-data-grid {
+  background-color: #ffffff; }
+  table.es-data-grid thead {
+    /* Last th leave space for tool icons */ }
+    table.es-data-grid thead .fa-sort {
+      opacity: 0.3; }
+      table.es-data-grid thead .fa-sort:hover {
+        opacity: 1; }
+    table.es-data-grid thead .es-filter-row {
+      /* Position search value warning icon over input. */ }
+      table.es-data-grid thead .es-filter-row input {
+        width: 100%;
+        box-sizing: border-box;
+        margin: 0; }
+      table.es-data-grid thead .es-filter-row .fa-exclamation-circle {
+        margin-left: -20px; }
+    table.es-data-grid thead th:last-child, table.es-data-grid thead td:last-child {
+      padding-right: 18px; }
+  table.es-data-grid tbody tr:nth-child(even), table.es-data-grid tbody tr:nth-child(even) td {
+    background-color: #f7f7f7; }
+  table.es-data-grid tbody tr:nth-child(odd), table.es-data-grid tbody tr:nth-child(odd) td {
+    background-color: #ffffff; }
+  table.es-data-grid tbody tr:hover, table.es-data-grid tbody tr:hover td {
+    color: #333333;
+    background-color: #fff899; }
+  table.es-data-grid tbody tr.selected, table.es-data-grid tbody tr.selected td {
+    color: #ffffff;
+    background-color: #3333ee; }
+  table.es-data-grid tbody tr img {
+    max-height: 60px;
+    border-radius: 4px;
+    margin: 0 2px;
+    box-shadow: #aaa 0px 2px 4px 0px; }
+    table.es-data-grid tbody tr img.multi {
+      max-height: 45px; }
+  table.es-data-grid.fixed-header tbody {
+    display: block;
+    overflow-y: auto; }
+  table.es-data-grid.fixed-header thead, table.es-data-grid.fixed-header tbody tr {
+    display: table;
     width: 100%;
-    box-sizing: border-box;
-    margin: 0; }
-  table.es-data-grid thead .es-filter-row .fa-exclamation-circle {
-    margin-left: -20px; }
-table.es-data-grid tbody tr:nth-child(even), table.es-data-grid tbody tr:nth-child(even) td {
-  background-color: #f7f7f7; }
-table.es-data-grid tbody tr:nth-child(odd), table.es-data-grid tbody tr:nth-child(odd) td {
-  background-color: transparent; }
-table.es-data-grid tbody tr:hover, table.es-data-grid tbody tr:hover td {
-  color: #333333;
-  background-color: #fff899; }
-table.es-data-grid tbody tr.selected, table.es-data-grid tbody tr.selected td {
-  color: #ffffff;
-  background-color: #3333ee; }
-table.es-data-grid tbody tr img {
-  max-height: 60px;
-  border-radius: 4px;
-  margin: 0 2px;
-  box-shadow: #aaa 0px 2px 4px 0px; }
-  table.es-data-grid tbody tr img.multi {
-    max-height: 45px; }
+    table-layout: fixed;
+    /* even columns width , fix width of table too*/ }
+  table.es-data-grid.fixed-header thead {
+    width: calc( 100% - 1em ); }
+  table.es-data-grid.fixed-header .multiselect-cell {
+    padding: 0;
+    width: 12px; }
 
 /* idcLeafletMap plugin */
 .idc-output-leafletMap {

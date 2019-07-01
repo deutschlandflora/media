@@ -42,7 +42,7 @@
     var commentToSave;
     var data = {
       website_id: indiciaData.website_id,
-      user_id: indiciaData.userId
+      user_id: indiciaData.user_id
     };
     var doc = {
       identification: {}
@@ -262,11 +262,19 @@
         }
       });
     },
+
     on: function on(event, handler) {
       if (typeof callbacks[event] === 'undefined') {
         indiciaFns.controlFail(this, 'Invalid event handler requested for ' + event);
       }
       callbacks[event].push(handler);
+    },
+
+    /**
+     * No need to re-populate if source updates.
+     */
+    getNeedsPopulation: function getNeedsPopulation() {
+      return false;
     }
   };
 
@@ -275,10 +283,12 @@
    */
   $.fn.idcVerificationButtons = function buildVerificationButtons(methodOrOptions) {
     var passedArgs = arguments;
-    $.each(this, function callOnEachGrid() {
+    var result;
+    $.each(this, function callOnEachOutput() {
       if (methods[methodOrOptions]) {
         // Call a declared method.
-        return methods[methodOrOptions].apply(this, Array.prototype.slice.call(passedArgs, 1));
+        result = methods[methodOrOptions].apply(this, Array.prototype.slice.call(passedArgs, 1));
+        return true;
       } else if (typeof methodOrOptions === 'object' || !methodOrOptions) {
         // Default to "init".
         return methods.init.apply(this, passedArgs);
@@ -287,6 +297,7 @@
       $.error('Method ' + methodOrOptions + ' does not exist on jQuery.idcVerificationButtons');
       return true;
     });
-    return this;
+    // If the method has no explicit response, return this to allow chaining.
+    return typeof result === 'undefined' ? this : result;
   };
 }());

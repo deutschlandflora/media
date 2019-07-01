@@ -3,14 +3,58 @@ $file-box-width: 400px;
 $file-box-padding: 20px;
 $file-box-icon-size: 30px;
 $colour-even-row: #f7f7f7;
-$colour-odd-row: transparent;
+$colour-odd-row: #ffffff;
 $colour-hover-row-bg: #fff899;
 $colour-hover-row: #333333;
 $colour-select-row: #ffffff;
 $colour-select-row-bg: #3333ee;
 
 /* idcDataGrid plugin */
+.idc-output-dataGrid {
+  position: relative;
+  /* Ensure height enough for spinner. */
+  min-height: 140px;
+  .data-grid-tools {
+    position: absolute;
+    top: 0;
+    right: 0;
+    span {
+      width: 16px;
+      height: 16px;
+      padding: 0;
+      margin: 0 2px;
+      color: #999;
+    }
+  }
+  .data-grid-settings {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    padding: 1em;
+    opacity: 0.95;
+    background-color: #f0f0f0;
+    min-height: 500px;
+    border: solid silver 1px;
+    ol {
+      overflow: auto;
+      li {
+        background: #e7e7e7;
+        border: solid #777 1px;
+        padding: 4px;
+        margin: 4px;
+        list-style-position: inside;
+        input[type="checkbox"] {
+          margin: 4px;
+          font-size: 200%;
+        }
+      }
+    }
+  }
+}
 table.es-data-grid {
+  background-color: $colour-odd-row;
   thead {
     .fa-sort {
       opacity: 0.3;
@@ -28,6 +72,10 @@ table.es-data-grid {
       .fa-exclamation-circle {
         margin-left: -20px;
       }
+    }
+    /* Last th leave space for tool icons */
+    th:last-child, td:last-child {
+      padding-right: 18px;
     }
   }
   tbody {
@@ -55,6 +103,24 @@ table.es-data-grid {
           max-height: 45px;
         }
       }
+    }
+  }
+  &.fixed-header {
+    tbody {
+      display:block;
+      overflow-y: auto;
+    }
+    thead, tbody tr {
+      display:table;
+      width:100%;
+      table-layout: fixed;/* even columns width , fix width of table too*/
+    }
+    thead {
+      width: calc( 100% - 1em )/* scrollbar is average 1em/16px width, remove it from thead width */
+    }
+    .multiselect-cell {
+      padding: 0;
+      width: 12px;
     }
   }
 }

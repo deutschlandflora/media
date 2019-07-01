@@ -392,7 +392,7 @@
         website_id: indiciaData.website_id,
         'occurrence:id': occurrenceId,
         'occurrence:taxa_taxon_list_id': $('#redet-species').val(),
-        user_id: indiciaData.userId
+        user_id: indiciaData.user_id
       };
       if ($('#redet-comment').val()) {
         data['occurrence_comment:comment'] = $('#redet-comment').val();
@@ -533,7 +533,7 @@
             key = doc.occurrence.source_system_key ? doc.occurrence.source_system_key : doc.occurrence_external_key;
             if (key.match(/^iNat:/)) {
               externalMessage = 'View details of this record in iNaturalist using the link above.';
-              if (!doc.occurrence.associated_media) {
+              if (!doc.occurrence.media) {
                 externalMessage += ' Although there are no media files linked to the imported record, this may be ' +
                   'because the source record\'s images were not licensed so could not be imported. If so then they ' +
                   'may be viewed in iNaturalist.';
@@ -572,6 +572,13 @@
         indiciaFns.controlFail(this, 'Invalid event handler requested for ' + event);
       }
       callbacks[event].push(handler);
+    },
+
+    /**
+     * Details pane doesn't repopulate if source changes until row clicked.
+     */
+    getNeedsPopulation: function getNeedsPopulation() {
+      return false;
     }
   };
 
@@ -580,10 +587,12 @@
    */
   $.fn.idcRecordDetailsPane = function buildRecordDetailsPane(methodOrOptions) {
     var passedArgs = arguments;
-    $.each(this, function callOnEachPane() {
+    var result;
+    $.each(this, function callOnEachOutput() {
       if (methods[methodOrOptions]) {
         // Call a declared method.
-        return methods[methodOrOptions].apply(this, Array.prototype.slice.call(passedArgs, 1));
+        result = methods[methodOrOptions].apply(this, Array.prototype.slice.call(passedArgs, 1));
+        return true;
       } else if (typeof methodOrOptions === 'object' || !methodOrOptions) {
         // Default to "init".
         return methods.init.apply(this, passedArgs);
@@ -592,6 +601,7 @@
       $.error('Method ' + methodOrOptions + ' does not exist on jQuery.idcRecordDetailsPane');
       return true;
     });
-    return this;
+    // If the method has no explicit response, return this to allow chaining.
+    return typeof result === 'undefined' ? this : result;
   };
 }());
