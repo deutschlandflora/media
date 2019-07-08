@@ -2781,12 +2781,15 @@ var destroyAllFeatures;
        * Public function to change selection of features on a layer.
        */
       div.map.setSelection = function (layer, features) {
-        $.each(layer.selectedFeatures, function (idx, feature) {
-          feature.renderIntent = 'default';
-        });
-        layer.selectedFeatures = features;
-        $.each(layer.selectedFeatures, function (idx, feature) {
-          feature.renderIntent = 'select';
+        if (!indiciaData.shiftPressed) {
+          $.each(layer.selectedFeatures, function () {
+            this.renderIntent = 'default';
+          });
+          layer.selectedFeatures = [];
+        }
+        layer.selectedFeatures = layer.selectedFeatures.concat(features);
+        $.each(layer.selectedFeatures, function () {
+          this.renderIntent = 'select';
         });
         layer.redraw();
       };
