@@ -23,13 +23,34 @@ if (typeof window.indiciaData === 'undefined') {
     documentReady: 'no',
     windowLoaded: 'no',
     reports: {},
-    lang: []
+    lang: [],
+    ctrlPressed: false,
+    shiftPressed: false
   };
   window.indiciaFns = {};
 }
 
 (function ($) {
   'use strict';
+
+  /**
+   * Keep track of modifier keys such as shift anc ctrl as generally useful.
+   */
+  $(document).keydown(function keyDown(evt) {
+    if (evt.keyCode === 17) { // ctrl
+      indiciaData.ctrlPressed = true;
+    } else if (evt.keyCode === 16) {
+      indiciaData.shiftPressed = true;
+    }
+  }).keyup(function keyUp(evt) {
+    if (evt.keyCode === 17) { // ctrl
+      indiciaData.ctrlPressed = false;
+    } else if (evt.keyCode === 16) {
+      indiciaData.shiftPressed = false;
+    }
+  }).blur(function blur() {
+    indiciaData.ctrlPressed = false;
+  });
 
   /**
    * Add a handy jQuery function for ignoring certain content elements, e.g. $(el).ignore('.skip').text() gets the
