@@ -137,7 +137,7 @@
         .appendTo(headerRow);
     });
     if (el.settings.actions.length) {
-      $('<th class="col-actions">Actions</th>').appendTo(headerRow);
+      $('<th class="col-actions"></th>').appendTo(headerRow);
     }
   }
 
@@ -658,7 +658,7 @@
         });
         value = media;
         // Approximate a column size to accomodate the thumbnails.
-        maxCharsPerCol['col-' + idx] = value.length === 1 ? 10 : 15;
+        maxCharsPerCol['col-' + idx] = Math.max(maxCharsPerCol['col-' + idx], value.length === 1 ? 8 : 14);
       } else {
         maxCharsPerCol['col-' + idx] = Math.max(maxCharsPerCol['col-' + idx], $('<p>' + value + '</p>').text().length);
       }
@@ -711,6 +711,10 @@
       if (el.settings.responsive) {
         maxCharsPerRow += 3;
         $(el).find('.footable-toggle-col').css('width', (100 * (3 / maxCharsPerRow)) + '%');
+      }
+      if (el.settings.actions) {
+        maxCharsPerRow += 6;
+        $(el).find('.col-actions').css('width', (100 * (6 / maxCharsPerRow)) + '%');
       }
       $.each(el.settings.columns, function eachColumn(idx) {
         var allowedColWidth = Math.min(maxCharsPerCol['col-' + idx], 20);
