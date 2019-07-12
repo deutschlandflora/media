@@ -374,6 +374,16 @@
     },
 
     /**
+     * A formatted lat long.
+     */
+    lat_lon: function latLon(doc) {
+      var coords = doc.location.point.split(',');
+      var lat = parseFloat(coords[0]);
+      var lon = parseFloat(coords[1]);
+      return Math.abs(lat).toFixed(3) + (lat >= 0 ? 'N' : 'S') + ' ' + Math.abs(lon).toFixed(3) + (lon >= 0 ? 'E' : 'W');
+    },
+
+    /**
      * A simple output of website and survey ID.
      *
      * Has a hint to show the underlying titles.
@@ -494,11 +504,45 @@
         value: '',
         query: JSON.stringify(query)
       };
+    },
+
+    /**
+     * Implement a filter for records near a lat long point.
+     */
+    lat_lon: function latLon(text) {
+      var coords = text.split(/[, ]/);
+      var query;
+      coords[0] = coords[0].match(/S$/) ? 0 - coords[0].replace(/S$/, '') : parseFloat(coords[0].replace(/[^\d\.]$/, ''))
+      coords[1] = coords[1].match(/W$/) ? 0 - coords[1].replace(/[^\d\.]$/, '') : parseFloat(coords[1].replace(/[^\d\.]$/, ''));
+      query = {
+        geo_distance: {
+          distance: '5km',
+          'location.point': {
+            lat: coords[0],
+            lon: coords[1]
+          }
+        }
+      };
+      return {
+        bool_clause: 'must',
+        value: '',
+        query: JSON.stringify(query)
+      };
     }
   };
 
   /**
+   * Allow special fields to provide custom hints for their filter row inputs.
+   */
+  indiciaFns.fieldConvertorQueryDescriptions = {
+    lat_lon: 'Enter a latitude and longitude value to filter to records in the vicinity.'
+  };
+
+  /**
    * Field convertors which allow sort on underlying fields are listed here.
+   *
+   * Either specify an array of field names, or an object defining the sort
+   * data that needs to be sent in the request.
    */
   indiciaData.fieldConvertorSortFields = {
     // Unsupported possibilities are commented out.
@@ -507,6 +551,17 @@
     event_date: ['event.date_start'],
     // higher_geography: [],
     // locality: [],
+    // Do a distance sort from the North Pole
+    lat_lon: {
+      _geo_distance: {
+        'location.point': {
+          lat: 0,
+          lon: 0
+        },
+        order: 'asc',
+        unit: 'km'
+      }
+    },
     datasource_code: ['metadata.website.id', 'metadata.survey.id']
   };
 

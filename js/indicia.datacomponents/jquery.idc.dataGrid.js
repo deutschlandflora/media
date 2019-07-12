@@ -158,7 +158,11 @@
       if (typeof indiciaData.esMappings[this] !== 'undefined'
           || typeof indiciaFns.fieldConvertorQueryBuilders[this.simpleFieldName()] !== 'undefined') {
         if (indiciaFns.fieldConvertorQueryBuilders[this.simpleFieldName()]) {
-          title = 'Enter a value to find matches the ' + caption + ' column.';
+          if (indiciaFns.fieldConvertorQueryDescriptions[this.simpleFieldName()]) {
+            title = indiciaFns.fieldConvertorQueryDescriptions[this.simpleFieldName()];
+          } else {
+            title = 'Enter a value to find matches the ' + caption + ' column.';
+          }
         } else if (indiciaData.esMappings[this].type === 'text' || indiciaData.esMappings[this].type === 'keyword') {
           title = 'Search for words in the  which begin with this text in the ' + caption + ' column. Prefix with ! to exclude rows which contain words beginning with the text you enter.';
         } else {
@@ -247,7 +251,7 @@
         var source = indiciaData.esSourceObjects[sourceId];
         var field = $(sortButton).closest('th').attr('data-field');
         var sortDesc = $(sortButton).hasClass('fa-sort-up');
-        var fields;
+        var sortData;
         var fieldName = field.simpleFieldName();
         $(row).find('.sort.fas').removeClass('fa-sort-down');
         $(row).find('.sort.fas').removeClass('fa-sort-up');
@@ -260,12 +264,17 @@
             order: sortDesc ? 'desc' : 'asc'
           };
         } else if (indiciaData.fieldConvertorSortFields[fieldName]) {
-          fields = indiciaData.fieldConvertorSortFields[fieldName];
-          $.each(fields, function eachField() {
-            source.settings.sort[this] = {
-              order: sortDesc ? 'desc' : 'asc'
-            };
-          });
+          sortData = indiciaData.fieldConvertorSortFields[fieldName];
+          if ($.isArray(sortData)) {
+            $.each(sortData, function eachField() {
+              source.settings.sort[this] = {
+                order: sortDesc ? 'desc' : 'asc'
+              };
+            });
+          } else if (typeof sortData === 'object') {
+            source.settings.sort = sortData;
+            indiciaFns.findAndSetValue(source.settings.sort, 'order', sortDesc ? 'desc' : 'asc');
+          }
         }
         source.populate();
       });
