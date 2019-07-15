@@ -430,8 +430,8 @@
       baseMaps[el.settings.baseLayer].addTo(el.map);
       $.each(el.settings.layerConfig, function eachLayer(id, layer) {
         var group;
-        if (layer.type !== 'undefined' && layer.type === 'heat') {
-          group = L.heatLayer([], { radius: 10 });
+        if (layer.type && layer.type === 'heat') {
+          group = L.heatLayer([], $.extend({ radius: 10 }, layer.style ? layer.style : {}));
         } else {
           group = L.featureGroup();
         }
