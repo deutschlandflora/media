@@ -267,10 +267,9 @@ table.report-grid {
     top: 0;
     right: 0; }
     .idc-output-dataGrid .data-grid-tools span {
-      width: 16px;
-      height: 16px;
+      font-size: 20px;
       padding: 0;
-      margin: 0 2px;
+      margin: 2px;
       color: #999; }
   .idc-output-dataGrid .data-grid-settings {
     position: absolute;
