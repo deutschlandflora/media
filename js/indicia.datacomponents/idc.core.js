@@ -831,7 +831,10 @@ jQuery(document).ready(function docReady() {
         });
       });
     } else {
-      $(this).idcLeafletMap('clearFeature');
+      $.each($('.idc-output-leafletMap'), function eachMap() {
+        $(this).idcLeafletMap('clearFeature');
+        $(this).idcLeafletMap('resetViewport');
+      });
     }
   });
 
