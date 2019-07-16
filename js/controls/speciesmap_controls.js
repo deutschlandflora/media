@@ -57,6 +57,27 @@ var control_speciesmap_addcontrols;
       }
       // TODO if map projection != indicia internal projection transform to internal projection
     };
+    var switchToSubSampleForm = function switchToSubSampleForm() {
+      $(indiciaData.control_speciesmap_opts.mapDiv).hide(indiciaData.control_speciesmap_opts.animationDuration);
+      $('#' + indiciaData.control_speciesmap_opts.id + '-container')
+        .show(indiciaData.control_speciesmap_opts.animationDuration, function after() {
+          // Trigger footable resize so visible columns are updated.
+          $('#' + indiciaData.control_speciesmap_opts.id + '-container table').trigger('footable_resize');
+        });
+      // Hide tab navigation buttons as they are confusing in this state.
+      $('.wizard-buttons').hide();
+    };
+    var switchToOverviewMap = function switchToOverviewMap() {
+      $('#' + indiciaData.control_speciesmap_opts.id + '-container')
+        .hide(indiciaData.control_speciesmap_opts.animationDuration);
+      $(indiciaData.control_speciesmap_opts.mapDiv)
+        .show(indiciaData.control_speciesmap_opts.animationDuration, function after() {
+          // Trigger map resize to ensure redraws correctly.
+          indiciaData.control_speciesmap_opts.mapDiv.map.updateSize();
+        });
+      // Show tab navigation buttons that we previously hid.
+      $('.wizard-buttons').show();
+    };
     var beginMove = function () {
       var div = $(indiciaData.control_speciesmap_opts.mapDiv)[0];
       indiciaData.control_speciesmap_selectFeatureControl.deactivate();
@@ -100,15 +121,8 @@ var control_speciesmap_addcontrols;
       indiciaData.control_speciesmap_new_feature.style = null;
       indiciaData.SubSampleLayer.addFeatures([indiciaData.control_speciesmap_new_feature]);
       fillInMainSref();
-      // TODO if map projection != indicia internal projection transform to internal projection
-      $(indiciaData.control_speciesmap_opts.mapDiv).hide(indiciaData.control_speciesmap_opts.animationDuration);
-      $('#' + indiciaData.control_speciesmap_opts.id + '-container')
-        .show(indiciaData.control_speciesmap_opts.animationDuration, function after() {
-          // Trigger footable resize so visible columns are updated.
-          $('#' + indiciaData.control_speciesmap_opts.id + '-container table').trigger('footable_resize');
-        })
-        .find('.new')
-        .removeClass('new');
+      switchToSubSampleForm();
+      $('#' + indiciaData.control_speciesmap_opts.id + '-container').find('.new').removeClass('new');
       $('#' + indiciaData.control_speciesmap_opts.id + '-blocks').find(' > div').hide();
       $('#' + indiciaData.control_speciesmap_opts.id + ' > tbody > tr').not('.scClonableRow').hide();
       $('#' + indiciaData.control_speciesmap_opts.id + ' .scClonableRow').find('[name$="\:sampleIDX"]').each(
@@ -171,10 +185,8 @@ var control_speciesmap_addcontrols;
       indiciaData.control_speciesmap_existing_feature = a1.feature; /* not clone */
       switch (indiciaData.control_speciesmap_mode) {
         case 'Modify':
-          $('#' + indiciaData.control_speciesmap_opts.id + '-container').show(
-              indiciaData.control_speciesmap_opts.animationDuration).find('.new').removeClass('new');
-          $(indiciaData.control_speciesmap_opts.mapDiv).hide(
-              indiciaData.control_speciesmap_opts.animationDuration);
+          switchToSubSampleForm();
+          $('#' + indiciaData.control_speciesmap_opts.id + '-container').find('.new').removeClass('new');
           $('#' + indiciaData.control_speciesmap_opts.id + '-blocks > div').hide();
           $('#' + indiciaData.control_speciesmap_opts.id + ' > tbody > tr').not('.scClonableRow').hide();
           block.show();
@@ -289,8 +301,8 @@ var control_speciesmap_addcontrols;
       div.map.editLayer.clickControl.deactivate();
       div.map.editLayer.destroyFeatures();
       $('#imp-sref,#imp-geom').val('');
-      $('#' + indiciaData.control_speciesmap_opts.id + '-container').hide(indiciaData.control_speciesmap_opts.animationDuration).find('.new').removeClass('new');
-      $(div).show(indiciaData.control_speciesmap_opts.animationDuration, function () { div.map.updateSize(); });
+      switchToOverviewMap();
+      $('#' + indiciaData.control_speciesmap_opts.id + '-container').removeClass('new')
       showButtons(['add', 'mod', 'move', 'del']);
       // Switch off Move button functionality
       indiciaData.control_speciesmap_selectFeatureControl.unselectAll();
@@ -334,7 +346,7 @@ var control_speciesmap_addcontrols;
       var div = $(indiciaData.control_speciesmap_opts.mapDiv)[0];
       switch (indiciaData.control_speciesmap_mode) {
         case 'Add':
-          $(div).show(indiciaData.control_speciesmap_opts.animationDuration, function () { div.map.updateSize(); });
+          switchToOverviewMap();
           $('#' + indiciaData.control_speciesmap_opts.messageId).empty().append(
               indiciaData.control_speciesmap_translatedStrings.AddMessage);
           showButtons(['add', 'mod', 'move', 'del']);
@@ -347,8 +359,6 @@ var control_speciesmap_addcontrols;
           setupSummaryRows(indiciaData.control_speciesmap_new_feature.attributes.subSampleIndex);
           indiciaData.SubSampleLayer.removeFeatures([indiciaData.control_speciesmap_new_feature]);
           fillInMainSref();
-          $('#' + indiciaData.control_speciesmap_opts.id + '-container')
-              .hide(indiciaData.control_speciesmap_opts.animationDuration);
           break;
         case 'Move':
           div.map.editLayer.clickControl.deactivate(); // to allow user to select new position.
@@ -368,7 +378,6 @@ var control_speciesmap_addcontrols;
       var feature = (indiciaData.control_speciesmap_mode === 'Add' ?
             indiciaData.control_speciesmap_new_feature : indiciaData.control_speciesmap_existing_feature);
       var scinputs;
-      var div = $(indiciaData.control_speciesmap_opts.mapDiv)[0];
       scinputs = $("[name$='\:sampleIDX']").filter('[value=' + feature.attributes.subSampleIndex + ']').closest('tr')
         .not('.scClonableRow')
         .find('input,select')
@@ -377,8 +386,8 @@ var control_speciesmap_addcontrols;
         return; // validation failed: leave everything in sight
       }
       setupSummaryRows(feature.attributes.subSampleIndex);
-      $('#' + indiciaData.control_speciesmap_opts.id + '-container').hide(indiciaData.control_speciesmap_opts.animationDuration).find('.new').removeClass('new');
-      $(div).show(indiciaData.control_speciesmap_opts.animationDuration, function() { div.map.updateSize(); });
+      switchToOverviewMap();
+      $('#' + indiciaData.control_speciesmap_opts.id + '-container').find('.new').removeClass('new');
       switch (indiciaData.control_speciesmap_mode) {
         case 'Add':
           $('#' + indiciaData.control_speciesmap_opts.messageId).empty().append(indiciaData.control_speciesmap_translatedStrings.AddMessage);
