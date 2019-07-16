@@ -24,6 +24,9 @@ $colour-select-row-bg: #3333ee;
       margin: 2px;
       color: #999;
     }
+    span:hover {
+      color: #333;
+    }
   }
   .data-grid-settings {
     position: absolute;

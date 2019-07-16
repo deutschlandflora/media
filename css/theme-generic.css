@@ -271,6 +271,8 @@ table.report-grid {
       padding: 0;
       margin: 2px;
       color: #999; }
+    .idc-output-dataGrid .data-grid-tools span:hover {
+      color: #333; }
   .idc-output-dataGrid .data-grid-settings {
     position: absolute;
     top: 0;
