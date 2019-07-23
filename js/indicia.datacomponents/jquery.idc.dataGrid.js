@@ -236,11 +236,11 @@
       });
     });
 
-    $(el).find('.pager .next').click(function clickNext() {
+    $(el).find('.pager-row .next').click(function clickNext() {
       movePage(el, true);
     });
 
-    $(el).find('.pager .prev').click(function clickPrev() {
+    $(el).find('.pager-row .prev').click(function clickPrev() {
       movePage(el, false);
     });
 
@@ -603,14 +603,14 @@
         $(el).find('tfoot .showing').html('No hits');
       }
       // Enable or disable the paging buttons.
-      $(el).find('.pager .prev').prop('disabled', fromRowIndex <= 1);
-      $(el).find('.pager .next').prop('disabled', fromRowIndex + response.hits.hits.length >= response.hits.total);
+      $(el).find('.pager-row .prev').prop('disabled', fromRowIndex <= 1);
+      $(el).find('.pager-row .next').prop('disabled', fromRowIndex + response.hits.hits.length >= response.hits.total);
     } else if (el.settings.aggregation === 'composite') {
       if (afterKey) {
         el.settings.compositeInfo.pageAfterKeys[el.settings.compositeInfo.page + 1] = afterKey;
       }
-      $(el).find('.pager .next').prop('disabled', !afterKey);
-      $(el).find('.pager .prev').prop('disabled', el.settings.compositeInfo.page === 0);
+      $(el).find('.pager-row .next').prop('disabled', !afterKey);
+      $(el).find('.pager-row .prev').prop('disabled', el.settings.compositeInfo.page === 0);
     }
   }
 
@@ -797,7 +797,7 @@
         totalCols = el.settings.columns.length
           + (el.settings.responsive ? 1 : 0)
           + (el.settings.actions.length > 0 ? 1 : 0);
-        $('<tfoot><tr class="pager"><td colspan="' + totalCols + '"><span class="showing"></span>' +
+        $('<tfoot><tr class="pager-row"><td colspan="' + totalCols + '"><span class="showing"></span>' +
           '<span class="buttons"><button class="prev">Previous</button><button class="next">Next</button></span>' +
           '</td></tr></tfoot>').appendTo(table);
       }
