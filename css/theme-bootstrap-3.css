@@ -331,6 +331,8 @@ table.es-data-grid {
     box-shadow: #aaa 0px 2px 4px 0px; }
     table.es-data-grid tbody tr img.multi {
       max-height: 45px; }
+  table.es-data-grid th, table.es-data-grid td {
+    word-wrap: break-word; }
   table.es-data-grid.fixed-header tbody {
     display: block;
     overflow-y: auto; }

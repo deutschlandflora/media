@@ -107,6 +107,9 @@ table.es-data-grid {
       }
     }
   }
+  th, td {
+    word-wrap: break-word;
+  }
   &.fixed-header {
     tbody {
       display:block;
