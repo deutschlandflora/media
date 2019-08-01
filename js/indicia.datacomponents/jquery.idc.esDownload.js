@@ -91,7 +91,8 @@
       // chunk of the dataset.
       $.ajax({
         url: indiciaData.esProxyAjaxUrl + '/download/' + indiciaData.nid,
-        type: 'post',
+        type: 'POST',
+        dataType: 'json',
         data: {
           scroll_id: data.scroll_id
         },
@@ -140,7 +141,8 @@
         // Post to the ES proxy.
         $.ajax({
           url: indiciaData.esProxyAjaxUrl + '/download/' + indiciaData.nid,
-          type: 'post',
+          type: 'POST',
+          dataType: 'json',
           data: data,
           success: function success(response) {
             if (typeof response.code !== 'undefined' && response.code === 401) {
