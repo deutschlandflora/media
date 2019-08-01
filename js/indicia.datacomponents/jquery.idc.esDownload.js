@@ -99,8 +99,7 @@
         success: function success(response) {
           updateProgress(el, response);
           doPages(el, response);
-        },
-        dataType: 'json'
+        }
       });
     } else {
       date = new Date();
