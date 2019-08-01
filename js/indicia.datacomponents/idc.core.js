@@ -144,7 +144,8 @@
    * Convert an ES (ISO) date to local display format.
    *
    * @param string dateString
-   *   Date as returned from ES date field.
+   *   Date as returned from ES date field, or 64 bit integer for an
+   *   aggregation's date key.
    *
    * @return string
    *   Date formatted.
@@ -153,7 +154,7 @@
     var date;
     var month;
     var day;
-    if (dateString.trim() === '') {
+    if (typeof dateString === 'string' && dateString.trim() === '') {
       return '';
     }
     date = new Date(dateString);
@@ -322,8 +323,9 @@
      * Output the event date or date range.
      */
     event_date: function eventDate(doc) {
-      var start = doc.event.date_start ? indiciaFns.formatDate(doc.event.date_start) : '';
-      var end = doc.event.date_end ? indiciaFns.formatDate(doc.event.date_end) : '';
+      var root = doc.event || doc.key;
+      var start = root.date_start ? indiciaFns.formatDate(root.date_start) : '';
+      var end = root.date_end ? indiciaFns.formatDate(root.date_end) : '';
       if (start !== end) {
         return start + ' - ' + end;
       }
