@@ -460,6 +460,31 @@
   }
 
   /**
+   * Takes a string and applies token replacement for field values.
+   *
+   * @param object doc
+   *   The ES document for the row.
+   * @param string text
+   *   Text to perform replacements on.
+   *
+   * @return string
+   *   Updated text.
+   */
+  function applyFieldReplacements(doc, text) {
+    // Find any field name replacements.
+    var fieldMatches = text.match(/\[(.*?)\]/g);
+    var updatedText = text;
+    $.each(fieldMatches, function eachMatch(i, fieldToken) {
+      var dataVal;
+      // Cleanup the square brackets which are not part of the field name.
+      var field = fieldToken.replace(/\[/, '').replace(/\]/, '');
+      dataVal = indiciaFns.getValueForField(doc, field);
+      updatedText = updatedText.replace(fieldToken, dataVal);
+    });
+    return updatedText;
+  }
+
+  /**
    * Retrieve any action links to attach to an idcDataGrid row.
    *
    * @param array actions
@@ -475,6 +500,7 @@
     $.each(actions, function eachActions() {
       var item;
       var link;
+      var params = [];
       if (typeof this.title === 'undefined') {
         html += '<span class="fas fa-times-circle error" title="Invalid action definition - missing title"></span>';
       } else {
@@ -488,19 +514,11 @@
           if (this.urlParams) {
             link += link.indexOf('?') === -1 ? '?' : '&';
             $.each(this.urlParams, function eachParam(name, value) {
-              // Find any field name replacements.
-              var fieldMatches = value.match(/\[(.*?)\]/g);
-              var updatedVal = value;
-              $.each(fieldMatches, function eachMatch(i, fieldToken) {
-                var dataVal;
-                // Cleanup the square brackets which are not part of the field name.
-                var field = fieldToken.replace(/\[/, '').replace(/\]/, '');
-                dataVal = indiciaFns.getValueForField(doc, field);
-                updatedVal = value.replace(fieldToken, dataVal);
-              });
-              link += name + '=' + updatedVal;
+              params.push(name + '=' + value);
             });
+            link += params.join('&');
           }
+          link = applyFieldReplacements(doc, link);
           item = '<a href="' + link + '" title="' + this.title + '">' + item + '</a>';
         }
         html += item;
