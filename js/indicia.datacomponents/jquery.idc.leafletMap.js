@@ -187,7 +187,7 @@
     // Pan and zoom the map. Method differs for points vs polygons.
     if (!zoom) {
       el.map.panTo(centre);
-    } else if (wkt.type === 'polygon') {
+    } else if (wkt.type === 'polygon' || wkt.type === 'multipolygon') {
       el.map.fitBounds(obj.getBounds(), { maxZoom: 11 });
     } else {
       el.map.setView(centre, 11);
