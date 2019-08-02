@@ -854,7 +854,7 @@ jQuery(document).ready(function docReady() {
       });
     } else {
       // Unless a disabled (loading message etc), clear the current selection.
-      $.each($('.idc-output-leafletMap'), function eachMap() {
+      $.each($('.idc-output-leafletMap.leaflet-container'), function eachMap() {
         $(this).idcLeafletMap('clearFeature');
         $(this).idcLeafletMap('resetViewport');
       });
