@@ -721,9 +721,11 @@
       }
       // Using filter paremeter controls.
       $.each($('.es-filter-param'), function eachParam() {
-        var val = $(this).val().trim();
-        if (val !== '') {
-          val = val.replace(/{{ indicia_user_id }}/g, indiciaData.user_id);
+        var val = $(this).val();
+        // Make sure we have a value to apply. Skip special "novalue" items
+        // in linked selects (such as Loading... message).
+        if (val !== null && val.trim() !== '') {
+          val = val.trim().replace(/{{ indicia_user_id }}/g, indiciaData.user_id);
           data.bool_queries.push({
             bool_clause: $(this).attr('data-es-bool-clause'),
             field: $(this).attr('data-es-field') ? $(this).attr('data-es-field') : null,
@@ -822,10 +824,28 @@ jQuery(document).ready(function docReady() {
     }
   }));
   $('.es-higher-geography-select').change(function higherGeoSelectChange() {
-    if ($(this).val()) {
+    var baseId;
+    var idx = 0;
+    var thisSelect;
+    var locIdToLoad;
+    // Fimd the most precise specified boundary in the list of linked selects.
+    if ($(this).hasClass('linked-select')) {
+      baseId = this.id.replace(/\-\d+$/, '');
+      thisSelect = $('#' + baseId + '-' + idx);
+      while (thisSelect.length) {
+        if ($(thisSelect).val() && $(thisSelect).val().match(/^\d+$/)) {
+          locIdToLoad = $(thisSelect).val();
+        }
+        idx++;
+        thisSelect = $('#' + baseId + '-' + idx);
+      }
+    } else {
+      locIdToLoad = $(this).val();
+    }
+    if (locIdToLoad && locIdToLoad.match(/^\d+$/)) {
       $.getJSON(indiciaData.warehouseUrl + 'index.php/services/report/requestReport?' +
           'report=library/locations/location_boundary_projected.xml' +
-          '&reportSource=local&srid=4326&location_id=' + $(this).val() +
+          '&reportSource=local&srid=4326&location_id=' + locIdToLoad +
           '&nonce=' + indiciaData.read.nonce + '&auth_token=' + indiciaData.read.auth_token +
           '&mode=json&callback=?', function getLoc(data) {
         $.each($('.idc-output-leafletMap'), function eachMap() {
@@ -833,6 +853,7 @@ jQuery(document).ready(function docReady() {
         });
       });
     } else {
+      // Unless a disabled (loading message etc), clear the current selection.
       $.each($('.idc-output-leafletMap'), function eachMap() {
         $(this).idcLeafletMap('clearFeature');
         $(this).idcLeafletMap('resetViewport');
