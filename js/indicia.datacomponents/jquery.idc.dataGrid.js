@@ -404,7 +404,7 @@
     /**
      * Config save button handler.
      */
-    indiciaFns.on('click', '.data-grid-settings .save', {}, function onClick() {
+    indiciaFns.on('click', '#' + el.id + ' .data-grid-settings .save', {}, function onClick() {
       var header = $(el).find('thead');
       var showingAggregation = el.settings.aggregation || el.settings.sourceTable;
       var colsList = [];
