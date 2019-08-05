@@ -25,7 +25,8 @@ if (typeof window.indiciaData === 'undefined') {
     reports: {},
     lang: [],
     ctrlPressed: false,
-    shiftPressed: false
+    shiftPressed: false,
+    linkedSelects: []
   };
   window.indiciaFns = {};
 }
@@ -452,6 +453,45 @@ if (typeof window.indiciaData === 'undefined') {
     }
   };
 
+  /**
+   * Linked selects parent change handler.
+   *
+   * When 2 select boxes are linked (so selecting an item in one filters the
+   * other), this function handles the selection change and application of the
+   * filter.
+   */
+  indiciaFns.changeLinkedParentSelect = function changeLinkedParentSelect(el, options) {
+    var childSelect = $('#' + options.escapedId);
+    var parentSelect = $(el);
+    if (parentSelect.val()) {
+      $.getJSON(options.request + '&query=' + options.query.replace('%22val%22', parentSelect.val()), function onResponse(data) {
+        childSelect.find('option').remove();
+        if (data.length > 0) {
+          childSelect.removeClass('ui-state-disabled');
+          childSelect.show();
+          if (data.length > 1) {
+            childSelect.append('<option value="">&lt;Please select&gt;</option>');
+          }
+          $.each(data, function eachData() {
+            var selected = typeof indiciaData['default' + options.escapedId] !== 'undefined' && indiciaData['default' + options.escapedId] === this[options.valueField] ? '" selected="selected' : '';
+            childSelect.append('<option value="' + this[options.valueField] + selected + '">' + this[options.captionField] + '</option>');
+          });
+        } else {
+          if (options.hideChildrenUntilLoaded) {
+            childSelect.hide();
+          }
+          childSelect.addClass('ui-state-disabled').html('<option disabled>' + options.instruct + '</option>');
+        }
+        childSelect.change();
+      });
+    } else {
+      if (options.hideChildrenUntilLoaded) {
+        childSelect.hide();
+      }
+      childSelect.addClass('ui-state-disabled').html('<option disabled>' + options.instruct + '</option>');
+      childSelect.change();
+    }
+  };
 }(jQuery));
 
 jQuery(document).ready(function ($) {
@@ -492,5 +532,15 @@ jQuery(document).ready(function ($) {
   indiciaFns.on('click', '.media-info-close', {}, function(e) {
     $(e.currentTarget).parent('.media-info').hide();
     return false;
+  });
+
+  $.each(indiciaData.linkedSelects, function() {
+    var selectInfo = this;
+    indiciaFns.on('change', '#' + this.parentControlId, {}, function onChange() {
+      indiciaFns.changeLinkedParentSelect(this, selectInfo);
+    });
+    if ($('#' + this.escapedId + ' option').length === 0) {
+      $('#' + this.parentControlId).trigger('change');
+    }
   });
 });
