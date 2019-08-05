@@ -293,7 +293,7 @@ table.report-grid {
         margin: 4px;
         list-style-position: inside; }
         .idc-output-dataGrid .data-grid-settings ol li input[type="checkbox"] {
-          margin: 4px;
+          margin-right: 8px;
           font-size: 200%; }
 
 table.es-data-grid {
