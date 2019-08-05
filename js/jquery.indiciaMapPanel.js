@@ -543,13 +543,13 @@ var destroyAllFeatures;
         info = handler.getPrecisionInfo(handler.valueToAccuracy(value));
         if (info.metres > div.settings.helpToPickPrecisionMin) {
           helpText.push(div.settings.hlpImproveResolution1.replace('{size}', info.display));
-          helpClass = 'help-green';
+          helpClass = 'help-red';
         } else if (info.metres > div.settings.helpToPickPrecisionMax) {
           helpText.push(div.settings.hlpImproveResolution2.replace('{size}', info.display));
           helpClass = 'help-amber';
         } else {
           helpText.push(div.settings.hlpImproveResolution3.replace('{size}', info.display));
-          helpClass = 'help-red';
+          helpClass = 'help-green';
         }
         // Switch layer, but not if on a dynamic layer which already handles this.
         if (div.settings.helpToPickPrecisionSwitchAt && info.metres <= div.settings.helpToPickPrecisionSwitchAt
