@@ -733,21 +733,35 @@
     // Column resizing needs to be done manually when tbody has scroll bar.
     if (el.settings.scrollY) {
       $.each(el.settings.columns, function eachColumn(idx) {
-        maxCharsPerRow += Math.min(maxCharsPerCol['col-' + idx], 20);
+        maxCharsPerRow += maxCharsPerCol['col-' + idx];
       });
+      if (el.settings.actions) {
+        maxCharsPerRow += maxCharsPerCol['col-actions'];
+      }
       if (el.settings.responsive) {
         maxCharsPerRow += 3;
         $(el).find('.footable-toggle-col').css('width', (100 * (3 / maxCharsPerRow)) + '%');
       }
-      if (el.settings.actions) {
-        maxCharsPerRow += 6;
-        $(el).find('.col-actions').css('width', (100 * (6 / maxCharsPerRow)) + '%');
-      }
+      $(el).find('.col-actions').css('width', (100 * (maxCharsPerCol['col-actions'] / maxCharsPerRow)) + '%');
       $.each(el.settings.columns, function eachColumn(idx) {
-        var allowedColWidth = Math.min(maxCharsPerCol['col-' + idx], 20);
-        $(el).find('.col-' + idx).css('width', (100 * (allowedColWidth / maxCharsPerRow)) + '%');
+        $(el).find('.col-' + idx).css('width', (100 * (maxCharsPerCol['col-' + idx] / maxCharsPerRow)) + '%');
       });
     }
+  }
+
+  /**
+   * Finds the longest word in a string.
+   */
+  function longestWordLength(str) {
+    var strSplit = str.split(' ');
+    var longestWord = 0;
+    var i;
+    for (i = 0; i < strSplit.length; i++) {
+      if (strSplit[i].length > longestWord) {
+        longestWord = strSplit[i].length;
+      }
+    }
+    return longestWord;
   }
 
   /**
@@ -864,11 +878,21 @@
       // Start by finding the number of characters in header cells. Later we'll
       // increase this if  we find cells in a column that contain more
       // characters.
-      maxCharsPerCol = {};
       $.each(el.settings.columns, function eachColumn(idx) {
-        // Status icons allowed to be smaller than a normal col.
-        maxCharsPerCol['col-' + idx] = Math.max(el.settings.availableColumnInfo[this].caption.length, this === '#status_icons#' ? 5 : 10);
+        // Only use the longest word in the caption as we'd rather break the
+        // heading than the data rows.
+        maxCharsPerCol['col-' + idx] = Math.max(longestWordLength(el.settings.availableColumnInfo[this].caption), 5);
+        if (typeof indiciaData.esMappings[this] !== 'undefined' && indiciaData.esMappings[this].sort_field) {
+          maxCharsPerCol['col-' + idx] += 1;
+        }
       });
+      if (el.settings.actions.length) {
+        // Allow 2 chars per action icon plus 2 for the tool icons.
+        maxCharsPerCol['col-actions'] = (el.settings.actions.length * 2) + 2;
+      } else {
+        // 2 extra chars for the last heading as it contains tool icons.
+        maxCharsPerCol['col-' + (el.settings.columns.length - 1)] += 1;
+      }
       $.each(dataList, function eachHit() {
         var hit = this;
         var cells = [];
@@ -880,10 +904,7 @@
         cells = cells.concat(getDataCells(el, doc, maxCharsPerCol));
         if (el.settings.actions.length) {
           cells.push('<td class="col-actions">' + getActionsForRow(el.settings.actions, doc) + '</td>');
-          maxCharsPerCol['col-actions'] = 7;
         }
-        // Extra char for the last heading as it contains tool icons.
-        maxCharsPerCol['col-' + (maxCharsPerCol.length - 1)] += 1;
         selectedClass = (el.settings.selectIdsOnNextLoad && $.inArray(hit._id, el.settings.selectIdsOnNextLoad) !== -1)
           ? ' selected' : '';
         dataRowId = hit._id ? ' data-row-id="' + hit._id + '"' : '';

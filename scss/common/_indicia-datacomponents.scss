@@ -65,6 +65,9 @@ table.es-data-grid {
       }
     }
     .es-filter-row {
+      td {
+        padding: 2px;
+      }
       input {
         width: 100%;
         box-sizing: border-box;

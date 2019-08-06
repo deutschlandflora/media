@@ -306,6 +306,8 @@ table.es-data-grid {
         opacity: 1; }
     table.es-data-grid thead .es-filter-row {
       /* Position search value warning icon over input. */ }
+      table.es-data-grid thead .es-filter-row td {
+        padding: 2px; }
       table.es-data-grid thead .es-filter-row input {
         width: 100%;
         box-sizing: border-box;
