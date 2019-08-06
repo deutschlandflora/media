@@ -733,9 +733,12 @@
     // Column resizing needs to be done manually when tbody has scroll bar.
     if (el.settings.scrollY) {
       $.each(el.settings.columns, function eachColumn(idx) {
+        // Allow 2 extra chars per col for padding.
+        maxCharsPerCol['col-' + idx] += 2;
         maxCharsPerRow += maxCharsPerCol['col-' + idx];
       });
       if (el.settings.actions) {
+        maxCharsPerCol['col-actions'] += 2;
         maxCharsPerRow += maxCharsPerCol['col-actions'];
       }
       if (el.settings.responsive) {
@@ -883,7 +886,8 @@
         // heading than the data rows.
         maxCharsPerCol['col-' + idx] = Math.max(longestWordLength(el.settings.availableColumnInfo[this].caption), 5);
         if (typeof indiciaData.esMappings[this] !== 'undefined' && indiciaData.esMappings[this].sort_field) {
-          maxCharsPerCol['col-' + idx] += 1;
+          // Add 2 chars to allow for the sort icon.
+          maxCharsPerCol['col-' + idx] += 2;
         }
       });
       if (el.settings.actions.length) {
