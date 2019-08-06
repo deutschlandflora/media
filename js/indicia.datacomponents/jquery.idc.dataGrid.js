@@ -164,7 +164,7 @@
             title = 'Enter a value to find matches the ' + caption + ' column.';
           }
         } else if (indiciaData.esMappings[this].type === 'text' || indiciaData.esMappings[this].type === 'keyword') {
-          title = 'Search for words in the  which begin with this text in the ' + caption + ' column. Prefix with ! to exclude rows which contain words beginning with the text you enter.';
+          title = 'Search for words which begin with this text in the ' + caption + ' column. Prefix with ! to exclude rows which contain words beginning with the text you enter.';
         } else {
           title = 'Search for a number in the ' + caption + ' column. Prefix with ! to exclude rows which match the number you enter or separate a range with a hyphen (e.g. 123-456).';
         }
@@ -244,7 +244,7 @@
       movePage(el, false);
     });
 
-    $(el).find('.sort').click(function clickSort() {
+    indiciaFns.on('click', '#' + el.id + ' .sort', {}, function clickSort() {
       var sortButton = this;
       var row = $(sortButton).closest('tr');
       $.each(el.settings.source, function eachSource(sourceId) {
@@ -280,7 +280,7 @@
       });
     });
 
-    $(el).find('.es-filter-row input').change(function changeFilterInput() {
+    indiciaFns.on('change', '#' + el.id + ' .es-filter-row input', {}, function changeFilterInput() {
       var sources = Object.keys(el.settings.source);
       if (el.settings.applyFilterRowToSources) {
         sources = sources.concat(el.settings.applyFilterRowToSources);
