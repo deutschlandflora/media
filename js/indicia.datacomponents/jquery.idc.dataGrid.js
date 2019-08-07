@@ -734,11 +734,11 @@
     if (el.settings.scrollY) {
       $.each(el.settings.columns, function eachColumn(idx) {
         // Allow 2 extra chars per col for padding.
-        maxCharsPerCol['col-' + idx] += 2;
+        maxCharsPerCol['col-' + idx] += 1;
         maxCharsPerRow += maxCharsPerCol['col-' + idx];
       });
       if (el.settings.actions) {
-        maxCharsPerCol['col-actions'] += 2;
+        maxCharsPerCol['col-actions'] += 1;
         maxCharsPerRow += maxCharsPerCol['col-actions'];
       }
       if (el.settings.responsive) {
