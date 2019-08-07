@@ -605,6 +605,26 @@
   }
 
   /**
+   * Retrieve the value of a named data attribute from an input.
+   *
+   * If the input is a select, then the selected option can override the
+   * attribute specified at the input element level. Returns null if no
+   * value available.
+   */
+  indiciaFns.getDataValueFromInput = function getDataValueFromInput(input, dataName) {
+    var option = $(input).find('option:selected');
+    var val;
+    if (option.length > 0) {
+      val = option.attr(dataName);
+      if (val) {
+        return val;
+      }
+    }
+    val = $(input).attr(dataName);
+    return val ? val : null;
+  }
+
+  /**
    * Build query data to send to ES proxy.
    *
    * Builds the data to post to the Elasticsearch search proxy to represent
@@ -668,11 +688,11 @@
         if (val !== '') {
           val = val.replace(/{{ indicia_user_id }}/g, indiciaData.user_id);
           data.bool_queries.push({
-            bool_clause: $(this).attr('data-es-bool-clause'),
-            field: $(this).attr('data-es-field') ? $(this).attr('data-es-field') : null,
-            query_type: $(this).attr('data-es-query-type'),
-            query: $(this).attr('data-es-query') ? $(this).attr('data-es-query') : null,
-            nested: $(this).attr('data-es-nested') ? $(this).attr('data-es-nested') : null,
+            bool_clause: indiciaFns.getDataValueFromInput(this, 'data-es-bool-clause'),
+            field: indiciaFns.getDataValueFromInput(this, 'data-es-field'),
+            query_type: indiciaFns.getDataValueFromInput(this, 'data-es-query-type'),
+            query: indiciaFns.getDataValueFromInput(this, 'data-es-query'),
+            nested: indiciaFns.getDataValueFromInput(this, 'data-es-nested'),
             value: val
           });
         }
