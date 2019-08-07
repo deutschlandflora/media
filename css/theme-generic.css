@@ -304,10 +304,10 @@ table.es-data-grid {
       opacity: 0.3; }
       table.es-data-grid thead .fa-sort:hover {
         opacity: 1; }
+    table.es-data-grid thead th, table.es-data-grid thead td {
+      padding: 4px 2px; }
     table.es-data-grid thead .es-filter-row {
       /* Position search value warning icon over input. */ }
-      table.es-data-grid thead .es-filter-row td {
-        padding: 2px; }
       table.es-data-grid thead .es-filter-row input {
         width: 100%;
         box-sizing: border-box;
@@ -316,6 +316,8 @@ table.es-data-grid {
         margin-left: -20px; }
     table.es-data-grid thead th:last-child, table.es-data-grid thead td:last-child {
       padding-right: 18px; }
+  table.es-data-grid tbody tr th, table.es-data-grid tbody tr td {
+    padding: 4px 2px; }
   table.es-data-grid tbody tr:nth-child(even), table.es-data-grid tbody tr:nth-child(even) td {
     background-color: #f7f7f7; }
   table.es-data-grid tbody tr:nth-child(odd), table.es-data-grid tbody tr:nth-child(odd) td {
@@ -341,9 +343,10 @@ table.es-data-grid {
   table.es-data-grid.fixed-header thead, table.es-data-grid.fixed-header tbody tr {
     display: table;
     width: 100%;
-    table-layout: fixed;
-    /* even columns width , fix width of table too*/ }
+    /* even columns width , fix width of table too*/
+    table-layout: fixed; }
   table.es-data-grid.fixed-header thead {
+    /* scrollbar is average 1em/16px width, remove it from thead width */
     width: calc( 100% - 1em ); }
   table.es-data-grid.fixed-header .multiselect-cell {
     padding: 0;

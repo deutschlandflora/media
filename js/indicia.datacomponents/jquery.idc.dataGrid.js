@@ -891,11 +891,12 @@
         }
       });
       if (el.settings.actions.length) {
-        // Allow 2 chars per action icon plus 2 for the tool icons.
-        maxCharsPerCol['col-actions'] = (el.settings.actions.length * 2) + 2;
-      } else {
-        // 2 extra chars for the last heading as it contains tool icons.
-        maxCharsPerCol['col-' + (el.settings.columns.length - 1)] += 1;
+        // Allow 2 chars per action icon.
+        maxCharsPerCol['col-actions'] = Math.max(el.settings.actions.length * 2);
+      } else if (!el.settings.scrollY) {
+        // If no scrollbar or actions column, 2 extra chars for the last
+        // heading as it contains tool icons.
+        maxCharsPerCol['col-' + (el.settings.columns.length - 1)] += 2;
       }
       $.each(dataList, function eachHit() {
         var hit = this;

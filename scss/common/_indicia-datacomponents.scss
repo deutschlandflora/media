@@ -64,10 +64,10 @@ table.es-data-grid {
         opacity: 1;
       }
     }
+    th, td {
+      padding: 4px 2px;
+    }
     .es-filter-row {
-      td {
-        padding: 2px;
-      }
       input {
         width: 100%;
         box-sizing: border-box;
@@ -85,6 +85,9 @@ table.es-data-grid {
   }
   tbody {
     tr {
+      th, td {
+        padding: 4px 2px;
+      }
       &:nth-child(even), &:nth-child(even) td {
         background-color: $colour-even-row;
       }
@@ -121,10 +124,12 @@ table.es-data-grid {
     thead, tbody tr {
       display:table;
       width:100%;
-      table-layout: fixed;/* even columns width , fix width of table too*/
+      /* even columns width , fix width of table too*/
+      table-layout: fixed;
     }
     thead {
-      width: calc( 100% - 1em )/* scrollbar is average 1em/16px width, remove it from thead width */
+      /* scrollbar is average 1em/16px width, remove it from thead width */
+      width: calc( 100% - 1em );
     }
     .multiselect-cell {
       padding: 0;
