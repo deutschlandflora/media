@@ -298,26 +298,24 @@ table.report-grid {
 
 table.es-data-grid {
   background-color: #ffffff; }
-  table.es-data-grid thead {
-    /* Last th leave space for tool icons */ }
-    table.es-data-grid thead .fa-sort {
-      opacity: 0.3; }
-      table.es-data-grid thead .fa-sort:hover {
-        opacity: 1; }
-    table.es-data-grid thead th, table.es-data-grid thead td {
-      padding: 4px 2px; }
-    table.es-data-grid thead .es-filter-row {
-      /* Position search value warning icon over input. */ }
-      table.es-data-grid thead .es-filter-row input {
-        width: 100%;
-        box-sizing: border-box;
-        margin: 0; }
-      table.es-data-grid thead .es-filter-row .fa-exclamation-circle {
-        margin-left: -20px; }
-    table.es-data-grid thead th:last-child, table.es-data-grid thead td:last-child {
-      padding-right: 18px; }
+  table.es-data-grid thead tr th, table.es-data-grid thead tr td {
+    padding: 4px 2px;
+    word-wrap: break-word; }
+  table.es-data-grid thead tr.es-filter-row {
+    /* Position search value warning icon over input. */ }
+    table.es-data-grid thead tr.es-filter-row input {
+      width: 100%;
+      box-sizing: border-box;
+      margin: 0; }
+    table.es-data-grid thead tr.es-filter-row .fa-exclamation-circle {
+      margin-left: -20px; }
+  table.es-data-grid thead tr .fa-sort {
+    opacity: 0.3; }
+    table.es-data-grid thead tr .fa-sort:hover {
+      opacity: 1; }
   table.es-data-grid tbody tr th, table.es-data-grid tbody tr td {
-    padding: 4px 2px; }
+    padding: 4px 2px;
+    word-wrap: break-word; }
   table.es-data-grid tbody tr:nth-child(even), table.es-data-grid tbody tr:nth-child(even) td {
     background-color: #f7f7f7; }
   table.es-data-grid tbody tr:nth-child(odd), table.es-data-grid tbody tr:nth-child(odd) td {
@@ -335,8 +333,6 @@ table.es-data-grid {
     box-shadow: #aaa 0px 2px 4px 0px; }
     table.es-data-grid tbody tr img.multi {
       max-height: 45px; }
-  table.es-data-grid th, table.es-data-grid td {
-    word-wrap: break-word; }
   table.es-data-grid.fixed-header tbody {
     display: block;
     overflow-y: auto; }

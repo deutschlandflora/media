@@ -9,6 +9,11 @@ $colour-hover-row: #333333;
 $colour-select-row: #ffffff;
 $colour-select-row-bg: #3333ee;
 
+@mixin cell {
+  padding: 4px 2px;
+  word-wrap: break-word;
+}
+
 /* idcDataGrid plugin */
 .idc-output-dataGrid {
   position: relative;
@@ -58,35 +63,33 @@ $colour-select-row-bg: #3333ee;
 table.es-data-grid {
   background-color: $colour-odd-row;
   thead {
-    .fa-sort {
-      opacity: 0.3;
-      &:hover {
-        opacity: 1;
+    tr {
+      th, td {
+        @include cell;
       }
-    }
-    th, td {
-      padding: 4px 2px;
-    }
-    .es-filter-row {
-      input {
-        width: 100%;
-        box-sizing: border-box;
-        margin: 0;
+      &.es-filter-row {
+        input {
+          width: 100%;
+          box-sizing: border-box;
+          margin: 0;
+        }
+        /* Position search value warning icon over input. */
+        .fa-exclamation-circle {
+          margin-left: -20px;
+        }
       }
-      /* Position search value warning icon over input. */
-      .fa-exclamation-circle {
-        margin-left: -20px;
+      .fa-sort {
+        opacity: 0.3;
+        &:hover {
+          opacity: 1;
+        }
       }
-    }
-    /* Last th leave space for tool icons */
-    th:last-child, td:last-child {
-      padding-right: 18px;
     }
   }
   tbody {
     tr {
       th, td {
-        padding: 4px 2px;
+        @include cell;
       }
       &:nth-child(even), &:nth-child(even) td {
         background-color: $colour-even-row;
@@ -112,9 +115,6 @@ table.es-data-grid {
         }
       }
     }
-  }
-  th, td {
-    word-wrap: break-word;
   }
   &.fixed-header {
     tbody {
