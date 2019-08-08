@@ -663,8 +663,8 @@
       var media = '';
       var date;
       value = indiciaFns.getValueForField(doc, this);
-      if (colDef.range_field) {
-        rangeValue = indiciaFns.getValueForField(doc, colDef.range_field);
+      if (colDef.rangeField) {
+        rangeValue = indiciaFns.getValueForField(doc, colDef.rangeField);
         if (value !== rangeValue) {
           value = value + ' to ' + rangeValue;
         }
@@ -693,6 +693,10 @@
       // Copy across responsive hidden cols.
       if ($(el).find('table th.col-' + idx).css('display') === 'none') {
         style = ' style="display: none"';
+      }
+      value = value === null ? '' : value;
+      if (colDef.ifEmpty && value === '') {
+        value = colDef.ifEmpty;
       }
       cells.push('<td class="' + classes.join(' ') + '"' + style + '>' + value + '</td>');
       // Extra space in last col to account for tool icons.
