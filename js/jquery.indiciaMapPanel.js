@@ -670,13 +670,17 @@ var destroyAllFeatures;
       var helptext = [];
       var helpItem;
       var helpDiv = $('#' + div.settings.helpDiv);
+      var contentDiv = helpDiv.find('div.help-content');
+      if (contentDiv.length === 0) {
+        contentDiv = $('<div class="help-content"/>').appendTo(helpDiv);
+      };
       helpDiv.removeClass('help-green');
       helpDiv.removeClass('help-amber');
       helpDiv.removeClass('help-red');
       // Output optional help and zoom in if more precision needed
       helpItem = getPrecisionHelp(div, data.sref);
       if (helpItem.text !== '') {
-        helpDiv.html(helpItem.text);
+        contentDiv.html(helpItem.text);
         helpDiv.addClass(helpItem.class);
       } else {
         helptext.push(div.settings.hlpClickAgainToCorrect);
@@ -685,7 +689,7 @@ var destroyAllFeatures;
             (div.settings.clickedSrefPrecisionMin === '' || div.settings.clickedSrefPrecisionMin !== div.settings.clickedSrefPrecisionMax)) {
           helptext.push(div.settings.hlpZoomChangesPrecision);
         }
-        helpDiv.html(helptext.join(' '));
+        contentDiv.html(helptext.join(' '));
       }
       helpDiv.show();
       // Just in case the change shifted the map
