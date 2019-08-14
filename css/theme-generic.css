@@ -418,6 +418,9 @@ table.es-data-grid {
   padding: 0 0.5em; }
 .details-container .record-details .fas, .details-container .record-details .far {
   font-size: 130%; }
+.details-container .record-details .attrs {
+  position: relative;
+  min-height: 120px; }
 .details-container .recorder-experience {
   position: relative;
   min-height: 150px; }
@@ -436,6 +439,22 @@ table.es-data-grid {
     .details-container .recorder-experience td span.exp-R {
       background-color: red; }
 
+/* Mod the loading spinner to only appear if a delay > 1s */
+.loading-spinner {
+  animation: 1.5s fadeIn;
+  animation-fill-mode: forwards;
+  visibility: hidden; }
+
+@keyframes fadeIn {
+  0% {
+    opacity: 0;
+    visibility: hidden; }
+  66% {
+    opacity: 0;
+    visibility: visible; }
+  100% {
+    opacity: 1;
+    visibility: visible; } }
 .comment-popup label {
   display: block;
   width: auto; }
