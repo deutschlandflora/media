@@ -3073,7 +3073,9 @@ var destroyAllFeatures;
         ctrlObj=null;
         // Add a layer switcher if there are multiple layers
         if (ctrl=='layerSwitcher') {
-          div.map.addControl(new OpenLayers.Control.LayerSwitcher());
+          var ls = new OpenLayers.Control.LayerSwitcher();
+          div.map.addControl(ls);
+          ls.maximizeControl();
         } else if (ctrl=='zoomBox') {
           div.map.addControl(new OpenLayers.Control.ZoomBox());
         } else if (ctrl=='panZoom') {
