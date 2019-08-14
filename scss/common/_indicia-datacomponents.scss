@@ -215,6 +215,10 @@ table.es-data-grid {
     .fas, .far {
       font-size: 130%;
     }
+    .attrs {
+      position: relative;
+      min-height: 120px;
+    }
   }
   .recorder-experience {
     position: relative;
@@ -240,6 +244,28 @@ table.es-data-grid {
         }
       }
     }
+  }
+}
+
+/* Mod the loading spinner to only appear if a delay > 1s */
+.loading-spinner {
+  animation: 1.5s fadeIn;
+  animation-fill-mode: forwards;
+  visibility: hidden;
+}
+
+@keyframes fadeIn {
+  0% {
+    opacity: 0;
+    visibility: hidden;
+  }
+  66% {
+    opacity: 0;
+    visibility: visible;
+  }
+  100% {
+    opacity: 1;
+    visibility: visible;
   }
 }
 
