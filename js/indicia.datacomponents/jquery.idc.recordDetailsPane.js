@@ -526,7 +526,8 @@
           addRow(rows, doc, 'Dataset',
             ['metadata.website.title', 'metadata.survey.title', 'metadata.group.title'], ' :: ');
           $(recordDetails).html('<table><tbody>' + rows.join('') + '</tbody></table>');
-          $(recordDetails).append('<div class="attrs"></div>');
+          $(recordDetails).append('<div class="attrs"><div class="loading-spinner"><div>Loading...</div></div></div>');
+          loadedAttrsOcurrenceId = 0;
           // Reference to doc.occurrence_external_key is deprecated and can be
           // removed if the BRC index has been re-indexed.
           if (doc.occurrence.source_system_key || doc.occurrence_external_key) {
