@@ -2772,12 +2772,14 @@ var destroyAllFeatures;
 
       // Loop through layers and if it is an Indicia WMS layer, then set its
       // visibility according to next value in array derived from cookie.
-      wmsvisibility = wmsvisibility ? JSON.parse(wmsvisibility) : {};
-      div.map.layers.forEach(function(l){
-        if (l.isIndiciaWMSLayer) {
-          l.setVisibility(wmsvisibility[l.name]);
-        }
-      });
+      if (wmsvisibility) {
+        wmsvisibility = wmsvisibility ? JSON.parse(wmsvisibility) : {};
+        div.map.layers.forEach(function (l) {
+          if (l.isIndiciaWMSLayer) {
+            l.setVisibility(wmsvisibility[l.name]);
+          }
+        });
+      }
       // Register moveend must come after panning and zooming the initial map
       // so the dynamic layer switcher does not mess up the centering code.
       div.map.events.register('moveend', null, function () {
@@ -2808,11 +2810,13 @@ var destroyAllFeatures;
       // function because that is called multiple times during page intialisation
       // resulting in incorrect setting.
       div.map.events.register('changelayer', null, function () {
+        var init;
+        var json;
         if (typeof $.cookie !== 'undefined') {
           // Need to init cookie here to currrent value in case different layers are used on different
           // pages - doing from scratch would loose settings for other layers not set for this one.
-          var init = $.cookie('mapwmsvisibility') ? JSON.parse($.cookie('mapwmsvisibility')) : {};
-          var json = div.map.layers.reduce(function(j, l){
+          init = $.cookie('mapwmsvisibility') ? JSON.parse($.cookie('mapwmsvisibility')) : {};
+          json = div.map.layers.reduce(function(j, l) {
             if (l.isIndiciaWMSLayer) {
               j[l.name] = l.visibility ? 1 : 0;
             }
@@ -2820,7 +2824,7 @@ var destroyAllFeatures;
           }, init);
           $.cookie('mapwmsvisibility', JSON.stringify(json), { expires: 7 });
         }
-      })
+      });
 
       /**
        * Public function to change selection of features on a layer.
