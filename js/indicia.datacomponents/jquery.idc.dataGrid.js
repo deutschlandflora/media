@@ -689,7 +689,7 @@
       } else {
         maxCharsPerCol['col-' + idx] = Math.max(maxCharsPerCol['col-' + idx], $('<p>' + value + '</p>').text().length);
       }
-      classes.push('field-' + this.replace('.', '--').replace('_', '-'));
+      classes.push('field-' + this.replace(/\./g, '--').replace(/_/g, '-'));
       // Copy across responsive hidden cols.
       if ($(el).find('table th.col-' + idx).css('display') === 'none') {
         style = ' style="display: none"';
