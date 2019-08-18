@@ -2773,7 +2773,7 @@ var destroyAllFeatures;
       // Loop through layers and if it is an Indicia WMS layer, then set its
       // visibility according to next value in array derived from cookie.
       if (wmsvisibility) {
-        wmsvisibility = wmsvisibility ? JSON.parse(wmsvisibility) : {};
+        wmsvisibility = JSON.parse(wmsvisibility);
         div.map.layers.forEach(function (l) {
           if (l.isIndiciaWMSLayer) {
             l.setVisibility(wmsvisibility[l.name]);
