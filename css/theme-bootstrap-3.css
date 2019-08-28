@@ -267,11 +267,12 @@ table.report-grid {
     top: 0;
     right: 0; }
     .idc-output-dataGrid .data-grid-tools span {
-      width: 16px;
-      height: 16px;
+      font-size: 20px;
       padding: 0;
-      margin: 0 2px;
+      margin: 2px;
       color: #999; }
+    .idc-output-dataGrid .data-grid-tools span:hover {
+      color: #333; }
   .idc-output-dataGrid .data-grid-settings {
     position: absolute;
     top: 0;
@@ -292,27 +293,29 @@ table.report-grid {
         margin: 4px;
         list-style-position: inside; }
         .idc-output-dataGrid .data-grid-settings ol li input[type="checkbox"] {
-          margin: 4px;
+          margin-right: 8px;
           font-size: 200%; }
 
 table.es-data-grid {
   background-color: #ffffff; }
-  table.es-data-grid thead {
-    /* Last th leave space for tool icons */ }
-    table.es-data-grid thead .fa-sort {
-      opacity: 0.3; }
-      table.es-data-grid thead .fa-sort:hover {
-        opacity: 1; }
-    table.es-data-grid thead .es-filter-row {
-      /* Position search value warning icon over input. */ }
-      table.es-data-grid thead .es-filter-row input {
-        width: 100%;
-        box-sizing: border-box;
-        margin: 0; }
-      table.es-data-grid thead .es-filter-row .fa-exclamation-circle {
-        margin-left: -20px; }
-    table.es-data-grid thead th:last-child, table.es-data-grid thead td:last-child {
-      padding-right: 18px; }
+  table.es-data-grid thead tr th, table.es-data-grid thead tr td {
+    padding: 4px 2px;
+    word-wrap: break-word; }
+  table.es-data-grid thead tr.es-filter-row {
+    /* Position search value warning icon over input. */ }
+    table.es-data-grid thead tr.es-filter-row input {
+      width: 100%;
+      box-sizing: border-box;
+      margin: 0; }
+    table.es-data-grid thead tr.es-filter-row .fa-exclamation-circle {
+      margin-left: -20px; }
+  table.es-data-grid thead tr .fa-sort {
+    opacity: 0.3; }
+    table.es-data-grid thead tr .fa-sort:hover {
+      opacity: 1; }
+  table.es-data-grid tbody tr th, table.es-data-grid tbody tr td {
+    padding: 4px 2px;
+    word-wrap: break-word; }
   table.es-data-grid tbody tr:nth-child(even), table.es-data-grid tbody tr:nth-child(even) td {
     background-color: #f7f7f7; }
   table.es-data-grid tbody tr:nth-child(odd), table.es-data-grid tbody tr:nth-child(odd) td {
@@ -336,9 +339,10 @@ table.es-data-grid {
   table.es-data-grid.fixed-header thead, table.es-data-grid.fixed-header tbody tr {
     display: table;
     width: 100%;
-    table-layout: fixed;
-    /* even columns width , fix width of table too*/ }
+    /* even columns width , fix width of table too*/
+    table-layout: fixed; }
   table.es-data-grid.fixed-header thead {
+    /* scrollbar is average 1em/16px width, remove it from thead width */
     width: calc( 100% - 1em ); }
   table.es-data-grid.fixed-header .multiselect-cell {
     padding: 0;

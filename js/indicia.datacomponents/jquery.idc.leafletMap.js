@@ -187,7 +187,7 @@
     // Pan and zoom the map. Method differs for points vs polygons.
     if (!zoom) {
       el.map.panTo(centre);
-    } else if (wkt.type === 'polygon') {
+    } else if (wkt.type === 'polygon' || wkt.type === 'multipolygon') {
       el.map.fitBounds(obj.getBounds(), { maxZoom: 11 });
     } else {
       el.map.setView(centre, 11);
@@ -400,11 +400,15 @@
       if (typeof options !== 'undefined') {
         $.extend(el.settings, options);
       }
+      // Store initial viewport as configured, before being affected by cookies.
+      el.settings.configuredLat = el.settings.initialLat;
+      el.settings.configuredLng = el.settings.initialLng;
+      el.settings.configuredZoom = el.settings.initialZoom;
       // Apply settings stored in cookies.
       if (el.settings.cookies) {
         $.extend(el.settings, loadSettingsFromCookies([
           'initialLat',
-          'initialLong',
+          'initialLng',
           'initialZoom',
           'baseLayer',
           'layerState'
@@ -426,8 +430,8 @@
       baseMaps[el.settings.baseLayer].addTo(el.map);
       $.each(el.settings.layerConfig, function eachLayer(id, layer) {
         var group;
-        if (layer.type !== 'undefined' && layer.type === 'heat') {
-          group = L.heatLayer([], { radius: 10 });
+        if (layer.type && layer.type === 'heat') {
+          group = L.heatLayer([], $.extend({ radius: 10 }, layer.style ? layer.style : {}));
         } else {
           group = L.featureGroup();
         }
@@ -541,7 +545,7 @@
      */
     clearFeature: function clearFeature() {
       if (selectedFeature) {
-        selectedFeature.removeFrom($(this)[0].map);
+        selectedFeature.removeFrom(this.map);
         selectedFeature = null;
       }
     },
@@ -551,7 +555,7 @@
      * */
     showFeature: function showFeature(geom, zoom) {
       if (selectedFeature) {
-        selectedFeature.removeFrom($(this)[0].map);
+        selectedFeature.removeFrom(this.map);
         selectedFeature = null;
       }
       selectedFeature = showFeatureWkt(this, geom, zoom, {
@@ -559,6 +563,13 @@
         fillColor: '#4444CC',
         fillOpacity: 0.05
       });
+    },
+
+    /**
+     * Reset to the initial viewport (pan/zoom).
+     */
+    resetViewport: function resetViewport() {
+      this.map.setView([this.settings.configuredLat, this.settings.configuredLng], this.settings.configuredZoom);
     },
 
     /**

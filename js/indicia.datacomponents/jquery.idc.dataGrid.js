@@ -158,9 +158,13 @@
       if (typeof indiciaData.esMappings[this] !== 'undefined'
           || typeof indiciaFns.fieldConvertorQueryBuilders[this.simpleFieldName()] !== 'undefined') {
         if (indiciaFns.fieldConvertorQueryBuilders[this.simpleFieldName()]) {
-          title = 'Enter a value to find matches the ' + caption + ' column.';
+          if (indiciaFns.fieldConvertorQueryDescriptions[this.simpleFieldName()]) {
+            title = indiciaFns.fieldConvertorQueryDescriptions[this.simpleFieldName()];
+          } else {
+            title = 'Enter a value to find matches the ' + caption + ' column.';
+          }
         } else if (indiciaData.esMappings[this].type === 'text' || indiciaData.esMappings[this].type === 'keyword') {
-          title = 'Search for words in the  which begin with this text in the ' + caption + ' column. Prefix with ! to exclude rows which contain words beginning with the text you enter.';
+          title = 'Search for words which begin with this text in the ' + caption + ' column. Prefix with ! to exclude rows which contain words beginning with the text you enter.';
         } else {
           title = 'Search for a number in the ' + caption + ' column. Prefix with ! to exclude rows which match the number you enter or separate a range with a hyphen (e.g. 123-456).';
         }
@@ -232,22 +236,22 @@
       });
     });
 
-    $(el).find('.pager .next').click(function clickNext() {
+    $(el).find('.pager-row .next').click(function clickNext() {
       movePage(el, true);
     });
 
-    $(el).find('.pager .prev').click(function clickPrev() {
+    $(el).find('.pager-row .prev').click(function clickPrev() {
       movePage(el, false);
     });
 
-    $(el).find('.sort').click(function clickSort() {
+    indiciaFns.on('click', '#' + el.id + ' .sort', {}, function clickSort() {
       var sortButton = this;
       var row = $(sortButton).closest('tr');
       $.each(el.settings.source, function eachSource(sourceId) {
         var source = indiciaData.esSourceObjects[sourceId];
         var field = $(sortButton).closest('th').attr('data-field');
         var sortDesc = $(sortButton).hasClass('fa-sort-up');
-        var fields;
+        var sortData;
         var fieldName = field.simpleFieldName();
         $(row).find('.sort.fas').removeClass('fa-sort-down');
         $(row).find('.sort.fas').removeClass('fa-sort-up');
@@ -260,18 +264,23 @@
             order: sortDesc ? 'desc' : 'asc'
           };
         } else if (indiciaData.fieldConvertorSortFields[fieldName]) {
-          fields = indiciaData.fieldConvertorSortFields[fieldName];
-          $.each(fields, function eachField() {
-            source.settings.sort[this] = {
-              order: sortDesc ? 'desc' : 'asc'
-            };
-          });
+          sortData = indiciaData.fieldConvertorSortFields[fieldName];
+          if ($.isArray(sortData)) {
+            $.each(sortData, function eachField() {
+              source.settings.sort[this] = {
+                order: sortDesc ? 'desc' : 'asc'
+              };
+            });
+          } else if (typeof sortData === 'object') {
+            source.settings.sort = sortData;
+            indiciaFns.findAndSetValue(source.settings.sort, 'order', sortDesc ? 'desc' : 'asc');
+          }
         }
         source.populate();
       });
     });
 
-    $(el).find('.es-filter-row input').change(function changeFilterInput() {
+    indiciaFns.on('change', '#' + el.id + ' .es-filter-row input', {}, function changeFilterInput() {
       var sources = Object.keys(el.settings.source);
       if (el.settings.applyFilterRowToSources) {
         sources = sources.concat(el.settings.applyFilterRowToSources);
@@ -395,7 +404,7 @@
     /**
      * Config save button handler.
      */
-    indiciaFns.on('click', '.data-grid-settings .save', {}, function onClick() {
+    indiciaFns.on('click', '#' + el.id + ' .data-grid-settings .save', {}, function onClick() {
       var header = $(el).find('thead');
       var showingAggregation = el.settings.aggregation || el.settings.sourceTable;
       var colsList = [];
@@ -451,6 +460,31 @@
   }
 
   /**
+   * Takes a string and applies token replacement for field values.
+   *
+   * @param object doc
+   *   The ES document for the row.
+   * @param string text
+   *   Text to perform replacements on.
+   *
+   * @return string
+   *   Updated text.
+   */
+  function applyFieldReplacements(doc, text) {
+    // Find any field name replacements.
+    var fieldMatches = text.match(/\[(.*?)\]/g);
+    var updatedText = text;
+    $.each(fieldMatches, function eachMatch(i, fieldToken) {
+      var dataVal;
+      // Cleanup the square brackets which are not part of the field name.
+      var field = fieldToken.replace(/\[/, '').replace(/\]/, '');
+      dataVal = indiciaFns.getValueForField(doc, field);
+      updatedText = updatedText.replace(fieldToken, dataVal);
+    });
+    return updatedText;
+  }
+
+  /**
    * Retrieve any action links to attach to an idcDataGrid row.
    *
    * @param array actions
@@ -466,6 +500,7 @@
     $.each(actions, function eachActions() {
       var item;
       var link;
+      var params = [];
       if (typeof this.title === 'undefined') {
         html += '<span class="fas fa-times-circle error" title="Invalid action definition - missing title"></span>';
       } else {
@@ -479,19 +514,11 @@
           if (this.urlParams) {
             link += link.indexOf('?') === -1 ? '?' : '&';
             $.each(this.urlParams, function eachParam(name, value) {
-              // Find any field name replacements.
-              var fieldMatches = value.match(/\[(.*?)\]/g);
-              var updatedVal = value;
-              $.each(fieldMatches, function eachMatch(i, fieldToken) {
-                var dataVal;
-                // Cleanup the square brackets which are not part of the field name.
-                var field = fieldToken.replace(/\[/, '').replace(/\]/, '');
-                dataVal = indiciaFns.getValueForField(doc, field);
-                updatedVal = value.replace(fieldToken, dataVal);
-              });
-              link += name + '=' + updatedVal;
+              params.push(name + '=' + value);
             });
+            link += params.join('&');
           }
+          link = applyFieldReplacements(doc, link);
           item = '<a href="' + link + '" title="' + this.title + '">' + item + '</a>';
         }
         html += item;
@@ -594,14 +621,14 @@
         $(el).find('tfoot .showing').html('No hits');
       }
       // Enable or disable the paging buttons.
-      $(el).find('.pager .prev').prop('disabled', fromRowIndex <= 1);
-      $(el).find('.pager .next').prop('disabled', fromRowIndex + response.hits.hits.length >= response.hits.total);
+      $(el).find('.pager-row .prev').prop('disabled', fromRowIndex <= 1);
+      $(el).find('.pager-row .next').prop('disabled', fromRowIndex + response.hits.hits.length >= response.hits.total);
     } else if (el.settings.aggregation === 'composite') {
       if (afterKey) {
         el.settings.compositeInfo.pageAfterKeys[el.settings.compositeInfo.page + 1] = afterKey;
       }
-      $(el).find('.pager .next').prop('disabled', !afterKey);
-      $(el).find('.pager .prev').prop('disabled', el.settings.compositeInfo.page === 0);
+      $(el).find('.pager-row .next').prop('disabled', !afterKey);
+      $(el).find('.pager-row .prev').prop('disabled', el.settings.compositeInfo.page === 0);
     }
   }
 
@@ -636,8 +663,8 @@
       var media = '';
       var date;
       value = indiciaFns.getValueForField(doc, this);
-      if (colDef.range_field) {
-        rangeValue = indiciaFns.getValueForField(doc, colDef.range_field);
+      if (colDef.rangeField) {
+        rangeValue = indiciaFns.getValueForField(doc, colDef.rangeField);
         if (value !== rangeValue) {
           value = value + ' to ' + rangeValue;
         }
@@ -662,10 +689,14 @@
       } else {
         maxCharsPerCol['col-' + idx] = Math.max(maxCharsPerCol['col-' + idx], $('<p>' + value + '</p>').text().length);
       }
-      classes.push('field-' + this.replace('.', '--').replace('_', '-'));
+      classes.push('field-' + this.replace(/\./g, '--').replace(/_/g, '-'));
       // Copy across responsive hidden cols.
       if ($(el).find('table th.col-' + idx).css('display') === 'none') {
         style = ' style="display: none"';
+      }
+      value = value === null ? '' : value;
+      if (colDef.ifEmpty && value === '') {
+        value = colDef.ifEmpty;
       }
       cells.push('<td class="' + classes.join(' ') + '"' + style + '>' + value + '</td>');
       // Extra space in last col to account for tool icons.
@@ -706,21 +737,38 @@
     // Column resizing needs to be done manually when tbody has scroll bar.
     if (el.settings.scrollY) {
       $.each(el.settings.columns, function eachColumn(idx) {
-        maxCharsPerRow += Math.min(maxCharsPerCol['col-' + idx], 20);
+        // Allow 2 extra chars per col for padding.
+        maxCharsPerCol['col-' + idx] += 1;
+        maxCharsPerRow += maxCharsPerCol['col-' + idx];
       });
+      if (el.settings.actions) {
+        maxCharsPerCol['col-actions'] += 1;
+        maxCharsPerRow += maxCharsPerCol['col-actions'];
+      }
       if (el.settings.responsive) {
         maxCharsPerRow += 3;
         $(el).find('.footable-toggle-col').css('width', (100 * (3 / maxCharsPerRow)) + '%');
       }
-      if (el.settings.actions) {
-        maxCharsPerRow += 6;
-        $(el).find('.col-actions').css('width', (100 * (6 / maxCharsPerRow)) + '%');
-      }
+      $(el).find('.col-actions').css('width', (100 * (maxCharsPerCol['col-actions'] / maxCharsPerRow)) + '%');
       $.each(el.settings.columns, function eachColumn(idx) {
-        var allowedColWidth = Math.min(maxCharsPerCol['col-' + idx], 20);
-        $(el).find('.col-' + idx).css('width', (100 * (allowedColWidth / maxCharsPerRow)) + '%');
+        $(el).find('.col-' + idx).css('width', (100 * (maxCharsPerCol['col-' + idx] / maxCharsPerRow)) + '%');
       });
     }
+  }
+
+  /**
+   * Finds the longest word in a string.
+   */
+  function longestWordLength(str) {
+    var strSplit = str.split(' ');
+    var longestWord = 0;
+    var i;
+    for (i = 0; i < strSplit.length; i++) {
+      if (strSplit[i].length > longestWord) {
+        longestWord = strSplit[i].length;
+      }
+    }
+    return longestWord;
   }
 
   /**
@@ -788,7 +836,7 @@
         totalCols = el.settings.columns.length
           + (el.settings.responsive ? 1 : 0)
           + (el.settings.actions.length > 0 ? 1 : 0);
-        $('<tfoot><tr class="pager"><td colspan="' + totalCols + '"><span class="showing"></span>' +
+        $('<tfoot><tr class="pager-row"><td colspan="' + totalCols + '"><span class="showing"></span>' +
           '<span class="buttons"><button class="prev">Previous</button><button class="next">Next</button></span>' +
           '</td></tr></tfoot>').appendTo(table);
       }
@@ -837,11 +885,23 @@
       // Start by finding the number of characters in header cells. Later we'll
       // increase this if  we find cells in a column that contain more
       // characters.
-      maxCharsPerCol = {};
       $.each(el.settings.columns, function eachColumn(idx) {
-        // Status icons allowed to be smaller than a normal col.
-        maxCharsPerCol['col-' + idx] = Math.max(el.settings.availableColumnInfo[this].caption.length, this === '#status_icons#' ? 5 : 10);
+        // Only use the longest word in the caption as we'd rather break the
+        // heading than the data rows.
+        maxCharsPerCol['col-' + idx] = Math.max(longestWordLength(el.settings.availableColumnInfo[this].caption), 5);
+        if (typeof indiciaData.esMappings[this] !== 'undefined' && indiciaData.esMappings[this].sort_field) {
+          // Add 2 chars to allow for the sort icon.
+          maxCharsPerCol['col-' + idx] += 2;
+        }
       });
+      if (el.settings.actions.length) {
+        // Allow 2 chars per action icon.
+        maxCharsPerCol['col-actions'] = Math.max(el.settings.actions.length * 2);
+      } else if (!el.settings.scrollY) {
+        // If no scrollbar or actions column, 2 extra chars for the last
+        // heading as it contains tool icons.
+        maxCharsPerCol['col-' + (el.settings.columns.length - 1)] += 2;
+      }
       $.each(dataList, function eachHit() {
         var hit = this;
         var cells = [];
@@ -853,10 +913,7 @@
         cells = cells.concat(getDataCells(el, doc, maxCharsPerCol));
         if (el.settings.actions.length) {
           cells.push('<td class="col-actions">' + getActionsForRow(el.settings.actions, doc) + '</td>');
-          maxCharsPerCol['col-actions'] = 7;
         }
-        // Extra char for the last heading as it contains tool icons.
-        maxCharsPerCol['col-' + (maxCharsPerCol.length - 1)] += 1;
         selectedClass = (el.settings.selectIdsOnNextLoad && $.inArray(hit._id, el.settings.selectIdsOnNextLoad) !== -1)
           ? ' selected' : '';
         dataRowId = hit._id ? ' data-row-id="' + hit._id + '"' : '';

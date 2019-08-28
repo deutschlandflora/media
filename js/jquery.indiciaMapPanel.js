@@ -532,28 +532,37 @@ var destroyAllFeatures;
       });
     }
 
-    function _getPrecisionHelp(div, value) {
-      var helptext = [], info, handler = indiciaData.srefHandlers[_getSystem().toLowerCase()];
+    function getPrecisionHelp(div, value) {
+      var helpText = [];
+      var helpClass = '';
+      var info;
+      var handler = indiciaData.srefHandlers[_getSystem().toLowerCase()];
       if (div.settings.helpToPickPrecisionMin && typeof indiciaData.srefHandlers !== 'undefined' &&
           typeof indiciaData.srefHandlers[_getSystem().toLowerCase()] !== 'undefined' &&
           $.inArray('precisions', indiciaData.srefHandlers[_getSystem().toLowerCase()].returns) !== -1) {
         info = handler.getPrecisionInfo(handler.valueToAccuracy(value));
         if (info.metres > div.settings.helpToPickPrecisionMin) {
-          helptext.push(div.settings.hlpImproveResolution1.replace('{size}', info.display));
+          helpText.push(div.settings.hlpImproveResolution1.replace('{size}', info.display));
+          helpClass = 'help-red';
         } else if (info.metres > div.settings.helpToPickPrecisionMax) {
-          helptext.push(div.settings.hlpImproveResolution2.replace('{size}', info.display));
+          helpText.push(div.settings.hlpImproveResolution2.replace('{size}', info.display));
+          helpClass = 'help-amber';
         } else {
-          helptext.push(div.settings.hlpImproveResolution3.replace('{size}', info.display));
+          helpText.push(div.settings.hlpImproveResolution3.replace('{size}', info.display));
+          helpClass = 'help-green';
         }
         // Switch layer, but not if on a dynamic layer which already handles this.
         if (div.settings.helpToPickPrecisionSwitchAt && info.metres <= div.settings.helpToPickPrecisionSwitchAt
             && !div.map.baseLayer.dynamicLayerIndex) {
           switchToSatelliteBaseLayer(div.map);
-          helptext.push(div.settings.hlpImproveResolutionSwitch);
+          helpText.push(div.settings.hlpImproveResolutionSwitch);
         }
         zoomInToClickPoint(div);
       }
-      return helptext.join(' ');
+      return {
+        text: helpText.join(' '),
+        class: helpClass
+      };
     }
 
     function _handleEnteredSref(value, div) {
@@ -659,11 +668,20 @@ var destroyAllFeatures;
      */
     function updateHelpAfterMapClick(data, div, feature) {
       var helptext = [];
-      var helpitem;
+      var helpItem;
+      var helpDiv = $('#' + div.settings.helpDiv);
+      var contentDiv = helpDiv.find('div.help-content');
+      if (contentDiv.length === 0) {
+        contentDiv = $('<div class="help-content"/>').appendTo(helpDiv);
+      };
+      helpDiv.removeClass('help-green');
+      helpDiv.removeClass('help-amber');
+      helpDiv.removeClass('help-red');
       // Output optional help and zoom in if more precision needed
-      helpitem = _getPrecisionHelp(div, data.sref);
-      if (helpitem !== '') {
-        $('#' + div.settings.helpDiv).html(helpitem);
+      helpItem = getPrecisionHelp(div, data.sref);
+      if (helpItem.text !== '') {
+        contentDiv.html(helpItem.text);
+        helpDiv.addClass(helpItem.class);
       } else {
         helptext.push(div.settings.hlpClickAgainToCorrect);
         // Extra help for grid square precision, as long as the precision is not fixed.
@@ -671,9 +689,9 @@ var destroyAllFeatures;
             (div.settings.clickedSrefPrecisionMin === '' || div.settings.clickedSrefPrecisionMin !== div.settings.clickedSrefPrecisionMax)) {
           helptext.push(div.settings.hlpZoomChangesPrecision);
         }
-        $('#' + div.settings.helpDiv).html(helptext.join(' '));
+        contentDiv.html(helptext.join(' '));
       }
-      $('#' + div.settings.helpDiv).show();
+      helpDiv.show();
       // Just in case the change shifted the map
       div.map.updateSize();
     }
@@ -1217,7 +1235,7 @@ var destroyAllFeatures;
               ]
             }));
           },
-          function dynamicOSGoogleSat3() {
+          function dynamicOSGoogleSat2() {
             return new OpenLayers.Layer.Google('Dynamic (OpenStreetMap > Ordnance Survey Leisure > *Google Satellite*)', {
               type: google.maps.MapTypeId.SATELLITE,
               numZoomLevels: 20,
@@ -1225,6 +1243,33 @@ var destroyAllFeatures;
               minZoom: 18,
               layerId: 'dynamicOSGoogleSat.2',
               dynamicLayerIndex: 2,
+              avoidOnInitialLoad: true
+            });
+          }
+        ];
+        r.dynamicOSMGoogleSat = [
+          function dynamicOSMGoogleSat0() {
+            // OpenStreetMap standard tile layer
+            return new OpenLayers.Layer.OSM('Dynamic (*OpenStreetMap* > Google Satellite)',
+              [
+                'https://a.tile.openstreetmap.org/${z}/${x}/${y}.png',
+                'https://b.tile.openstreetmap.org/${z}/${x}/${y}.png',
+                'https://c.tile.openstreetmap.org/${z}/${x}/${y}.png'
+              ], {
+                layerId: 'dynamicOSMGoogleSat.0',
+                maxZoom: 17,
+                dynamicLayerIndex: 0
+              }
+            );
+          },
+          function dynamicOSMGoogleSat1() {
+            return new OpenLayers.Layer.Google('Dynamic (OpenStreetMap > *Google Satellite*)', {
+              type: google.maps.MapTypeId.SATELLITE,
+              numZoomLevels: 20,
+              sphericalMercator: true,
+              minZoom: 18,
+              layerId: 'dynamicOSMGoogleSat.1',
+              dynamicLayerIndex: 1,
               avoidOnInitialLoad: true
             });
           }
@@ -2727,12 +2772,14 @@ var destroyAllFeatures;
 
       // Loop through layers and if it is an Indicia WMS layer, then set its
       // visibility according to next value in array derived from cookie.
-      wmsvisibility = wmsvisibility ? JSON.parse(wmsvisibility) : {};
-      div.map.layers.forEach(function(l){
-        if (l.isIndiciaWMSLayer) {
-          l.setVisibility(wmsvisibility[l.name]);
-        }
-      });
+      if (wmsvisibility) {
+        wmsvisibility = JSON.parse(wmsvisibility);
+        div.map.layers.forEach(function (l) {
+          if (l.isIndiciaWMSLayer) {
+            l.setVisibility(wmsvisibility[l.name]);
+          }
+        });
+      }
       // Register moveend must come after panning and zooming the initial map
       // so the dynamic layer switcher does not mess up the centering code.
       div.map.events.register('moveend', null, function () {
@@ -2763,11 +2810,13 @@ var destroyAllFeatures;
       // function because that is called multiple times during page intialisation
       // resulting in incorrect setting.
       div.map.events.register('changelayer', null, function () {
+        var init;
+        var json;
         if (typeof $.cookie !== 'undefined') {
           // Need to init cookie here to currrent value in case different layers are used on different
           // pages - doing from scratch would loose settings for other layers not set for this one.
-          var init = $.cookie('mapwmsvisibility') ? JSON.parse($.cookie('mapwmsvisibility')) : {};
-          var json = div.map.layers.reduce(function(j, l){
+          init = $.cookie('mapwmsvisibility') ? JSON.parse($.cookie('mapwmsvisibility')) : {};
+          json = div.map.layers.reduce(function(j, l) {
             if (l.isIndiciaWMSLayer) {
               j[l.name] = l.visibility ? 1 : 0;
             }
@@ -2775,18 +2824,21 @@ var destroyAllFeatures;
           }, init);
           $.cookie('mapwmsvisibility', JSON.stringify(json), { expires: 7 });
         }
-      })
+      });
 
       /**
        * Public function to change selection of features on a layer.
        */
       div.map.setSelection = function (layer, features) {
-        $.each(layer.selectedFeatures, function (idx, feature) {
-          feature.renderIntent = 'default';
-        });
-        layer.selectedFeatures = features;
-        $.each(layer.selectedFeatures, function (idx, feature) {
-          feature.renderIntent = 'select';
+        if (!indiciaData.shiftPressed) {
+          $.each(layer.selectedFeatures, function () {
+            this.renderIntent = 'default';
+          });
+          layer.selectedFeatures = [];
+        }
+        layer.selectedFeatures = layer.selectedFeatures.concat(features);
+        $.each(layer.selectedFeatures, function () {
+          this.renderIntent = 'select';
         });
         layer.redraw();
       };

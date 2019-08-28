@@ -144,7 +144,8 @@
    * Convert an ES (ISO) date to local display format.
    *
    * @param string dateString
-   *   Date as returned from ES date field.
+   *   Date as returned from ES date field, or 64 bit integer for an
+   *   aggregation's date key.
    *
    * @return string
    *   Date formatted.
@@ -153,7 +154,7 @@
     var date;
     var month;
     var day;
-    if (dateString.trim() === '') {
+    if (typeof dateString === 'string' && dateString.trim() === '') {
       return '';
     }
     date = new Date(dateString);
@@ -322,8 +323,9 @@
      * Output the event date or date range.
      */
     event_date: function eventDate(doc) {
-      var start = doc.event.date_start ? indiciaFns.formatDate(doc.event.date_start) : '';
-      var end = doc.event.date_end ? indiciaFns.formatDate(doc.event.date_end) : '';
+      var root = doc.event || doc.key;
+      var start = root.date_start ? indiciaFns.formatDate(root.date_start) : '';
+      var end = root.date_end ? indiciaFns.formatDate(root.date_end) : '';
       if (start !== end) {
         return start + ' - ' + end;
       }
@@ -371,6 +373,16 @@
         }
       }
       return info;
+    },
+
+    /**
+     * A formatted lat long.
+     */
+    lat_lon: function latLon(doc) {
+      var coords = doc.location.point.split(',');
+      var lat = parseFloat(coords[0]);
+      var lon = parseFloat(coords[1]);
+      return Math.abs(lat).toFixed(3) + (lat >= 0 ? 'N' : 'S') + ' ' + Math.abs(lon).toFixed(3) + (lon >= 0 ? 'E' : 'W');
     },
 
     /**
@@ -494,11 +506,45 @@
         value: '',
         query: JSON.stringify(query)
       };
+    },
+
+    /**
+     * Implement a filter for records near a lat long point.
+     */
+    lat_lon: function latLon(text) {
+      var coords = text.split(/[, ]/);
+      var query;
+      coords[0] = coords[0].match(/S$/) ? 0 - coords[0].replace(/S$/, '') : parseFloat(coords[0].replace(/[^\d\.]$/, ''))
+      coords[1] = coords[1].match(/W$/) ? 0 - coords[1].replace(/[^\d\.]$/, '') : parseFloat(coords[1].replace(/[^\d\.]$/, ''));
+      query = {
+        geo_distance: {
+          distance: '5km',
+          'location.point': {
+            lat: coords[0],
+            lon: coords[1]
+          }
+        }
+      };
+      return {
+        bool_clause: 'must',
+        value: '',
+        query: JSON.stringify(query)
+      };
     }
   };
 
   /**
+   * Allow special fields to provide custom hints for their filter row inputs.
+   */
+  indiciaFns.fieldConvertorQueryDescriptions = {
+    lat_lon: 'Enter a latitude and longitude value to filter to records in the vicinity.'
+  };
+
+  /**
    * Field convertors which allow sort on underlying fields are listed here.
+   *
+   * Either specify an array of field names, or an object defining the sort
+   * data that needs to be sent in the request.
    */
   indiciaData.fieldConvertorSortFields = {
     // Unsupported possibilities are commented out.
@@ -507,6 +553,17 @@
     event_date: ['event.date_start'],
     // higher_geography: [],
     // locality: [],
+    // Do a distance sort from the North Pole
+    lat_lon: {
+      _geo_distance: {
+        'location.point': {
+          lat: 0,
+          lon: 0
+        },
+        order: 'asc',
+        unit: 'km'
+      }
+    },
     datasource_code: ['metadata.website.id', 'metadata.survey.id']
   };
 
@@ -684,9 +741,11 @@
       }
       // Using filter paremeter controls.
       $.each($('.es-filter-param'), function eachParam() {
-        var val = $(this).val().trim();
-        if (val !== '') {
-          val = val.replace(/{{ indicia_user_id }}/g, indiciaData.user_id);
+        var val = $(this).val();
+        // Make sure we have a value to apply. Skip special "novalue" items
+        // in linked selects (such as Loading... message).
+        if (val !== null && val.trim() !== '') {
+          val = val.trim().replace(/{{ indicia_user_id }}/g, indiciaData.user_id);
           data.bool_queries.push({
             bool_clause: indiciaFns.getDataValueFromInput(this, 'data-es-bool-clause'),
             field: indiciaFns.getDataValueFromInput(this, 'data-es-field'),
@@ -785,10 +844,28 @@ jQuery(document).ready(function docReady() {
     }
   }));
   $('.es-higher-geography-select').change(function higherGeoSelectChange() {
-    if ($(this).val()) {
+    var baseId;
+    var idx = 0;
+    var thisSelect;
+    var locIdToLoad;
+    // Fimd the most precise specified boundary in the list of linked selects.
+    if ($(this).hasClass('linked-select')) {
+      baseId = this.id.replace(/\-\d+$/, '');
+      thisSelect = $('#' + baseId + '-' + idx);
+      while (thisSelect.length) {
+        if ($(thisSelect).val() && $(thisSelect).val().match(/^\d+$/)) {
+          locIdToLoad = $(thisSelect).val();
+        }
+        idx++;
+        thisSelect = $('#' + baseId + '-' + idx);
+      }
+    } else {
+      locIdToLoad = $(this).val();
+    }
+    if (locIdToLoad && locIdToLoad.match(/^\d+$/)) {
       $.getJSON(indiciaData.warehouseUrl + 'index.php/services/report/requestReport?' +
           'report=library/locations/location_boundary_projected.xml' +
-          '&reportSource=local&srid=4326&location_id=' + $(this).val() +
+          '&reportSource=local&srid=4326&location_id=' + locIdToLoad +
           '&nonce=' + indiciaData.read.nonce + '&auth_token=' + indiciaData.read.auth_token +
           '&mode=json&callback=?', function getLoc(data) {
         $.each($('.idc-output-leafletMap'), function eachMap() {
@@ -796,7 +873,11 @@ jQuery(document).ready(function docReady() {
         });
       });
     } else {
-      $(this).idcLeafletMap('clearFeature');
+      // Unless a disabled (loading message etc), clear the current selection.
+      $.each($('.idc-output-leafletMap.leaflet-container'), function eachMap() {
+        $(this).idcLeafletMap('clearFeature');
+        $(this).idcLeafletMap('resetViewport');
+      });
     }
   });
 
