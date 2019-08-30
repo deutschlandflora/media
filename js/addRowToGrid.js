@@ -149,7 +149,7 @@ var resetSpeciesTextOnEscape;
      from the previous row if that option is set to be used on the edit tab.
      $(this).closest('table').attr('id') gets the gridId for use in the option check.
      */
-    if (indiciaData['copyDataFromPreviousRow-'+$(this).closest('table').attr('id')] == true) {
+    if (indiciaData['copyDataFromPreviousRow-' + $(this).closest('table').attr('id')]) {
       if (deltaX + deltaY !== 0) {
         changeIn2ndToLastRow(this);
       }
@@ -315,18 +315,18 @@ var resetSpeciesTextOnEscape;
       /* Create edit icons for taxon cells. Only add the edit icon if the user has this functionality available on the
       edit tab. Also create Notes and Delete icons when required */
       var linkPageIconSource = indiciaData.imagesPath + 'nuvola/find-22px.png';
-      if (indiciaData['editTaxaNames-' + gridId] == true) {
+      if (indiciaData['editTaxaNames-' + gridId]) {
         deleteAndEditHtml = "<td class='row-buttons'>\n\
             <img class='action-button remove-row' src=" + indiciaData.imagesPath + "nuvola/cancel-16px.png>\n"
         deleteAndEditHtml += "<img class='action-button edit-taxon-name' src=" + indiciaData.imagesPath + "nuvola/package_editors-16px.png>\n";
-        if (indiciaData['includeSpeciesGridLinkPage-'+gridId]==true) {
+        if (indiciaData['includeSpeciesGridLinkPage-' + gridId]) {
           deleteAndEditHtml += '<img class="species-grid-link-page-icon" title="'+indiciaData.speciesGridPageLinkTooltip+'" alt="Notes icon" src=' + linkPageIconSource + '>';
         }
         deleteAndEditHtml += '</td>';
       } else {
         deleteAndEditHtml = "<td class='row-buttons'>\n\
             <img class='action-button action-button remove-row' src=" + indiciaData.imagesPath + 'nuvola/cancel-16px.png>\n';
-        if (indiciaData['includeSpeciesGridLinkPage-' + gridId] == true) {
+        if (indiciaData['includeSpeciesGridLinkPage-' + gridId]) {
           deleteAndEditHtml += '<img class="species-grid-link-page-icon" title="' + indiciaData.speciesGridPageLinkTooltip+'" alt="Notes icon" src=' + linkPageIconSource + '>';
         }
         deleteAndEditHtml += '</td>';
@@ -364,7 +364,7 @@ var resetSpeciesTextOnEscape;
       checkbox.attr('checked', 'checked');
       // store the ttlId
       checkbox.val(data.taxa_taxon_list_id);
-      if (indiciaData['subSpeciesColumn-' + gridId] == true) {
+      if (indiciaData['subSpeciesColumn-' + gridId]) {
         // Setup a subspecies picker if this option is enabled. Since we don't know for sure if this is matching the
         // last row in the grid (as the user might be typing ahead), use the presence checkbox to extract the row unique ID.
         rowId = checkbox[0].id.match(/sc:([a-z0-9\-]+)/)[1];
@@ -375,7 +375,7 @@ var resetSpeciesTextOnEscape;
       makeSpareRow(gridId, readAuth, lookupListId, url, null, true);
       // When user selects a taxon then the new row is created, we want to copy data into that new row from previous row
       // automatically. when the option to do so is set.
-      if (indiciaData['copyDataFromPreviousRow-' + gridId] == true) {
+      if (indiciaData['copyDataFromPreviousRow-' + gridId]) {
         species_checklist_add_another_row(gridId);
       }
       // Allow forms to hook into the event of a new row being added
@@ -406,7 +406,7 @@ var resetSpeciesTextOnEscape;
         deleteAndEditHtml = '<td class="row-buttons">\n' +
             '<img class="action-button remove-row" src="' + indiciaData.imagesPath + 'nuvola/cancel-16px.png">\n' +
             '<img class="edit-taxon-name" src="' + indiciaData.imagesPath + 'nuvola/package_editors-16px.png">\n';
-        if (indiciaData['includeSpeciesGridLinkPage-' + gridId] == true) {
+        if (indiciaData['includeSpeciesGridLinkPage-' + gridId]) {
           linkPageIconSource = indiciaData.imagesPath + 'nuvola/find-22px.png';
           deleteAndEditHtml += '<img class="species-grid-link-page-icon" title="' +
             indiciaData.speciesGridPageLinkTooltip + '" alt="Notes icon" src=' + linkPageIconSource + '>\n';
