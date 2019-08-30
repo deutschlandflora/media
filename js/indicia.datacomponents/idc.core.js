@@ -20,8 +20,9 @@
  * @link https://github.com/indicia-team/client_helpers
  */
 
- /* eslint no-underscore-dangle: ["error", { "allow": ["_id", "_source", "_latlng"] }] */
- /* eslint no-extend-native: ["error", { "exceptions": ["String"] }] */
+/* eslint no-underscore-dangle: ["error", { "allow": ["_id", "_source", "_latlng"] }] */
+/* eslint no-extend-native: ["error", { "exceptions": ["String"] }] */
+/* eslint no-param-reassign: ["error", { "props": false }]*/
 
 (function enclose() {
   'use strict';
@@ -143,7 +144,8 @@
    * Convert an ES (ISO) date to local display format.
    *
    * @param string dateString
-   *   Date as returned from ES date field.
+   *   Date as returned from ES date field, or 64 bit integer for an
+   *   aggregation's date key.
    *
    * @return string
    *   Date formatted.
@@ -152,7 +154,7 @@
     var date;
     var month;
     var day;
-    if (dateString.trim() === '') {
+    if (typeof dateString === 'string' && dateString.trim() === '') {
       return '';
     }
     date = new Date(dateString);
@@ -321,8 +323,9 @@
      * Output the event date or date range.
      */
     event_date: function eventDate(doc) {
-      var start = doc.event.date_start ? indiciaFns.formatDate(doc.event.date_start) : '';
-      var end = doc.event.date_end ? indiciaFns.formatDate(doc.event.date_end) : '';
+      var root = doc.event || doc.key;
+      var start = root.date_start ? indiciaFns.formatDate(root.date_start) : '';
+      var end = root.date_end ? indiciaFns.formatDate(root.date_end) : '';
       if (start !== end) {
         return start + ' - ' + end;
       }
@@ -370,6 +373,16 @@
         }
       }
       return info;
+    },
+
+    /**
+     * A formatted lat long.
+     */
+    lat_lon: function latLon(doc) {
+      var coords = doc.location.point.split(',');
+      var lat = parseFloat(coords[0]);
+      var lon = parseFloat(coords[1]);
+      return Math.abs(lat).toFixed(3) + (lat >= 0 ? 'N' : 'S') + ' ' + Math.abs(lon).toFixed(3) + (lon >= 0 ? 'E' : 'W');
     },
 
     /**
@@ -493,19 +506,64 @@
         value: '',
         query: JSON.stringify(query)
       };
+    },
+
+    /**
+     * Implement a filter for records near a lat long point.
+     */
+    lat_lon: function latLon(text) {
+      var coords = text.split(/[, ]/);
+      var query;
+      coords[0] = coords[0].match(/S$/) ? 0 - coords[0].replace(/S$/, '') : parseFloat(coords[0].replace(/[^\d\.]$/, ''))
+      coords[1] = coords[1].match(/W$/) ? 0 - coords[1].replace(/[^\d\.]$/, '') : parseFloat(coords[1].replace(/[^\d\.]$/, ''));
+      query = {
+        geo_distance: {
+          distance: '5km',
+          'location.point': {
+            lat: coords[0],
+            lon: coords[1]
+          }
+        }
+      };
+      return {
+        bool_clause: 'must',
+        value: '',
+        query: JSON.stringify(query)
+      };
     }
   };
 
   /**
+   * Allow special fields to provide custom hints for their filter row inputs.
+   */
+  indiciaFns.fieldConvertorQueryDescriptions = {
+    lat_lon: 'Enter a latitude and longitude value to filter to records in the vicinity.'
+  };
+
+  /**
    * Field convertors which allow sort on underlying fields are listed here.
+   *
+   * Either specify an array of field names, or an object defining the sort
+   * data that needs to be sent in the request.
    */
   indiciaData.fieldConvertorSortFields = {
     // Unsupported possibilities are commented out.
-    // status_icons: []
+    status_icons: ['identification.verification_status', 'identification.verification_substatus', 'metadata.sensitive'],
     // data_cleaner_icons: [],
     event_date: ['event.date_start'],
     // higher_geography: [],
     // locality: [],
+    // Do a distance sort from the North Pole
+    lat_lon: {
+      _geo_distance: {
+        'location.point': {
+          lat: 0,
+          lon: 0
+        },
+        order: 'asc',
+        unit: 'km'
+      }
+    },
     datasource_code: ['metadata.website.id', 'metadata.survey.id']
   };
 
@@ -551,6 +609,79 @@
   };
 
   /**
+   * Applies the filter from inputs in a set of filter rows to the request.
+   */
+  function applyFilterRows(filterRows, data) {
+    $.each(filterRows, function eachFilterRow() {
+      var filterRow = this;
+      // Remove search text format errors.
+      $(filterRow).find('.fa-exclamation-circle').remove();
+      // Build the filter required for values in each filter row input.
+      $.each($(filterRow).find('input'), function eachInput() {
+        var cell = $(this).closest('td');
+        var field = $(cell).attr('data-field');
+        var fnQueryBuilder;
+        var query;
+        var fieldNameParts;
+        var fn;
+        if ($(this).val().trim() !== '') {
+          // If there is a special field name, break it into the name
+          // + parameters.
+          fieldNameParts = field.replace(/#/g, '').split(':');
+          // Remove the convertor name from the start of the array,
+          // leaving the parameters.
+          fn = fieldNameParts.shift();
+          if (typeof indiciaFns.fieldConvertorQueryBuilders[fn] !== 'undefined') {
+            // A special field with a convertor function.
+            fnQueryBuilder = indiciaFns.fieldConvertorQueryBuilders[fn];
+            query = fnQueryBuilder($(this).val().trim(), fieldNameParts);
+            if (query === false) {
+              // Flag input as invalid.
+              $(this).after('<span title="Invalid search text" class="fas fa-exclamation-circle"></span>');
+            } else if (typeof query === 'object') {
+              // Query is an object, so use it as is.
+              data.bool_queries.push(query);
+            } else {
+              // Query is a string, so treat as a query_string.
+              data.bool_queries.push({
+                bool_clause: 'must',
+                query_type: 'query_string',
+                value: query
+              });
+            }
+          } else if (indiciaData.esMappings[field].type === 'keyword' || indiciaData.esMappings[field].type === 'text') {
+            // Normal text filter
+            data.textFilters[field] = $(this).val().trim();
+          } else {
+            // Normal numeric filter.
+            data.numericFilters[field] = $(this).val().trim();
+          }
+        }
+      });
+    });
+  }
+
+  /**
+   * Retrieve the value of a named data attribute from an input.
+   *
+   * If the input is a select, then the selected option can override the
+   * attribute specified at the input element level. Returns null if no
+   * value available.
+   */
+  indiciaFns.getDataValueFromInput = function getDataValueFromInput(input, dataName) {
+    var option = $(input).find('option:selected');
+    var val;
+    if (option.length > 0) {
+      val = option.attr(dataName);
+      if (val) {
+        return val;
+      }
+    }
+    val = $(input).attr(dataName);
+    return val ? val : null;
+  }
+
+  /**
    * Build query data to send to ES proxy.
    *
    * Builds the data to post to the Elasticsearch search proxy to represent
@@ -561,16 +692,15 @@
    */
   indiciaFns.getFormQueryData = function getFormQueryData(source) {
     var data = {
-      filters: {},
+      textFilters: {},
+      numericFilters: {},
       bool_queries: [],
       user_filters: []
     };
     var mapToFilterTo;
     var bounds;
-    var filterSourceGrid;
-    var filterSourceRow;
-    var thisDoc;
     var agg = {};
+    var filterRows = [];
     if (source.settings.size) {
       data.size = source.settings.size;
     }
@@ -594,87 +724,58 @@
         });
       });
     }
-    if (source.settings.filterSourceGrid && source.settings.filterField) {
-      // Using a grid row as a filter.
-      filterSourceGrid = $('#' + source.settings.filterSourceGrid);
-      if (filterSourceGrid.length === 0) {
-        alert('Invalid @filterSourceGrid setting for source. Grid with id="' +
-          source.settings.filterSourceGrid + '" does not exist.');
-      }
-      filterSourceRow = $(filterSourceGrid).find('tbody tr.selected');
-      if (filterSourceRow.length === 0) {
-        // Don't populate until a row selected.
-        return false;
-      }
-      thisDoc = JSON.parse($(filterSourceRow).attr('data-doc-source'));
+    if (source.settings.rowFilterField && source.settings.rowFilterValue) {
+      // Using a value from selected grid row as a filter, e.g. to show data
+      // for the species associated with a selected record.
       data.bool_queries.push({
         bool_clause: 'must',
-        field: source.settings.filterField,
+        field: source.settings.rowFilterField,
         query_type: 'term',
-        value: indiciaFns.getValueForField(thisDoc, source.settings.filterField)
+        value: source.settings.rowFilterValue
       });
     } else {
+      if (source.settings.filterSourceGrid) {
+        // If using a source grid to set the filter but no row data available,
+        // don't populate.
+        return false;
+      }
       // Using filter paremeter controls.
       $.each($('.es-filter-param'), function eachParam() {
-        var val = $(this).val().trim();
-        if (val !== '') {
-          val = val.replace(/{{ indicia_user_id }}/g, indiciaData.user_id);
+        var val = $(this).val();
+        // Make sure we have a value to apply. Skip special "novalue" items
+        // in linked selects (such as Loading... message).
+        if (val !== null && val.trim() !== '') {
+          val = val.trim().replace(/{{ indicia_user_id }}/g, indiciaData.user_id);
           data.bool_queries.push({
-            bool_clause: $(this).attr('data-es-bool-clause'),
-            field: $(this).attr('data-es-field') ? $(this).attr('data-es-field') : null,
-            query_type: $(this).attr('data-es-query-type'),
-            query: $(this).attr('data-es-query') ? $(this).attr('data-es-query') : null,
+            bool_clause: indiciaFns.getDataValueFromInput(this, 'data-es-bool-clause'),
+            field: indiciaFns.getDataValueFromInput(this, 'data-es-field'),
+            query_type: indiciaFns.getDataValueFromInput(this, 'data-es-query-type'),
+            query: indiciaFns.getDataValueFromInput(this, 'data-es-query'),
+            nested: indiciaFns.getDataValueFromInput(this, 'data-es-nested'),
             value: val
           });
         }
       });
+      // Any dataGrid this source outputs to may bave a filter row that affects
+      // this source.
       if (typeof source.outputs.idcDataGrid !== 'undefined') {
         $.each(source.outputs.idcDataGrid, function eachGrid() {
-          var filterRow = $(this).find('.es-filter-row');
-          // Remove search text format errors.
-          $(filterRow).find('.fa-exclamation-circle').remove();
-          // Build the filter required for values in each filter row input.
-          $.each($(filterRow).find('input'), function eachInput() {
-            var el = $(this).closest('.idc-output');
-            var cell = $(this).closest('td');
-            var col = $(el)[0].settings.columns[$(cell).attr('data-col')];
-            var fnQueryBuilder;
-            var query;
-            var fieldNameParts;
-            var fn;
-            if ($(this).val().trim() !== '') {
-              // If there is a special field name, break it into the name
-              // + parameters.
-              fieldNameParts = col.field.replace(/#/g, '').split(':');
-              // Remove the convertor name from the start of the array,
-              // leaving the parameters.
-              fn = fieldNameParts.shift();
-              if (typeof indiciaFns.fieldConvertorQueryBuilders[fn] !== 'undefined') {
-                // A special field with a convertor function.
-                fnQueryBuilder = indiciaFns.fieldConvertorQueryBuilders[fn];
-                query = fnQueryBuilder($(this).val().trim(), fieldNameParts);
-                if (query === false) {
-                  // Flag input as invalid.
-                  $(this).after('<span title="Invalid search text" class="fas fa-exclamation-circle"></span>');
-                } else if (typeof query === 'object') {
-                  // Query is an object, so use it as is.
-                  data.bool_queries.push(query);
-                } else {
-                  // Query is a string, so treat as a query_string.
-                  data.bool_queries.push({
-                    bool_clause: 'must',
-                    query_type: 'query_string',
-                    value: query
-                  });
-                }
-              } else {
-                // A normal mapped field with no special handling.
-                data.filters[col.field] = $(this).val().trim();
-              }
-            }
-          });
+          filterRows.push($(this).find('.es-filter-row').toArray());
         });
       }
+      // Find additional grids that choose to apply their filter to this source.
+      $.each($('.idc-output-dataGrid'), function eachGrid() {
+        var grid = this;
+        if (grid.settings.applyFilterRowToSources) {
+          $.each(this.settings.applyFilterRowToSources, function eachSource() {
+            if (this === source.settings.id) {
+              filterRows = filterRows.concat($(grid).find('.es-filter-row').toArray());
+            }
+          });
+        }
+      });
+      applyFilterRows(filterRows, data);
+      // Apply select in user filters drop down.
       if ($('.user-filter').length > 0) {
         $.each($('.user-filter'), function eachUserFilter() {
           if ($(this).val()) {
@@ -682,6 +783,7 @@
           }
         });
       }
+      // Apply select in context filters drop down.
       if ($('.permissions-filter').length > 0) {
         data.permissions_filter = $('.permissions-filter').val();
       }
@@ -742,21 +844,46 @@ jQuery(document).ready(function docReady() {
     }
   }));
   $('.es-higher-geography-select').change(function higherGeoSelectChange() {
-    if ($(this).val()) {
+    var baseId;
+    var idx = 0;
+    var thisSelect;
+    var locIdToLoad;
+    // Fimd the most precise specified boundary in the list of linked selects.
+    if ($(this).hasClass('linked-select')) {
+      baseId = this.id.replace(/\-\d+$/, '');
+      thisSelect = $('#' + baseId + '-' + idx);
+      while (thisSelect.length) {
+        if ($(thisSelect).val() && $(thisSelect).val().match(/^\d+$/)) {
+          locIdToLoad = $(thisSelect).val();
+        }
+        idx++;
+        thisSelect = $('#' + baseId + '-' + idx);
+      }
+    } else {
+      locIdToLoad = $(this).val();
+    }
+    if (locIdToLoad && locIdToLoad.match(/^\d+$/)) {
       $.getJSON(indiciaData.warehouseUrl + 'index.php/services/report/requestReport?' +
           'report=library/locations/location_boundary_projected.xml' +
-          '&reportSource=local&srid=4326&location_id=' + $(this).val() +
+          '&reportSource=local&srid=4326&location_id=' + locIdToLoad +
           '&nonce=' + indiciaData.read.nonce + '&auth_token=' + indiciaData.read.auth_token +
           '&mode=json&callback=?', function getLoc(data) {
-        $.each($('.idc-leaflet-map'), function eachMap() {
+        $.each($('.idc-output-leafletMap'), function eachMap() {
           $(this).idcLeafletMap('showFeature', data[0].boundary_geom, true);
         });
       });
     } else {
-      $(this).idcLeafletMap('clearFeature');
+      // Unless a disabled (loading message etc), clear the current selection.
+      $.each($('.idc-output-leafletMap.leaflet-container'), function eachMap() {
+        $(this).idcLeafletMap('clearFeature');
+        $(this).idcLeafletMap('resetViewport');
+      });
     }
   });
 
+  /**
+   * Change event handlers on filter inputs.
+   */
   $('.es-filter-param, .user-filter, .permissions-filter').change(function eachFilter() {
     // Force map to update viewport for new data.
     $.each($('.idc-output-idcLeafletMap'), function eachMap() {

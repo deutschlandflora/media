@@ -3,35 +3,94 @@ $file-box-width: 400px;
 $file-box-padding: 20px;
 $file-box-icon-size: 30px;
 $colour-even-row: #f7f7f7;
-$colour-odd-row: transparent;
+$colour-odd-row: #ffffff;
 $colour-hover-row-bg: #fff899;
 $colour-hover-row: #333333;
 $colour-select-row: #ffffff;
 $colour-select-row-bg: #3333ee;
 
+@mixin cell {
+  padding: 4px 2px;
+  word-wrap: break-word;
+}
+
 /* idcDataGrid plugin */
-table.es-data-grid {
-  thead {
-    .fa-sort {
-      opacity: 0.3;
-      &:hover {
-        opacity: 1;
+.idc-output-dataGrid {
+  position: relative;
+  /* Ensure height enough for spinner. */
+  min-height: 140px;
+  .data-grid-tools {
+    position: absolute;
+    top: 0;
+    right: 0;
+    span {
+      font-size: 20px;
+      padding: 0;
+      margin: 2px;
+      color: #999;
+    }
+    span:hover {
+      color: #333;
+    }
+  }
+  .data-grid-settings {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    padding: 1em;
+    opacity: 0.95;
+    background-color: #f0f0f0;
+    min-height: 500px;
+    border: solid silver 1px;
+    ol {
+      overflow: auto;
+      li {
+        background: #e7e7e7;
+        border: solid #777 1px;
+        padding: 4px;
+        margin: 4px;
+        list-style-position: inside;
+        input[type="checkbox"] {
+          margin-right: 8px;
+          font-size: 200%;
+        }
       }
     }
-    .es-filter-row {
-      input {
-        width: 100%;
-        box-sizing: border-box;
-        margin: 0;
+  }
+}
+table.es-data-grid {
+  background-color: $colour-odd-row;
+  thead {
+    tr {
+      th, td {
+        @include cell;
       }
-      /* Position search value warning icon over input. */
-      .fa-exclamation-circle {
-        margin-left: -20px;
+      &.es-filter-row {
+        input {
+          width: 100%;
+          box-sizing: border-box;
+          margin: 0;
+        }
+        /* Position search value warning icon over input. */
+        .fa-exclamation-circle {
+          margin-left: -20px;
+        }
+      }
+      .fa-sort {
+        opacity: 0.3;
+        &:hover {
+          opacity: 1;
+        }
       }
     }
   }
   tbody {
     tr {
+      th, td {
+        @include cell;
+      }
       &:nth-child(even), &:nth-child(even) td {
         background-color: $colour-even-row;
       }
@@ -65,10 +124,16 @@ table.es-data-grid {
     thead, tbody tr {
       display:table;
       width:100%;
-      table-layout: fixed;/* even columns width , fix width of table too*/
+      /* even columns width , fix width of table too*/
+      table-layout: fixed;
     }
     thead {
-      width: calc( 100% - 1em )/* scrollbar is average 1em/16px width, remove it from thead width */
+      /* scrollbar is average 1em/16px width, remove it from thead width */
+      width: calc( 100% - 1em );
+    }
+    .multiselect-cell {
+      padding: 0;
+      width: 12px;
     }
   }
 }
@@ -163,6 +228,10 @@ table.es-data-grid {
     .fas, .far {
       font-size: 130%;
     }
+    .attrs {
+      position: relative;
+      min-height: 120px;
+    }
   }
   .recorder-experience {
     position: relative;
@@ -188,6 +257,28 @@ table.es-data-grid {
         }
       }
     }
+  }
+}
+
+/* Mod the loading spinner to only appear if a delay > 1s */
+.loading-spinner {
+  animation: 1.5s fadeIn;
+  animation-fill-mode: forwards;
+  visibility: hidden;
+}
+
+@keyframes fadeIn {
+  0% {
+    opacity: 0;
+    visibility: hidden;
+  }
+  66% {
+    opacity: 0;
+    visibility: visible;
+  }
+  100% {
+    opacity: 1;
+    visibility: visible;
   }
 }
 

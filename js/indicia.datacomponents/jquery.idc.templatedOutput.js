@@ -117,10 +117,12 @@
    */
   $.fn.idcTemplatedOutput = function buildTemplatedOutput(methodOrOptions) {
     var passedArgs = arguments;
-    $.each(this, function callOnEachGrid() {
+    var result;
+    $.each(this, function callOnEachOutput() {
       if (methods[methodOrOptions]) {
         // Call a declared method.
-        return methods[methodOrOptions].apply(this, Array.prototype.slice.call(passedArgs, 1));
+        result = methods[methodOrOptions].apply(this, Array.prototype.slice.call(passedArgs, 1));
+        return true;
       } else if (typeof methodOrOptions === 'object' || !methodOrOptions) {
         // Default to "init".
         return methods.init.apply(this, passedArgs);
@@ -129,6 +131,7 @@
       $.error('Method ' + methodOrOptions + ' does not exist on jQuery.idcTemplatedOutput');
       return true;
     });
-    return this;
+    // If the method has no explicit response, return this to allow chaining.
+    return typeof result === 'undefined' ? this : result;
   };
 }());

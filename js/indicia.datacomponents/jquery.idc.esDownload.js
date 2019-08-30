@@ -91,15 +91,15 @@
       // chunk of the dataset.
       $.ajax({
         url: indiciaData.esProxyAjaxUrl + '/download/' + indiciaData.nid,
-        type: 'post',
+        type: 'POST',
+        dataType: 'json',
         data: {
           scroll_id: data.scroll_id
         },
         success: function success(response) {
           updateProgress(el, response);
           doPages(el, response);
-        },
-        dataType: 'json'
+        }
       });
     } else {
       date = new Date();
@@ -137,10 +137,20 @@
         $(el).find('.circle').attr('style', 'stroke-dashoffset: 503px');
         $(el).find('.progress-text').text('Loading...');
         data = indiciaFns.getFormQueryData(source);
+        if (el.settings.columnsTemplate) {
+          data.columnsTemplate = el.settings.columnsTemplate;
+        }
+        if (el.settings.addColumns) {
+          data.addColumns = el.settings.addColumns;
+        }
+        if (el.settings.removeColumns) {
+          data.removeColumns = el.settings.removeColumns;
+        }
         // Post to the ES proxy.
         $.ajax({
           url: indiciaData.esProxyAjaxUrl + '/download/' + indiciaData.nid,
-          type: 'post',
+          type: 'POST',
+          dataType: 'json',
           data: data,
           success: function success(response) {
             if (typeof response.code !== 'undefined' && response.code === 401) {
@@ -202,10 +212,12 @@
    */
   $.fn.idcEsDownload = function buildEsDownload(methodOrOptions) {
     var passedArgs = arguments;
-    $.each(this, function callOnEachDiv() {
+    var result;
+    $.each(this, function callOnEachOutput() {
       if (methods[methodOrOptions]) {
         // Call a declared method.
-        return methods[methodOrOptions].apply(this, Array.prototype.slice.call(passedArgs, 1));
+        result = methods[methodOrOptions].apply(this, Array.prototype.slice.call(passedArgs, 1));
+        return true;
       } else if (typeof methodOrOptions === 'object' || !methodOrOptions) {
         // Default to "init".
         return methods.init.apply(this, passedArgs);
@@ -214,6 +226,7 @@
       $.error('Method ' + methodOrOptions + ' does not exist on jQuery.idcEsDownload');
       return true;
     });
-    return this;
+    // If the method has no explicit response, return this to allow chaining.
+    return typeof result === 'undefined' ? this : result;
   };
 }());
