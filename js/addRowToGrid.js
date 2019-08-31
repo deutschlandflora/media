@@ -371,6 +371,9 @@ var resetSpeciesTextOnEscape;
         subSpeciesCellIdBeginsWith = 'sc:' + rowId + ':';
         createSubSpeciesList(url, data.preferred_taxa_taxon_list_id, data.preferred_taxon, lookupListId, subSpeciesCellIdBeginsWith, readAuth, 0);
       }
+      if (indiciaData['enableDynamicAttrs-' + gridId]) {
+        loadDynamicAttrs(gridId, data.taxa_taxon_list_id, $(checkbox.closest('tr')));
+      }
       // Finally, a blank row is added for the next record
       makeSpareRow(gridId, readAuth, lookupListId, url, null, true);
       // When user selects a taxon then the new row is created, we want to copy data into that new row from previous row
@@ -825,6 +828,76 @@ var resetSpeciesTextOnEscape;
       e.preventDefault();
     }
   });
+
+  function loadDynamicAttrs(gridId, taxa_taxon_list_id, row) {
+    var urlSep = indiciaData.dynamicAttrProxyUrl.indexOf('?') === -1 ? '?' : '&';
+    // Find available dynamic attributes for the selected species.
+    $.get(indiciaData.dynamicAttrProxyUrl + '/getSpeciesChecklistAttrs' + urlSep +
+        'survey_id=' + $('#survey_id').val() +
+        '&taxa_taxon_list_id=' + taxa_taxon_list_id +
+        '&type=occurrence' +
+        '&language=' + indiciaData.userLang +
+        // @todo: Otions may need to be passed through for individual attr controls.
+        '&options={}', null,
+      function getAttrsReportCallback(data) {
+        var rowPrefix = $(row).find('.scPresence')[0].id.match(/(sc:[a-z0-9\-]+)/)[1];
+        // Capture all current attrs values for this row so they can be placed into new controls.
+        $.each($(row).find('td.scOccAttrCell'), function() {
+          var theInput = $(this).find(':input').not(':disabled');
+          if ($(theInput).is('select')) {
+            $(this).attr('data-oldval', $(theInput).text().trim());
+          } else if ($(theInput).is('input')) {
+            $(this).attr('data-oldval', $(theInput).val().trim());
+          } else {
+            $(this).removeAttr('data-oldval');
+          }
+        });
+        // If dynamic attrs previously loaded for the row, replace the original 
+        // inputs before applying the new set (since the new set may not have 
+        // attrs for the same columns as the old set).
+        $(row).find('.hidden-by-dynamic-attr').show().removeClass('.hidden-by-dynamic-attr').prop('disabled', false);  
+        $(row).find('.dynamic-attr').remove();
+        $.each(data, function() {
+          if (this.system_function) {
+            var attrId = this.attribute_id;
+            var systemFunction = this.system_function;
+            var ctrl = $(this.control)
+              .attr('name', rowPrefix + '::occAttr:' + attrId)
+              .addClass('system-function-' + systemFunction)
+              .addClass('dynamic-attr');
+            $.each(indiciaData['dynamicAttrInfo-' + gridId][systemFunction], function(idx) {
+              var cell = $(row).find('td.' + this + 'Cell');
+              // If multiple columns for same sysfuncton, only use the first 
+              // and empty the rest.
+              if (idx === 0) {
+                // Remove old dynamic attributes in the cell.
+                cell.find('dynamic-attr').remove();
+                // Hide and disable the non-dynamic attr for this cell, so we don't lose it 
+                // if the row is edited to a species without dynamic attrs.
+                cell.find('*').hide().addClass('hidden-by-dynamic-attr').prop('disabled', true);
+                // Tag the control against the column.
+                ctrl.addClass('sc' + this);
+                // Set any existint value into the control.
+                if ($(cell).attr('data-oldval')) {
+                  if (ctrl.is('select')) {
+                    ctrl.find('option').filter(function () { 
+                      return $(this).html().toLowerCase().trim() === $(cell).attr('data-oldval').toLowerCase(); 
+                    }).prop('selected', true);
+                  }
+                }
+                // Add the new dynamic attr control to the grid cell.
+                cell.append(ctrl);
+              } else {
+                // 2nd or later column for same sysfunction, so hide the control.
+                cell.html('');
+              }
+            });
+          }
+        })
+      },
+      'json'
+    );
+  }
 
 })(jQuery);
 
