@@ -74,10 +74,13 @@ var resetSpeciesTextOnEscape;
         var taxaTaxonListIds = [];
         var occurrenceIds = [];
         $.each($('table.species-grid tbody tr'), function() {
-          var scCtrl = $(this).find('input[type="checkbox"].scPresence');
-          rows.push(this);
-          taxaTaxonListIds.push(scCtrl.val());
-          occurrenceIds.push(scCtrl[0].id.match(/species-grid-\d+-\d+:([a-z0-9\-]+)/)[1]);
+          var scCtrl = $(this).find('.scPresence[name]');
+          if (!indiciaData['limitDynamicAttrsTaxonGroupIds-' + gridId] ||
+              $.inArray(parseInt($(this).find('.scTaxonGroupId').val()), indiciaData['limitDynamicAttrsTaxonGroupIds-' + gridId]) !== -1) {
+            rows.push(this);
+            taxaTaxonListIds.push($(this).find('.scTaxaTaxonListId').val());
+            occurrenceIds.push(scCtrl[0].name.match(/species-grid-\d+-\d+:([a-z0-9\-]+)/)[1]);
+          }
         });
         loadDynamicAttrs(gridId, taxaTaxonListIds, rows, occurrenceIds);
       });
@@ -378,8 +381,10 @@ var resetSpeciesTextOnEscape;
       // auto-check the row
       checkbox = $(row).find('.scPresenceCell input.scPresence').last();
       checkbox.attr('checked', 'checked');
-      // store the ttlId
+      // store the ttlId and other taxonomic info.
       checkbox.val(data.taxa_taxon_list_id);
+      $(row).find('.scPresenceCell .scTaxaTaxonListId').val(data.taxa_taxon_list_id);
+      $(row).find('.scPresenceCell .scTaxonGroupId').val(data.taxon_group_id);
       if (indiciaData['subSpeciesColumn-' + gridId]) {
         // Setup a subspecies picker if this option is enabled. Since we don't know for sure if this is matching the
         // last row in the grid (as the user might be typing ahead), use the presence checkbox to extract the row unique ID.
@@ -388,7 +393,15 @@ var resetSpeciesTextOnEscape;
         createSubSpeciesList(url, data.preferred_taxa_taxon_list_id, data.preferred_taxon, lookupListId, subSpeciesCellIdBeginsWith, readAuth, 0);
       }
       if (indiciaData['enableDynamicAttrs-' + gridId]) {
-        loadDynamicAttrs(gridId, [data.taxa_taxon_list_id], [$(checkbox.closest('tr'))]);
+        if (!indiciaData['limitDynamicAttrsTaxonGroupIds-' + gridId] ||
+            $.inArray(parseInt(data.taxon_group_id), indiciaData['limitDynamicAttrsTaxonGroupIds-' + gridId]) !== -1) {
+          loadDynamicAttrs(gridId, [data.taxa_taxon_list_id], [$(row)]);
+        } else {
+          $(row).find('.hidden-by-dynamic-attr')
+            .removeClass('hidden-by-dynamic-attr')
+            .prop('disabled', false);
+          $(row).find('.dynamic-attr').remove();
+        }
       }
       // Finally, a blank row is added for the next record
       makeSpareRow(gridId, readAuth, lookupListId, url, null, true);
@@ -881,7 +894,7 @@ var resetSpeciesTextOnEscape;
         });
         $.each(data, function() {
           var dataRow = this;
-          var row = dataRow.attr.occurrence_id 
+          var row = dataRow.attr.occurrence_id
             ? $(rows).find('.scPresence[id$=":' + dataRow.attr.occurrence_id + ':present"]').closest('tr')
             : rows[0];
           var rowPrefix = $(row).find('.scPresence').last().attr('id').match(/(sc:[a-z0-9\-]+)/)[1];
