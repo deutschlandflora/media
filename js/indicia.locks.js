@@ -471,7 +471,7 @@
       // controls for submission
       $('form:has(span.locked-icon, span.unlocked-icon)').submit(function(event) {
         // select all locked controls in this form and enable them so that they post
-        $(this).find('*').removeAttr('disabled');
+        $(this).find('.locked-control:disabled').removeAttr('disabled');
         $(this).find('span.locked-icon').each(function() {
           var span = this;
           var escId = esc4jq(span.id);

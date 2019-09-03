@@ -1217,6 +1217,7 @@ var destroyAllFeatures;
           function dynamicOSGoogleSat1() {
             return new OpenLayers.Layer.WMTS($.extend({}, osLeisureOptions, {
               name: 'Dynamic (OpenStreetMap > *Ordnance Survey Leisure* > Google Satellite)',
+              maxWidth: 500000,
               minZoom: 1,
               maxZoom: 11,
               layerId: 'dynamicOSGoogleSat.1',
@@ -1240,6 +1241,7 @@ var destroyAllFeatures;
               type: google.maps.MapTypeId.SATELLITE,
               numZoomLevels: 20,
               sphericalMercator: true,
+              maxWidth: 500,
               minZoom: 18,
               layerId: 'dynamicOSGoogleSat.2',
               dynamicLayerIndex: 2,
@@ -2430,7 +2432,6 @@ var destroyAllFeatures;
      * Handle the automatic switching between layers for the dynamic layer.
      */
     function handleDynamicLayerSwitching(div) {
-      var thisZoomLevel = div.map.getZoom();
       var onLayer;
       var switcherChange = false;
       var baseLayer = div.map.baseLayer;
@@ -2438,19 +2439,25 @@ var destroyAllFeatures;
       // dynamicOSLeisureGoogleSat.0.
       var baseLayerIdParts = baseLayer.layerId.split('.');
       var onLayerIdx;
+      var dynamicLayers;
+      var bb;
+      var mapWidth;
       // Careful about recursion. Also don't bother if not on a dynamic layer.
       if (indiciaData.settingBaseLayer || typeof baseLayer.dynamicLayerIndex === 'undefined') {
         return;
       }
       // If we need to switch dynamic layer because of the zoom, find the new
       // sub-layer's index.
-      if (baseLayer.maxZoom && thisZoomLevel > baseLayer.maxZoom) {
-        onLayerIdx = baseLayer.dynamicLayerIndex + 1;
-      } else if (baseLayer.minZoom && thisZoomLevel < baseLayer.minZoom) {
-        onLayerIdx = baseLayer.dynamicLayerIndex - 1;
-      } else {
-        onLayerIdx = baseLayer.dynamicLayerIndex;
-      }
+      dynamicLayers = _getPresetLayers(div.settings)[baseLayerIdParts[0]];
+      bb = div.map.getExtent().transform(div.map.projection, new OpenLayers.Projection('EPSG:27700'));
+      mapWidth = bb.right - bb.left;
+      onLayerIdx = dynamicLayers.reduce(function findLayer(index, lyr, i) {
+        var mapLayer = lyr();
+        if (!mapLayer.maxWidth || mapWidth < mapLayer.maxWidth) {
+          return i;
+        }
+        return index;
+      }, 0);
       indiciaData.settingBaseLayer = true;
       try {
         // Ensure switch is immediate.

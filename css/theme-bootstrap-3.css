@@ -3,6 +3,8 @@
 /* Set the species checklist entry grid width to 100% */
 table.species-grid {
   width: 100%; }
+  table.species-grid .hidden-by-dynamic-attr {
+    display: none; }
 
 .attrs-container {
   /* Indent contents */
@@ -451,12 +453,6 @@ table.es-data-grid {
     .details-container .recorder-experience td span.exp-R {
       background-color: red; }
 
-/* Mod the loading spinner to only appear if a delay > 1s */
-.loading-spinner {
-  animation: 1.5s fadeIn;
-  animation-fill-mode: forwards;
-  visibility: hidden; }
-
 @keyframes fadeIn {
   0% {
     opacity: 0;
@@ -512,6 +508,10 @@ table.es-data-grid {
   bottom: 0;
   right: 0;
   background-color: rgba(230, 230, 230, 0.6);
+  /* Mod the loading spinner to only appear if a delay > 1s */
+  animation: 1.5s fadeIn;
+  animation-fill-mode: forwards;
+  visibility: hidden;
   /* :not(:required) hides these rules from IE9 and below */ }
   .loading-spinner div:not(:required) {
     /* hide "loading..." text */

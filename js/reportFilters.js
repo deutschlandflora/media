@@ -1207,7 +1207,7 @@ jQuery(document).ready(function ($) {
     $('#filter-build').html(indiciaData.lang.reportFilters.ModifyFilter);
     $('#standard-params .header span.changed').hide();
     // can't delete a filter you didn't create.
-    if (data[0].created_by_id === indiciaData.user_id) {
+    if (data[0].created_by_id === indiciaData.user_id || indiciaData.admin === "1") {
       $('#filter-delete').show();
     } else {
       $('#filter-delete').hide();
