@@ -1656,7 +1656,7 @@ return true;}
 return false;},deactivate:function(){if(this.active&&this.watchId!==null){this.geolocation.clearWatch(this.watchId);}
 return OpenLayers.Control.prototype.deactivate.apply(this,arguments);},geolocate:function(position){var center=new OpenLayers.LonLat(position.coords.longitude,position.coords.latitude).transform(new OpenLayers.Projection("EPSG:4326"),this.map.getProjectionObject());if(this.bind){this.map.setCenter(center);}
 this.events.triggerEvent("locationupdated",{position:position,point:new OpenLayers.Geometry.Point(center.lon,center.lat)});},getCurrentLocation:function(){if(!this.active||this.watch){return false;}
-this.geolocation.getCurrentPosition(OpenLayers.Function.bind(this.geolocate,this),OpenLayers.Function.bind(this.failure,this),this.geolocationOptions);return true;},failure:function(error){this.events.triggerEvent("locationfailed",{error:error});},CLASS_NAME:"OpenLayers.Control.Geolocate"});OpenLayers.Control.MousePosition=OpenLayers.Class(OpenLayers.Control,{autoActivate:true,element:null,prefix:'',separator:', ',suffix:'',numDigits:5,granularity:10,emptyString:null,lastXy:null,displayProjection:null,destroy:function(){this.deactivate();OpenLayers.Control.prototype.destroy.apply(this,arguments);},activate:function(){if(OpenLayers.Control.prototype.activate.apply(this,arguments)){this.map.events.register('mousemove',this,this.redraw);this.map.events.register('mouseout',this,this.reset);this.redraw();return true;}else{return false;}},deactivate:function(){if(OpenLayers.Control.prototype.deactivate.apply(this,arguments)){this.map.events.unregister('mousemove',this,this.redraw);this.map.events.unregister('mouseout',this,this.reset);this.element.innerHTML="";return true;}else{return false;}},draw:function(){OpenLayers.Control.prototype.draw.apply(this,arguments);if(!this.element){this.div.left="";this.div.top="";this.element=this.div;}
+this.geolocation.getCurrentPosition(OpenLayers.Function.bind(this.geolocate,this),OpenLayers.Function.bind(this.failure,this),this.geolocationOptions);return true;},failure:function(error){this.events.triggerEvent("locationfailed",{error:error});},CLASS_NAME:"OpenLayers.Control.Geolocate"});OpenLayers.Control.MousePosition=OpenLayers.Class(OpenLayers.Control,{autoActivate:true,element:null,prefix:'Mauszeiger ',separator:', ',suffix:'',numDigits:5,granularity:10,emptyString:null,lastXy:null,displayProjection:null,destroy:function(){this.deactivate();OpenLayers.Control.prototype.destroy.apply(this,arguments);},activate:function(){if(OpenLayers.Control.prototype.activate.apply(this,arguments)){this.map.events.register('mousemove',this,this.redraw);this.map.events.register('mouseout',this,this.reset);this.redraw();return true;}else{return false;}},deactivate:function(){if(OpenLayers.Control.prototype.deactivate.apply(this,arguments)){this.map.events.unregister('mousemove',this,this.redraw);this.map.events.unregister('mouseout',this,this.reset);this.element.innerHTML="";return true;}else{return false;}},draw:function(){OpenLayers.Control.prototype.draw.apply(this,arguments);if(!this.element){this.div.left="";this.div.top="";this.element=this.div;}
 return this.div;},redraw:function(evt){var lonLat;if(evt==null){this.reset();return;}else{if(this.lastXy==null||Math.abs(evt.xy.x-this.lastXy.x)>this.granularity||Math.abs(evt.xy.y-this.lastXy.y)>this.granularity)
 {this.lastXy=evt.xy;return;}
 lonLat=this.map.getLonLatFromPixel(evt.xy);if(!lonLat){return;}
@@ -1797,3 +1797,106 @@ if(i==this.map.controls.length){var args=this.getParameters();if(args.layers){th
 if(args.lat&&args.lon){this.center=new OpenLayers.LonLat(parseFloat(args.lon),parseFloat(args.lat));if(args.zoom){this.zoom=parseFloat(args.zoom);}
 this.map.events.register('changebaselayer',this,this.setCenter);this.setCenter();}}},setCenter:function(){if(this.map.baseLayer){this.map.events.unregister('changebaselayer',this,this.setCenter);if(this.displayProjection){this.center.transform(this.displayProjection,this.map.getProjectionObject());}
 this.map.setCenter(this.center,this.zoom);}},configureLayers:function(){if(this.layers.length==this.map.layers.length){this.map.events.unregister('addlayer',this,this.configureLayers);for(var i=0,len=this.layers.length;i<len;i++){var layer=this.map.layers[i];var c=this.layers.charAt(i);if(c=="B"){this.map.setBaseLayer(layer);}else if((c=="T")||(c=="F")){layer.setVisibility(c=="T");}}}},CLASS_NAME:"OpenLayers.Control.ArgParser"});
+OpenLayers.Layer.TMS=OpenLayers.Class(OpenLayers.Layer.Grid,{serviceVersion:"1.0.0",layername:null,type:null,isBaseLayer:!0,tileOrigin:null,serverResolutions:null,zoomOffset:0,initialize:function(a,b,c){var d=[];d.push(a,b,{},c);OpenLayers.Layer.Grid.prototype.initialize.apply(this,d)},clone:function(a){null==a&&(a=new OpenLayers.Layer.TMS(this.name,this.url,this.getOptions()));return a=OpenLayers.Layer.Grid.prototype.clone.apply(this,[a])},getURL:function(a){a=this.adjustBounds(a);var b=this.getServerResolution(),
+c=Math.round((a.left-this.tileOrigin.lon)/(b*this.tileSize.w));a=Math.round((a.bottom-this.tileOrigin.lat)/(b*this.tileSize.h));b=this.getServerZoom();c=this.serviceVersion+"/"+this.layername+"/"+b+"/"+c+"/"+a+"."+this.type;a=this.url;OpenLayers.Util.isArray(a)&&(a=this.selectUrl(c,a));return a+c},setMap:function(a){OpenLayers.Layer.Grid.prototype.setMap.apply(this,arguments);this.tileOrigin||(this.tileOrigin=new OpenLayers.LonLat(this.map.maxExtent.left,this.map.maxExtent.bottom))},CLASS_NAME:"OpenLayers.Layer.TMS"});
+/**maps4net additional controls **/
+OpenLayers.Control.ScaleLine=OpenLayers.Class(OpenLayers.Control,{maxWidth:100,topOutUnits:"km",topInUnits:"m",bottomOutUnits:"mi",bottomInUnits:"ft",eTop:null,eBottom:null,geodesic:!1,draw:function(){OpenLayers.Control.prototype.draw.apply(this,arguments);this.eTop||(this.eTop=document.createElement("div"),this.eTop.className=this.displayClass+"Top",this.div.appendChild(this.eTop),this.eTop.style.visibility=""==this.topOutUnits||""==this.topInUnits?"hidden":"visible",this.eBottom=document.createElement("div"),
+this.eBottom.className=this.displayClass+"Bottom",this.div.appendChild(this.eBottom),this.eBottom.style.visibility=""==this.bottomOutUnits||""==this.bottomInUnits?"hidden":"visible");this.map.events.register("moveend",this,this.update);this.update();return this.div},getBarLen:function(a){var b=parseInt(Math.log(a)/Math.log(10)),b=Math.pow(10,b);a=parseInt(a/b);return(5<a?5:2<a?2:1)*b},update:function(){var a=this.map.getResolution();if(a){var b=this.map.getUnits(),c=OpenLayers.INCHES_PER_UNIT,d=this.maxWidth*
+a*c[b],e=1;!0===this.geodesic&&(e=(this.map.getGeodesicPixelSize().w||1E-6)*this.maxWidth/(d/c.km),d*=e);var f,g;1E5<d?(f=this.topOutUnits,g=this.bottomOutUnits):(f=this.topInUnits,g=this.bottomInUnits);var h=d/c[f],k=d/c[g],d=this.getBarLen(h),l=this.getBarLen(k),h=d/c[b]*c[f],k=l/c[b]*c[g],b=h/a/e,a=k/a/e;"visible"==this.eBottom.style.visibility&&(this.eBottom.style.width=Math.round(a)+"px",this.eBottom.innerHTML=l+" "+g);"visible"==this.eTop.style.visibility&&(this.eTop.style.width=Math.round(b)+
+"px",this.eTop.innerHTML=d+" "+f)}},CLASS_NAME:"OpenLayers.Control.ScaleLine"});
+/**
+* maps4net additional Grid functions
+**/
+OpenLayers.Control.MapCenterPosition = OpenLayers.Class(OpenLayers.Control, {autoActivate: true,element: null, prefix: '<a target="_blank" ' +'href="http://spatialreference.org/ref/epsg/4314/">' + '</a> Kartenmitte (Breite,Länge): ', separator: ', ',  suffix: '', numDigits: 5, displayProjection: 'EPSG:4314',destroy: function() {this.deactivate();OpenLayers.Control.prototype.destroy.apply(this, arguments);},activate: function() {if (OpenLayers.Control.prototype.activate.apply(this, arguments)) {this.map.events.register('move', this, this.redraw);this.redraw();return true; } else { return false;}},deactivate: function() {if (OpenLayers.Control.prototype.deactivate.apply(this, arguments)) {this.map.events.unregister('move', this, this.redraw);
+this.element.innerHTML = "";return true;} else { return false; }},draw: function() {OpenLayers.Control.prototype.draw.apply(this, arguments);if (!this.element) {this.div.left = ""; this.div.top = ""; this.element = this.div; } return this.div;},redraw: function(evt) {lonLat = this.map.getCenter();if (!lonLat) {   return; } if (this.displayProjection) {lonLat.transform(this.map.getProjectionObject(), this.displayProjection ); } var newHtml = this.formatOutput(lonLat); if (newHtml != this.element.innerHTML) {
+this.element.innerHTML = newHtml;  }},formatOutput: function(lonLat) { var digits = parseInt(this.numDigits); var nlonLat = lonLat.clone(); var z = this.map.getZoom(); var newHtml = this.prefix +  lonLat.lat.toFixed(digits) + this.separator + lonLat.lon.toFixed(digits) + this.suffix + ' | TK/QQQ ' + EastingNorthingToQqq(lonLat.lat, lonLat.lon) + ' | Zoomstufe ' + z + ' | Inspire ' + XYToInspireGrid(lonLat.lat, lonLat.lon,'10K') ;  return newHtml; }, CLASS_NAME: "OpenLayers.Control.MapCenterPosition"});
+function EastingNorthingToQqq(iLat, iLong) {var SIX_MINUTES=1/10;var TEN_MINUTES=1/6;
+    var yy, xx, q1, q2, q3, y8th, x8th; var StrY, StrX, MTBQYX; var FXOrigin; var FYOrigin; 
+    FYOrigin= 55.1; FXOrigin  = 5 + (50/60); y=((FYOrigin - iLat)/SIX_MINUTES)+9;yy= Math.floor(y);
+    x=((iLong-FXOrigin)*6)+1; xx= Math.floor(x);y8th= Math.floor((y-yy)*8)+1; x8th= Math.floor((x-xx)* 8)+1;
+    q1 = 1;q2 = 1;q3 = 1; if(y8th in { 5:1, 6:1, 7:1, 8:1 } ){q1 = 3}; if(y8th in {3:1, 4:1, 7:1, 8:1}){q2 = 3};
+    if ( y8th in { 2:1, 4:1, 6:1, 8:1 } ) {q3 = 3}; if ( x8th in { 5:1, 6:1, 7:1, 8:1 } ) {q1++;};
+    if ( x8th in { 3:1, 4:1, 7:1, 8:1 } ) {q2++;}; if ( x8th in { 2:1, 4:1, 6:1, 8:1 } ) {q3++;};
+    if (yy < 10) {StrY = '0' + yy + ''}; if (yy > 9) {StrY = yy + ''};
+    if (xx < 10) {StrX = '0' + xx}; if (xx > 9) {StrX = xx}; MTBQQQ = StrY + StrX +"/" + q1 + q2 + q3;
+    if (yy < 09 || xx < 01 || yy > 87 || xx > 56) {return '';} else {return MTBQQQ;};}
+ function EastingNorthingToQyx(iLat, iLong) {
+    var SIX_MINUTES = 1/10;
+    var TEN_MINUTES = 1/6;
+    var easting, northing; //double
+    var yy, xx, q, y, x, y6th, x10th; //integer
+    var StrY, StrX, MTBQYX;  //WideString;
+    var FXOrigin;  //Double;
+    var FYOrigin;  //Double;
+    FYOrigin  = 55.1;
+    FXOrigin  = 5 + (50/60);
+    easting  = ((FYOrigin - iLat)/SIX_MINUTES) + 9;
+    yy       = Math.floor(easting);
+    northing = ((iLong - FXOrigin) * 6) + 1;
+    xx       = Math.floor(northing);
+    y6th     = Math.floor((easting - yy) * 6) + 1;
+    x10th    = Math.floor((northing - xx) * 10) + 1;
+    q = 1;
+    y = 1;
+    x = 1;
+    if ( y6th in { 4:1, 5:1, 6:1 } ) {q = 3};
+    if ( y6th in { 2:1, 5:1 } ) {y = 2};
+    if ( y6th in { 3:1, 6:1} ) {y = 3};
+    if ( x10th in { 6:1,  7:1, 8:1, 9:1, 10:1 } ) {q++;};
+    if ( x10th in { 2:1,  7:1 } ) {x = 2};
+    if ( x10th in { 3:1,  8:1 } ) {x = 3};
+    if ( x10th in { 4:1,  9:1 } ) {x = 4};
+    if ( x10th in { 5:1, 10:1 } ) {x = 5};
+    if (xx<0) {
+       StrY = Right('00' + yy, 2);
+       StrX = Right('00' + (100+xx), 2);
+       MTBQYX = 'W'+StrY + StrX + "/" + q + y +x;
+     }
+     else {
+       StrY = Right(('00' + yy), 2);
+       StrX = Right(('00' + xx), 2);
+       MTBQYX = StrY + StrX +"/" + q + y + x;
+     };
+
+    if (yy < 0 || xx < -99 || yy > 99 || xx > 99) {
+      return "";
+      }
+    else {
+      return MTBQYX;
+      };
+}
+function Left(str, n){  if (n <= 0) return "";
+  else if (n > String(str).length) return str;
+  else return String(str).substring(0,n);
+}
+
+function Right(str, n){  if (n <= 0) return "";
+    else if (n > String(str).length) return str;
+    else {var iLen = String(str).length;
+       return String(str).substring(iLen, iLen - n);
+    }
+}
+function XYToInspireGrid(iX,iY,precision) {
+    //berechnet Inspire Raster Bezeichung des
+    //übergeben werden X und Y Koordinaten im ETRS89 / LAEA Europe - EPSG:3035
+    //sowie die Gitterweite = Rasterauflösung (10K = 10 km; 5K = 5 km)
+  
+  var Grid = ''; //string
+  var StrX = '';
+  var StrY = '';
+  precision ='10K';
+
+  if (precision == '10K' ) {
+    StrX = 'E'+Right('00'+Math.floor(iX/10000),3);
+    StrY = 'N'+Right('00'+Math.floor(iY/10000),3);
+    Grid = '10km'+StrX+StrY;
+  } else if (precision == '5K') {
+    StrX = 'E'+Right('000'+Math.floor(iX/5000),4);
+    StrY = 'N'+Right('000'+Math.floor(iY/5000),4);
+    Grid = '5km'+StrX+StrY;
+  } else {
+    Grid = 'undefiniert';
+  }
+  return Grid;
+}
+var projInspire = new OpenLayers.Projection("EPSG:3035"); //ETRS89 / ETRS-LAEA (Inspire)
