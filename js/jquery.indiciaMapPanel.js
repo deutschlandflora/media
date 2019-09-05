@@ -1164,8 +1164,231 @@ var destroyAllFeatures;
         },
         os_leisure: function osLeisure() {
           return new OpenLayers.Layer.WMTS(osLeisureOptions);
-        }
-      };
+        },
+		
+		//maps4net added layers
+		 osm_german: function() {
+			 return new OpenLayers.Layer.XYZ("OSM Deutscher Stil", [
+               "https://a.tile.openstreetmap.de/tiles/osmde/${z}/${x}/${y}.png",
+               "https://b.tile.openstreetmap.de/tiles/osmde/${z}/${x}/${y}.png",
+               "https://c.tile.openstreetmap.de/tiles/osmde/${z}/${x}/${y}.png",
+               "https://d.tile.openstreetmap.de/tiles/osmde/${z}/${x}/${y}.png"],
+		           {layerId: 'osm_german.0', numZoomLevels: 19, attribution: '<span>Basiskarte: OpenStreetMap-Mitwirkende | &copy; www.openstreetmap.de (ODbL)</span>',group:"WMS-Dienste/OSM"});
+		},
+		 topplus_open: function() {return new OpenLayers.Layer.XYZ("TopPlusOpen", [
+               "https://sgx.geodatenzentrum.de/wmts_topplus_web_open/tile/1.0.0/web/default/WEBMERCATOR/${z}/${y}/${x}.png"],
+                 {
+                    layerId: 'topplus_open.0',
+					numZoomLevels: 18,
+                    attribution: "Kartendaten: © <a href='//www.bkg.bund.de' target='_blank'>Bundesamt für Kartographie und Geodäsie</a>"+(new Date()).getFullYear()+"| <a href='http://sg.geodatenzentrum.de/web_public/Datenquellen_TopPlus_Open.pdf' target='_blank'>Datenquellen</a>",
+                    transitionEffect: "resize"
+                 }
+               )},
+        topplus_open_grey: function() {return new OpenLayers.Layer.XYZ("TopPlusOpen (Graustufen)", [
+               "https://sgx.geodatenzentrum.de/wmts_topplus_web_open/tile/1.0.0/web_grau/default/WEBMERCATOR/${z}/${y}/${x}.png"],
+                 {
+                    layerId: 'topplus_open_grey.0',
+					numZoomLevels: 18,
+                    attribution: "Kartendaten: © <a href='//www.bkg.bund.de' target='_blank'>Bundesamt für Kartographie und Geodäsie</a>"+(new Date()).getFullYear()+"| <a href='http://sg.geodatenzentrum.de/web_public/Datenquellen_TopPlus_Open.pdf' target='_blank'>Datenquellen</a>",
+                    transitionEffect: "resize"
+                 }
+               )},
+         wms_dtk25: function() {return new OpenLayers.Layer.WMS("DTK25",
+               "https://sg.geodatenzentrum.de/wms_dtk25__13396d40-832a-5612-6ae1-80ac2cfa13d6?SERVICE=WMS&VERSION=1.1.0&REQUEST=GetMap&Layers=0&STYLES=default&SRS=EPSG:3857&Width=200&Height=200&Format=image/png",
+                {layers: 'wms_dtk25',
+				layerId: 'wms_dtk25.0',
+            	singleTile: true,
+            	isBaseLayer: true,
+            	transparent:false},
+                {attribution: '<span>Basiskarte: DTK25 &copy; GeoBasis-DE / BKG</span>'});
+				},
+		dgk200: function() {return new OpenLayers.Layer.TMS(
+               "GÜK 200",
+               "https://services.bgr.de/wms/geologie/guek200/?",
+               {
+                    type: 'png',
+                    getURL: function get_wms_url(bounds) {
+                        var bbounds = bounds.clone();
+                        var bbox = bbounds.toBBOX();
+
+                        //construct WMS request
+                        var url = this.url;
+                        url += "REQUEST=GetMap";
+                        url += "&SERVICE=WMS";
+                        url += "&STYLES=,,";
+                        url += "&VERSION=1.3.0";
+                        url += "&LAYERS=1,2,3";
+                        url += "&FORMAT=" + this.format;
+                        url += "&TRANSPARENT=true";
+                        url += "&CRS=" + "EPSG:3857";
+                        url += "&BBOX=" + bbox;
+                        url += "&WIDTH=" + this.tileSize.w;
+                        url += "&HEIGHT=" + this.tileSize.h;
+                        return url;
+                      },
+                    format: "image/png",
+                    attribution: "<br> <a href='https://produktcenter.bgr.de/terraCatalog/DetailResult.do?fileIdentifier=C1DE9507-F568-4667-8E2D-F19C4152F64A' target='_blank'>GÜK200</a>, © BGR, Hannover 2015",
+                    opacity: 0.3,
+                    visibility: false,
+					layerId: 'dgk200.0',
+                    isBaseLayer: false}
+					)},
+		 projektgebiete: function() {return new OpenLayers.Layer.TMS(
+               "Projektgebiete",
+             "https://deutschlandflora.de:7082/geoserver/indicia/gwc/service/tms/1.0.0?",
+               {
+                    type: 'png',
+                    getURL: function get_wms_url(bounds) {
+                        var bbounds = bounds.clone();
+                        var bbox = bbounds.toBBOX();
+                       
+                        var url = this.url;
+                        url += "REQUEST=GetMap";
+                        url += "&SERVICE=WMS";
+                        url += "&STYLES=";
+                        url += "&VERSION=1.3.0";
+                        url += "&LAYERS=indicia:l_grenzen_3857";
+                        url += "&FORMAT=" + this.format;
+                        url += "&TRANSPARENT=true";
+                        url += "&CRS=" + "EPSG:3857";
+                        url += "&BBOX=" + bbox;
+                        url += "&WIDTH=" + this.tileSize.w;
+                        url += "&HEIGHT=" + this.tileSize.h;
+                        return url;
+                      },
+                    format: "image/png",
+                    attribution: "<br> Projektgebiete | Kartendienst: &copy; Biota-D " +(new Date()).getFullYear()+ "| Datenquelle: <a href='https://biota-d.de' target='_blank'>Biota-D</a>",
+                    opacity: 0.9,
+                    visibility: false,
+					layerId: 'projektgebiete.0',
+                    isBaseLayer: false}
+		  )},
+		 bfn_naturraum: function() {return new OpenLayers.Layer.TMS(
+               "Naturräume",
+             "https://deutschlandflora.de:7082/geoserver/indicia/gwc/service/tms/1.0.0?",
+               {
+                    type: 'png',
+                    getURL: function get_wms_url(bounds) {
+                        var bbounds = bounds.clone();
+                        var bbox = bbounds.toBBOX();
+                       
+                        var url = this.url;
+                        url += "REQUEST=GetMap";
+                        url += "&SERVICE=WMS";
+                        url += "&STYLES=naturraum_grenzen";
+                        url += "&VERSION=1.3.0";
+                        url += "&LAYERS=indicia:bfn_nat_03_auspostgis";
+                        url += "&FORMAT=" + this.format;
+                        url += "&TRANSPARENT=true";
+                        url += "&CRS=" + "EPSG:3857";
+                        url += "&BBOX=" + bbox;
+                        url += "&WIDTH=" + this.tileSize.w;
+                        url += "&HEIGHT=" + this.tileSize.h;
+                        return url;
+                      },
+                    format: "image/png",
+                    attribution: "<br> Naturräume Kartendienst: &copy; Biota-D " +(new Date()).getFullYear()+ "| Datenquelle: <a href='https://bfn.de' target='_blank'>Bundesamt für Naturschutz</a>",
+                    opacity: 0.6,
+                    visibility: false,
+					layerId: 'bfn_naturraum.0',
+                    isBaseLayer: false}
+		  )},
+		 bfn_nsg: function() {return new OpenLayers.Layer.TMS(
+               "Naturschutzgebiete",
+              "https://deutschlandflora.de:7082/geoserver/indicia/gwc/service/tms/1.0.0?",
+               {
+                    type: 'png',
+                    getURL: function get_wms_url(bounds) {
+                        var bbounds = bounds.clone();
+                        var bbox = bbounds.toBBOX();
+                       
+                        var url = this.url;
+                        url += "REQUEST=GetMap";
+                        url += "&SERVICE=WMS";
+                        url += "&STYLES=";
+                        url += "&VERSION=1.3.0";
+                        url += "&LAYERS=indicia:bfn_nsg_3857";
+                        url += "&FORMAT=" + this.format;
+                        url += "&TRANSPARENT=true";
+                        url += "&CRS=" + "EPSG:3857";
+                        url += "&BBOX=" + bbox;
+                        url += "&WIDTH=" + this.tileSize.w;
+                        url += "&HEIGHT=" + this.tileSize.h;
+                        return url;
+                      },
+                    format: "image/png",
+                    attribution: "<br> Naturschutzgebiete | Kartendienst: &copy; Biota-D " +(new Date()).getFullYear()+ "| Datenquelle: <a href='https://bfn.de' target='_blank'>Bundesamt für Naturschutz</a>",
+                    opacity: 0.7,
+                    visibility: false,
+					layerId: 'bfn_nsg.0',
+                    isBaseLayer: false}
+		  )},
+		  eea_natura2000: function() {return new OpenLayers.Layer.TMS(
+               "Natura 2000",
+               "https://deutschlandflora.de:7082/geoserver/indicia/gwc/service/tms/1.0.0?",
+               {
+                    type: 'png',
+                    getURL: function get_wms_url(bounds) {
+                        var bbounds = bounds.clone();
+                        var bbox = bbounds.toBBOX();
+                        var url = this.url;
+                        url += "REQUEST=GetMap";
+                        url += "&SERVICE=WMS";
+                        url += "&STYLES=";
+                        url += "&VERSION=1.3.0";
+                        url += "&LAYERS=indicia:eea_natura2000_end2017";
+                        url += "&FORMAT=" + this.format;
+                        url += "&TRANSPARENT=true";
+                        url += "&CRS=" + "EPSG:3857";
+                        url += "&BBOX=" + bbox;
+                        url += "&WIDTH=" + this.tileSize.w;
+                        url += "&HEIGHT=" + this.tileSize.h;
+                        return url;
+                      },
+                    format: "image/png",
+                     attribution: "<br> Natura 2000 | Kartendienst: &copy; Biota-D " +(new Date()).getFullYear()+ "| Datenquelle: <a href='https://eea.europa.eu' target='_blank'>eea.europa.eu</a>",
+                    opacity: 0.8,
+                    visibility: false,
+					layerId: 'eea_natura2000.0',
+                    isBaseLayer: false}
+		  )},
+		  pnV: function() {return new OpenLayers.Layer.TMS(
+               "Pot. nat. Vegetation",
+               "https://geodienste.bfn.de/ogc/wms/pnv500?",
+               {
+                    type: 'png',
+                    getURL: function get_wms_url(bounds) {
+                        var bbounds = bounds.clone();
+                        var bbox = bbounds.toBBOX();
+                        var url = this.url;
+                        url += "REQUEST=GetMap";
+                        url += "&SERVICE=WMS";
+                        url += "&STYLES=";
+                        url += "&VERSION=1.3.0";
+                        url += "&LAYERS=Vegetationsgebiete,PNV500";
+                        url += "&FORMAT=" + this.format;
+                        url += "&TRANSPARENT=true";
+                        url += "&CRS=" + "EPSG:3857";
+                        url += "&BBOX=" + bbox;
+                        url += "&WIDTH=" + this.tileSize.w;
+                        url += "&HEIGHT=" + this.tileSize.h;
+                        return url;
+                      },
+                    format: "image/png",
+					tileOptions: {crossOriginKeyword: null},
+                    attribution: "<br> Potentielle nat. Vegetation | Kartendienst: &copy; Biota-D " +(new Date()).getFullYear()+ "| Datenquelle: <a href='https://geodienste.bfn.de' target='_blank'>BfN</a>",
+                    opacity: 0.8,
+                    visibility: false,
+					layerId: 'pnV.0',
+                    isBaseLayer: false}
+		  )}
+		//End maps4 layers
+		
+		
+      }; //end r
+	  
+	  
+	  
       // To protect ourselves against exceptions because the Google script would not link up, we
       // only enable these layers if the Google constants are available.
       if (typeof google !== 'undefined' && typeof google.maps !== 'undefined') {
@@ -1217,7 +1440,6 @@ var destroyAllFeatures;
           function dynamicOSGoogleSat1() {
             return new OpenLayers.Layer.WMTS($.extend({}, osLeisureOptions, {
               name: 'Dynamic (OpenStreetMap > *Ordnance Survey Leisure* > Google Satellite)',
-              maxWidth: 500000,
               minZoom: 1,
               maxZoom: 11,
               layerId: 'dynamicOSGoogleSat.1',
@@ -1241,7 +1463,6 @@ var destroyAllFeatures;
               type: google.maps.MapTypeId.SATELLITE,
               numZoomLevels: 20,
               sphericalMercator: true,
-              maxWidth: 500,
               minZoom: 18,
               layerId: 'dynamicOSGoogleSat.2',
               dynamicLayerIndex: 2,
@@ -2432,6 +2653,7 @@ var destroyAllFeatures;
      * Handle the automatic switching between layers for the dynamic layer.
      */
     function handleDynamicLayerSwitching(div) {
+      var thisZoomLevel = div.map.getZoom();
       var onLayer;
       var switcherChange = false;
       var baseLayer = div.map.baseLayer;
@@ -2439,25 +2661,19 @@ var destroyAllFeatures;
       // dynamicOSLeisureGoogleSat.0.
       var baseLayerIdParts = baseLayer.layerId.split('.');
       var onLayerIdx;
-      var dynamicLayers;
-      var bb;
-      var mapWidth;
       // Careful about recursion. Also don't bother if not on a dynamic layer.
       if (indiciaData.settingBaseLayer || typeof baseLayer.dynamicLayerIndex === 'undefined') {
         return;
       }
       // If we need to switch dynamic layer because of the zoom, find the new
       // sub-layer's index.
-      dynamicLayers = _getPresetLayers(div.settings)[baseLayerIdParts[0]];
-      bb = div.map.getExtent().transform(div.map.projection, new OpenLayers.Projection('EPSG:27700'));
-      mapWidth = bb.right - bb.left;
-      onLayerIdx = dynamicLayers.reduce(function findLayer(index, lyr, i) {
-        var mapLayer = lyr();
-        if (!mapLayer.maxWidth || mapWidth < mapLayer.maxWidth) {
-          return i;
-        }
-        return index;
-      }, 0);
+      if (baseLayer.maxZoom && thisZoomLevel > baseLayer.maxZoom) {
+        onLayerIdx = baseLayer.dynamicLayerIndex + 1;
+      } else if (baseLayer.minZoom && thisZoomLevel < baseLayer.minZoom) {
+        onLayerIdx = baseLayer.dynamicLayerIndex - 1;
+      } else {
+        onLayerIdx = baseLayer.dynamicLayerIndex;
+      }
       indiciaData.settingBaseLayer = true;
       try {
         // Ensure switch is immediate.
@@ -2576,7 +2792,8 @@ var destroyAllFeatures;
       olOptions.controls = [
         new OpenLayers.Control.Navigation({ title: 'navigation' }),
         new OpenLayers.Control.ArgParser(),
-        new OpenLayers.Control.Attribution()
+        new OpenLayers.Control.Attribution(),
+		new OpenLayers.Control.MousePosition()   //maps4net ergänzt
       ];
       $.extend(olOptions, {
         eventListeners: {
@@ -3085,6 +3302,12 @@ var destroyAllFeatures;
         // Add a layer switcher if there are multiple layers
         if (ctrl=='layerSwitcher') {
           div.map.addControl(new OpenLayers.Control.LayerSwitcher());
+		} else if (ctrl=='MapCenterPosition') {  //maps4net
+          div.map.addControl(new OpenLayers.Control.MapCenterPosition);  //maps4net
+		} else if (ctrl=='ScaleLine') {  //maps4net
+          div.map.addControl(new OpenLayers.Control.ScaleLine({maxWidth: 150}));  //maps4net
+        } else if (ctrl=='zoom') {               //maps4net
+          div.map.addControl(new OpenLayers.Control.Zoom()); //maps4net		  
         } else if (ctrl=='zoomBox') {
           div.map.addControl(new OpenLayers.Control.ZoomBox());
         } else if (ctrl=='panZoom') {
@@ -3148,7 +3371,8 @@ var destroyAllFeatures;
                 intervalColours: div.settings.graticuleIntervalColours,
                 intervalLineWidth: graticuleDef.intervalLineWidth,
                 intervalLineOpacity: graticuleDef.lineOpacity,
-                layerName: 'Map grid for ' + ($(this).html() !== '' ? $(this).html() : $(this).val())
+                //layerName: 'Map grid for ' + ($(this).html() !== '' ? $(this).html() : $(this).val())
+				layerName: 'Kartengitter ' + ($(this).html() !== '' ? $(this).html() : $(this).val())  //maps4net lang
               });
               div.map.addControl(ctrlObj);
               if ($.inArray(ctrl, div.settings.activatedStandardControls) === -1) {
@@ -3335,12 +3559,12 @@ jQuery.fn.indiciaMapPanel.defaults = {
     clickForPlot: false, // if true, overrides clickForSpatialRef to locate a plot instead of a grid square.
     allowPolygonRecording: false,
     autoFillInCentroid: false, // if true will automatically complete the centroid and Sref when polygon recording.
-    editLayerName: 'Selection layer',
+    editLayerName: 'Auswahllayer', //maps4net
     editLayerInSwitcher: false,
     searchLayer: false, // determines whether we have a separate layer for the display of location searches, eg georeferencing. Defaults to editLayer.
     searchUpdatesSref: false,
     searchDisplaysPoint: true,
-    searchLayerName: 'Search layer',
+    searchLayerName: 'Suchlayer',  //maps4net
     searchLayerInSwitcher: false,
     initialFeatureWkt: null,
     initialBoundaryWkt: null,
@@ -3359,13 +3583,13 @@ jQuery.fn.indiciaMapPanel.defaults = {
     clickedSrefPrecisionMin: 2, // depends on sref system, but for OSGB this would be 2,4,6,8,10 etc = length of grid reference
     clickedSrefPrecisionMax: 10,
     plotPrecision: '10', // when clickForPlot is true, the precision of grid ref associated with plot.
-    msgGeorefSelectPlace: 'Select from the following places that were found matching your search, then click on the map to specify the exact location:',
-    msgGeorefNothingFound: 'No locations found with that name. Try a nearby town name.',
-    msgGetInfoNothingFound: 'No occurrences were found at the location you clicked.',
-    msgSrefOutsideGrid: 'The position is outside the range of the selected map reference system.',
-    msgSrefNotRecognised: 'The map reference is not recognised.',
-    msgSrefSystemNotSet: 'The spatial reference system is not set.',
-    msgReplaceBoundary: 'Would you like to replace the existing boundary with the new one?',
+    msgGeorefSelectPlace: 'Klicken Sie auf den passenden Namen in der Liste und danach in die Karte um die exakte Position zu bestimmen:',
+    msgGeorefNothingFound: 'Zur Ihrer Suche wurden keine passenden Namen gefunden. Versuchen Sie es mit einem Ort im Umkreis.',
+    msgGetInfoNothingFound: 'An der angeklickten Position wurden keine Beobachtungen gefunden.',
+    msgSrefOutsideGrid: 'Die Position ist ausserhalb des angegebenen Koordinatensystems.',
+    msgSrefNotRecognised: 'Raumbezug wurde nicht erkannt.',
+    msgSrefSystemNotSet: 'Das Raumbezugssystem ist nicht angegeben.',
+    msgReplaceBoundary: 'Sollen die vorhandenen Grenzen durch die neuen ersetzt werden?',
     maxZoom: 19, //maximum zoom when relocating to gridref, postcode etc.
     maxZoomBuffer: 0.33, //margin around feature when relocating to gridref or initialFeatureWkt
     drawObjectType: 'boundary',
@@ -3406,7 +3630,7 @@ jQuery.fn.indiciaMapPanel.defaults = {
       },
       'mtbqqq': {
         projection: 4314,
-        bounds: [35/6, 46, 134/6, 55.9],
+        bounds: [35/6, 47.199, 91/6, 55.2], //maps4net changed from [35/6, 46, 134/6, 55.9]  alternativ   bounds: [5.66666, 46.7, 14.2, 54.9],
         intervals: [[ 10/60, 5/60, 150/3600, 75/3600 ],[ 6/60, 3/60, 90/3600, 45/3600 ]]
       }
     },
@@ -3435,31 +3659,31 @@ jQuery.fn.indiciaMapPanel.defaults = {
     // Are we using the OpenLayers defaults, or are they all provided?
     useOlDefaults: true,
     rememberPos: false, // set to true to enable restoring the map position when the page is reloaded. Requires jquery.cookie plugin.
-    hintNavigation: 'Select this tool to navigate around the map by dragging, or double clicking to zoom the map.',
-    hintScrollWheel: ' Holding Ctrl and using the mouse scroll wheel whilst over the map will zoom in and out.',
-    hintClickSpatialRefTool: 'Select this tool to enable clicking on the map to set your location',
-    hintQueryDataPointsTool: 'Select this tool then click on or drag a box over data points on the map to view the underlying records.',
+    hintNavigation: 'Aktivieren Sie dieses Werkzeug, um die Karte mittels Maus zu verschieben.',
+    hintScrollWheel: ' Ein-/Auszoomen mit dem Scrollrad Ihrer Maus.',
+    hintClickSpatialRefTool: 'Aktivieren Sie dieses Werkzeug, um eine Position in der Karte zu setzen.',
+    hintQueryDataPointsTool: 'Aktivieren Sie dieses Werkzeug, um Informationen zu einem oder mehreren Punkten mittels Klick oder Polygonbox abzurufen.',
     hintQueryBufferTool: 'The search area covered by a clicked point or dragged box will be enlarged by the amount specified in the Tolerance box shown when this control is active.',
-    hintDrawPolygonHint: 'Select this tool to draw a polygon, clicking on the map to draw the shape and double clicking to finish.',
-    hintDrawLineHint: 'Select this tool to draw a line, clicking on the map to draw the shape and double clicking to finish.',
-    hintDrawPointHint: 'Select this tool to draw points by clicking on the map.',
-    hintDrawForReportingHint: 'You can then filter the report for intersecting records.',
-    hintClearSelection: 'Clear the edit layer',
-    hintModifyFeature: 'Modify the selected feature. Click on the feature to select it then grab and drag the circular handles to change the boundary.',
-    hintFullscreen: 'Display the map in full screen mode',
-    hlpClickOnceSetSref: 'Click once on the map to set your location.',
-    hlpClickAgainToCorrect: 'Click on the map again to correct your position if necessary.',
-    hlpPanZoom: 'Pan and zoom the map to the required place by dragging the map and double clicking or Shift-dragging to zoom.',
-    hlpPanZoomButtons: 'Pan and zoom the map to the required place using the navigation buttons or '+
-        'by dragging the map and double clicking or Shift-dragging to zoom.',
-    hlpZoomChangesPrecision: 'By zooming the map in or out before clicking you can alter the precision of the '+
-        'selected grid square.',
+    hintDrawPolygonHint: 'Aktivieren Sie dieses Werkzeug, um ein Polygon zu zeichnen. Mit Doppelklick beenden Sie die Eingabe.',
+    hintDrawLineHint: 'Aktivieren Sie diesen Button, um eine Linie in der Karte zu zeichnen. Mit Doppelklick beenden Sie die Eingabe.',
+    hintDrawPointHint: 'Aktivieren Sie diesen Button, um Punkte in der Karte zu zeichnen.',
+    hintDrawForReportingHint: 'Filtern Sie den Bericht nach darunter liegenden Beobachtungen.',
+    hintClearSelection: 'Objekt auf Bearbeitungslayer entfernen.',
+    hintModifyFeature: 'Bearbeiten Sie das ausgesuchte Objekt. Klicken Sie auf das Objekt, dann greifen Sie Punkte und verschieben die Grenzen.',
+    hintFullscreen: 'Karte im Fullscreen-Modus zeigen',
+    hlpClickOnceSetSref: 'Klicken Sie in die Karte, um den Ort zu setzen.',
+    hlpClickAgainToCorrect: 'Klicken Sie falls erforderlich nochmals in die Karte, um Ihre Position zu korrigieren.',
+    hlpPanZoom: 'Verschieben Sie die Karte zum gesuchten Ort und Zoomen per Doppelklick hinein oder verwenden Sie die Umschalttaste und ziehen mit der Maus ein Polygon zum Einzoomen auf.',
+    hlpPanZoomButtons: 'Verschieben und zoomen sie die Karte mittels Navigations-Buttons oder '+
+        'durch Ziehen mit der Maus bzw. Doppelklick in die Karte oder mittels Shift-Taste und Auswahlrechteck.',
+    hlpZoomChangesPrecision: 'Durch ein oder auszoomen der Karte kann die Raster-Einheit '+
+        'bei Rasterkartierungen angepasst werden.',
     helpToPickPrecisionMin: false,
     helpToPickPrecisionMax: 10,
     helpToPickPrecisionSwitchAt: false,
-    hlpImproveResolution1: "{size} square selected. Please click on the map again to provide a more accurate location.",
-    hlpImproveResolution2: "Good. {size} square selected.",
-    hlpImproveResolution3: "Excellent! {size} square selected. If your position is wrong, either click your actual position again or zoom out until your position comes to view, then retry.",
+    hlpImproveResolution1: "{size} Raster selektiert. Bitte klicken Sie nochmals in die Karte, um den Punkt genauer festzulegen.",
+    hlpImproveResolution2: "Gut. {size} Raster selektiert.",
+    hlpImproveResolution3: "Excellent! {size} Raster selektiert. If your position is wrong, either click your actual position again or zoom out until your position comes to view, then retry.",
     hlpImproveResolutionSwitch: "We've switched to a satellite view to allow you to locate your position even better.",
     hlpCustomPolygon: "Excellent! A custom polygon has been drawn for this record."
 
