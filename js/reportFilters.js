@@ -374,6 +374,7 @@ jQuery(document).ready(function ($) {
       getDescription: function () {
         var r = [];
         var dateType = 'recorded';
+		var record_type= 'Beobachtet';
         var dateFromField = 'date_from';
         var dateToField = 'date_to';
         var dateAgeField = 'date_age';
@@ -384,17 +385,30 @@ jQuery(document).ready(function ($) {
             dateToField = dateType + '_date_to';
             dateAgeField = dateType + '_date_age';
           }
+		  if (dateType === 'recorded') {
+            record_type='Beobachtet';
+          }
+		  else if (dateType === 'input') {
+            record_type='Eingabe';
+          } 
+		  else if (dateType === 'edited') {
+            record_type='Bearbeitet';
+          }
+		  else if (dateType === 'verified') {
+            record_type='Verifizierung';
+          } 		  
+		  
         }
         if (indiciaData.filter.def[dateFromField] && indiciaData.filter.def[dateToField]) {
-          r.push('Records ' + dateType + ' between ' + indiciaData.filter.def[dateFromField] + ' and ' +
+          r.push(record_type + ' zwischen ' + indiciaData.filter.def[dateFromField] + ' und ' +  //r.push('Daten ' + dateType + ' zwischen ' + indiciaData.filter.def[dateFromField] + ' und ' +  maps4
             indiciaData.filter.def[dateToField]);
         } else if (indiciaData.filter.def[dateFromField]) {
-          r.push('Records ' + dateType + ' on or after ' + indiciaData.filter.def[dateFromField]);
+          r.push(record_type + ' am oder nach ' + indiciaData.filter.def[dateFromField]);  //r.push('Daten ' + dateType + ' am oder nach ' + indiciaData.filter.def[dateFromField]);
         } else if (indiciaData.filter.def[dateToField]) {
-          r.push('Records ' + dateType + ' on or before ' + indiciaData.filter.def[dateToField]);
+          r.push(record_type + ' am oder vor ' + indiciaData.filter.def[dateToField]);  // r.push('Daten ' + dateType + ' am oder vor ' + indiciaData.filter.def[dateToField]);
         }
         if (indiciaData.filter.def[dateAgeField]) {
-          r.push('Records ' + dateType + ' in last ' + indiciaData.filter.def[dateAgeField]);
+          r.push('Daten ' + dateType + ' in den letzten ' + indiciaData.filter.def[dateAgeField]);
         }
         return r.join('<br/>');
       },
@@ -454,18 +468,18 @@ jQuery(document).ready(function ($) {
     where: {
       getDescription: function () {
         if (indiciaData.filter.def.remembered_location_name) {
-          return 'Records in ' + indiciaData.filter.def.remembered_location_name;
+          return 'Daten aus ' + indiciaData.filter.def.remembered_location_name;  //maps4 lang
         } else if (indiciaData.filter.def['imp-location:name']) { // legacy
-          return 'Records in ' + indiciaData.filter.def['imp-location:name'];
+          return 'Daten aus ' + indiciaData.filter.def['imp-location:name'];
         } else if (indiciaData.filter.def.indexed_location_id) {
           // legacy location ID for the user's locality. In this case we need to hijack the site type drop down shortcuts to get the locality name
           return $('#site-type option[value=loc\\:' + indiciaData.filter.def.indexed_location_id + ']').text();
         } else if (indiciaData.filter.def.location_name) {
-          return 'Records in places containing "' + indiciaData.filter.def.location_name + '"';
+          return 'Fundortname mit "' + indiciaData.filter.def.location_name + '"';
         } else if (indiciaData.filter.def.sref) {
-          return 'Records in square ' + indiciaData.filter.def.sref;
+          return 'Daten aus Raster ' + indiciaData.filter.def.sref;
         } else if (indiciaData.filter.def.searchArea) {
-          return 'Records within a freehand boundary';
+          return 'Innerhalb eines Freihand-Polygons';
         } else {
           return '';
         }
@@ -1196,7 +1210,7 @@ jQuery(document).ready(function ($) {
     indiciaFns.applyFilterToReports();
     $('#filter-reset').removeClass('disabled');
     $('#filter-delete').removeClass('disabled');
-    $('#active-filter-label').html('Active filter: ' + data[0].title);
+    $('#active-filter-label').html('Aktiver Filter: ' + data[0].title); //maps4net lang 'Active filter: '
     $.each($('#filter-panes .pane'), function (idx, pane) {
       var name = pane.id.replace(/^pane-filter_/, '');
       if (paneObjList[name].loadFilter) {
@@ -1207,7 +1221,7 @@ jQuery(document).ready(function ($) {
     $('#filter-build').html(indiciaData.lang.reportFilters.ModifyFilter);
     $('#standard-params .header span.changed').hide();
     // can't delete a filter you didn't create.
-    if (data[0].created_by_id === indiciaData.user_id || indiciaData.admin === "1") {
+    if (data[0].created_by_id === indiciaData.user_id) {
       $('#filter-delete').show();
     } else {
       $('#filter-delete').hide();
@@ -1607,7 +1621,7 @@ jQuery(document).ready(function ($) {
           indiciaData.filter.id = data.outer_id;
           indiciaData.filter.title = $('#filter\\:title').val();
           indiciaData.filter.filters_user_id = data.struct.children[0].id;
-          $('#active-filter-label').html('Active filter: ' + $('#filter\\:title').val());
+          $('#active-filter-label').html('Aktiver Filter: ' + $('#filter\\:title').val()); //maps4net lang 'Active filter: '
           $('#standard-params .header span.changed').hide();
           $('#select-filter').val(indiciaData.filter.id);
           if ($('#select-filter').val() === '') {
